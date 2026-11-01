@@ -264,6 +264,6 @@
   - `.agent/visual/MV分鏡.md`、`memory/progress.md`、`memory/verify.md`、`memory/gotchas.md`。
   - `docs/CHANGELOG.md`。
 
-- **Git 提交**：待提交。
+- **Git 提交**：`dba76f9d497d4bd3ea136668911b7efeb68c2645 fix: keep Clawd arms in proportion in the storyboard`；普通推送 origin/main 成功。
 
 ---
