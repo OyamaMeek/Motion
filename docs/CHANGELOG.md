@@ -201,7 +201,7 @@
   - `memory/agents.md`、`memory/plan.md`、`memory/progress.md`、`memory/verify.md`
   - `docs/CHANGELOG.md`
 
-- **Git 提交**：待提交；仅提交本轮分镜与记录增量，保留其他任务修改。
+- **Git 提交**：`435872341db29187eec611d11fef014608027594 docs: specify all beat-aligned storyboard transitions`；普通推送 origin/main 成功，远端查询确认哈希一致；通过随后文档提交保存本结果，仅包含本轮分镜与记录增量。
 
 ---
 
