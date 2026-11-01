@@ -104,3 +104,21 @@
 - **Git 提交**：`251f3307460b815e9df564944e9be1ed80f281a7 feat: add shared pixel Clawd character and model sheet`；以随后文档提交补记哈希。未推送：main 未配置 upstream。
 
 ---
+
+## [2026-11-01 21:12] 推送项目到远端仓库
+
+- **需求/问题描述**：
+  > 将当前项目 push 到远端仓库。
+
+- **实际实现的功能与改动**：
+  - 检查现有 origin、main、提交记录及工作区状态，推送已提交的项目内容并设置 upstream。
+  - 未跟踪的 `.hyperframes/`、`261031/`、原始音频与歌词保留本地。
+  - 验证：远端分支查询成功且为空，已跟踪文件无未提交改动，`git diff --check` 通过；未修改业务代码，未重新运行功能或视觉测试。
+
+- **涉及文件**：
+  - `memory/progress.md`
+  - `docs/CHANGELOG.md`
+
+- **Git 提交**：待提交；推送完成后补记实际提交与远端核对结果。
+
+---

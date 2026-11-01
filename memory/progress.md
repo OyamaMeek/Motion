@@ -33,4 +33,8 @@
 
 - [x] 本次叙事修订与交付一致性检查通过，开发记录已追加并提交为 `e35b372`；音频测量数据不变。
 
-Git：origin 已配置；当前 main 没有 upstream，`git ls-remote --heads origin` 未返回任何远端分支，不擅自指定推送目标。用户已有文件不暂存。
+## 当前：推送远端仓库
+
+- 用户授权将项目推送远端；目标为现有 origin（`https://github.com/OyamaMeek/Motion.git`）的 main。
+- 已确认远端没有分支，已跟踪文件无未提交改动；准备普通推送并设置 upstream。
+- 未跟踪的 `.hyperframes/`、`261031/` 和原始 M4A、LRC 保留本地，不纳入提交。
