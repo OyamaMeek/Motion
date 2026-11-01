@@ -101,6 +101,6 @@
   - `memory/agents.md`、`memory/plan.md`、`memory/progress.md`、`memory/verify.md`。
   - `docs/CHANGELOG.md`。
 
-- **Git 提交**：待提交；main 未配置 upstream，未推送。
+- **Git 提交**：`251f3307460b815e9df564944e9be1ed80f281a7 feat: add shared pixel Clawd character and model sheet`；以随后文档提交补记哈希。未推送：main 未配置 upstream。
 
 ---

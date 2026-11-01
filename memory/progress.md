@@ -7,7 +7,8 @@
 - [x] 实现统一角色接口、四种朝向、四种表情及指定动作；道具绑定手部。
 - [x] 320 组姿势、192 组持物组合与像素连通/面部净空等检查通过；浏览器错误为空。
 - [x] 导出并检查 1920×1440 三视图、表情与动作设定图；保存 `.agent/visual/Clawd角色設定.md`。
-- [ ] 完成提交；当前已停止镜头制作，等待用户确认角色造型。
+- [x] 完成本地提交 `251f330 feat: add shared pixel Clawd character and model sheet`；main 未配置 upstream，未推送。
+- 当前已停止镜头制作，等待用户确认角色造型；后续所有 Clawd 镜头统一导入 `assets/clawd/character.js`。
 
 ## 已完成：开场样图
 
