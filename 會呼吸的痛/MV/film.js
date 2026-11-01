@@ -72,7 +72,7 @@ function setTower(d) {
 
 const LETTER = {x: 184, y: 152, w: 28, h: 26};
 function letterFace(d, s) {
-  const {x, y, w, h} = LETTER, mid = Math.abs(s.flip - 0.5) * 2;
+  const {x, y, w, h} = LETTER, mid = Math.abs(s.flip - 0.5) * 2 * (s.layLetter ?? 1);
   d.rect('letter', x + w / 2 - w / 2 * mid, y, w * mid, h, P.paper);
   if (mid < 0.5) return;
   if (s.flip < 0.5) {
@@ -93,7 +93,8 @@ function letterFace(d, s) {
 
 function planFace(d, s) {
   const x = 153 + (s.planShift ?? 0), y = 152;
-  d.rect('plan', x, y, 28, 26, P.white);
+  d.rect('plan', x, y, 28 * (s.layPlan ?? 1), 26, P.white);
+  if ((s.layPlan ?? 1) < 1) return;
   d.poly('planTower', [[x + 16, y + 15], [x + 19, y + 3], [x + 22, y + 15]], P.red);
   d.rect('planFigA', x + 14, y + 16, 3, 5, P.skinDark);
   d.rect('planFigB', x + 22, y + 16, 3, 5, P.skinDark);
@@ -214,14 +215,15 @@ function setPhone(d, s) {
   d.sky('phoneSky', 94, 2, 132, 176, [P.sky0, P.sky1, P.sky2]);
   d.poly('phoneCity', [[94, 130], [116, 118], [134, 126], [160, 110], [188, 124], [226, 112], [226, 178], [94, 178]], P.cityMid);
   d.dots('phoneLamps', [[108, 150], [124, 140], [150, 134], [168, 150], [194, 140], [212, 150], [140, 164], [186, 164], [120, 170], [206, 170]], P.lamp, 1.3);
-  const shift = mix(0, -46, s.pan);
+  const shift = mix(0, -46, s.pan), u = mix(2.4, 3, s.grow), x = mix(138, 112, s.grow) + shift, y = mix(90, 72, s.grow);
   d.rect('phoneChairBack', 214 + shift, 88, 8, 90, P.metal);
   d.rect('phoneChairSeat', 176 + shift, 150, 44, 7, P.cityFar);
-  d.clawd('selfie', 112 + shift, 72, {facing: 'front', expression: s.smile ? 'happy' : 'neutral', action: 'hug', frame: 0, unit: 3});
-  d.poly('selfieScarf', [[130 + shift, 134], [178 + shift, 134], [174 + shift, 160], [134 + shift, 160]], P.scarf);
+  d.clawd('selfie', x, y, {facing: 'front', expression: s.expr, action: 'hug', frame: 0, unit: u});
+  d.poly('selfieScarf', [[x + 6 * u, y + 20.67 * u], [x + 22 * u, y + 20.67 * u], [x + 20.67 * u, y + 29.33 * u], [x + 7.33 * u, y + 29.33 * u]], P.scarf);
 }
 
 const AX = 121, AY = 156, BX = 211, BY = 156, STAND = [196, 165];
+const ARRIVE = {from: [210, 158], leave: 9.52, seat: 12.6};
 const CAM = {wide: [150, 110, 1], plan: [167, 165, 6], letter: [198, 165, 6], wrist: [150, 173, 5]};
 const PEN_REST = [205, 172], WALK_RATE = 3.75;
 
@@ -240,20 +242,31 @@ function hopTo(t, t0, t1, from, to, facing) {
     action: moving ? 'jump' : 'idle', frame: moving ? 1 + Math.floor(p * 3) : 0, front: true};
 }
 
+// A 走出电梯到座位的路径；走到之前车票都在手尖。
+function arrivalAt(t) {
+  const p = clamp01((t - ARRIVE.leave) / (ARRIVE.seat - ARRIVE.leave));
+  return {x: Math.round(ARRIVE.from[0] + (AX - ARRIVE.from[0]) * p), y: Math.round(ARRIVE.from[1] + (AY - ARRIVE.from[1]) * p), facing: t < ARRIVE.leave ? 'right' : 'left', walking: t < ARRIVE.seat};
+}
+
 function tableState(t) {
   let ticketA = mixArr([161, 181], [165, 176], span(t, 44.2, 47)), ticketB = [177, 162];
+  if (t < 13.4) {
+    const {x, y, facing} = arrivalAt(t), land = span(t, ARRIVE.seat, 13.4), hand = facing === 'right' ? [31, 33] : [1, -1];
+    ticketA = mixArr([x + hand[0], y + 19], ticketA, land); ticketB = mixArr([x + hand[1], y + 22], ticketB, land);
+  }
   const finish = span(t, 251.4, 253.9);
   ticketA = mixArr(ticketA, [169, 176], finish); ticketB = mixArr(ticketB, [177, 176], finish);
-  const writing = (t > 212.1 && t < 215.1) || (t > 228.5 && t < 236.8);
+  const writing = (t > 212.1 && t < 215.737) || (t >= 228.624 && t < 237.192);
   let scarf = 'draped';
   if (t >= 200.5) scarf = 'gathered';
-  if (t >= 216.2) scarf = 'held';
+  if (t >= 216.4) scarf = 'held';
   return {
     ticketA, ticketB, used: t > 44.2, penAt: writing ? null : PEN_REST, scarf,
-    planOpen: span(t, 104.2, 108), flip: span(t, 211.4, 212.3),
+    planOpen: span(t, 104.2, 108), flip: span(t, 211.4, 212.1),
+    layPlan: span(t, ARRIVE.seat, 13.4), layLetter: span(t, 13.4, 14.2),
     words: Math.floor(6 * span(t, 212.6, 214.9)),
     drawn1: t > 230.6, drawn2: t > 234.9,
-    elevator: span(t, 242.5, 246.5), envelope: t > 11,
+    elevator: span(t, 242.556, 246.5), envelope: t > ARRIVE.seat,
   };
 }
 
@@ -264,70 +277,93 @@ const SAD = {expr: 'sad', facing: 'right'};
 // 每镜返回场景、相机与角色状态；p 为本镜进度。
 const SCRIPT = {
   P01: (p, t) => ({set: 'tower', cam: [mix(170, 280, p), 100, 1], walker: {x: Math.round(mix(40, 340, p)), frame: Math.floor(t * WALK_RATE) % 4}}),
-  P02: (p, t) => ({set: 'deck', cam: mixArr([110, 140, 1.5], CAM.wide, span(t, 9.2, 14.21)), a: {expr: 'neutral', facing: 'right'}}),
-  L01: (p) => ({set: 'deck', cam: mixArr(CAM.wide, [130, 128, 1.6], p), a: {expr: 'neutral', facing: 'back'}}),
+  P02: (p, t) => {
+    const {x, y, facing, walking} = arrivalAt(t);
+    return {set: 'deck', cam: CAM.wide, a: walking ? {x, y, facing, expr: 'neutral', action: 'walk', frame: Math.floor(t * WALK_RATE) % 4, front: true} : {expr: 'neutral', facing: 'right'}};
+  },
+  L01: (p, t) => ({set: 'deck', cam: mixArr(CAM.wide, [130, 128, 1.6], p), a: {expr: 'neutral', facing: t < 18.646 ? 'right' : 'back'}}),
   L02: (p) => ({set: 'deck', cam: mixArr([130, 128, 1.6], [130, 126, 2.1], p), a: {expr: 'neutral', facing: 'back'}}),
-  L03: (p) => ({set: 'deck', cam: mixArr([130, 126, 2.1], [170, 160, 1.7], p), a: {...SAD, dy: 1}}),
+  L03: (p, t) => ({set: 'deck', cam: mixArr([130, 126, 2.1], [170, 160, 1.7], p), a: t < 35.759 ? {expr: 'neutral', facing: 'back'} : {...SAD, dy: 1}}),
   L04: (p, t) => ({set: 'deck', cam: mixArr([170, 160, 1.7], CAM.plan, span(t, 43.77, 46)), a: {...SAD, dy: 1, dx: Math.round(18 * span(t, 43.8, 44.8))}}),
   L05: (p, t) => {
-    const sticker = span(t, 53.5, 56.5), rise = span(t, 51.5, 52.8), onChair = [Math.round(stickerX(sticker) - 2), 151];
-    return {set: 'home', cam: mixArr(CAM.plan, [170, 112, 1.15], span(t, 50.5, 53)), a: {expr: 'happy', facing: 'right'},
-      b: {expr: 'happy', scarf: true, x: rise < 1 ? Math.round(BX + (onChair[0] - BX) * rise) : onChair[0], y: rise < 1 ? Math.round(BY + (onChair[1] - BY) * rise) : onChair[1]},
-      sticker, suitcase: true};
+    const sticker = span(t, 53.5, 56.5), rise = span(t, 51.5, 52.8) * (1 - span(t, 56.7, 58.2)), onChair = [Math.round(stickerX(sticker) - 2), 151], back = 1 - span(t, 50.736, 53);
+    return {set: 'home', cam: mixArr(CAM.plan, [170, 112, 1.15], span(t, 50.759, 53)), a: {expr: t < 50.736 ? 'sad' : 'happy', facing: 'right', dx: Math.round(18 * back), dy: t < 50.736 ? 1 : 0},
+      b: {expr: 'happy', scarf: true, x: Math.round(BX + (onChair[0] - BX) * rise), y: Math.round(BY + (onChair[1] - BY) * rise)},
+      sticker, suitcase: true, corner: true};
   },
-  L06: (p, t) => ({set: 'home', cam: mixArr([170, 112, 1.15], [172, 160, 1.9], p), a: {expr: 'sad', facing: 'right'}, b: {expr: 'sad', scarf: true, dx: Math.round(mix(0, -17, span(t, 59, 60)))},
-    key: mix(196, 160, span(t, 60.5, 64)), sticker: 1}),
-  L07: (p, t) => ({set: 'deck', cam: [140, 168, 3], a: {...SAD, dy: breath(t, 67.8, 70.6)}}),
-  L08: (p, t) => ({set: 'deck', cam: mixArr([140, 168, 3], [150, 172, 1.7], p), a: {...SAD, dx: shake(t)}}),
+  L06: (p, t) => ({set: 'home', cam: mixArr([170, 112, 1.15], [172, 160, 1.9], p), a: {expr: t < 59.327 ? 'happy' : 'sad', facing: 'right'}, b: {expr: t < 59.327 ? 'happy' : 'sad', scarf: true, dx: Math.round(mix(0, -17, span(t, 59.327, 60.3)))},
+    key: mix(196, 160, span(t, 60.5, 64)), sticker: 1, corner: true}),
+  L07: (p, t) => ({set: 'deck', cam: mixArr([172, 160, 1.9], [140, 168, 3], span(t, 67.849, 68.9)), a: {...SAD, dy: breath(t, 67.8, 70.6)}}),
+  L08: (p, t) => ({set: 'deck', cam: mixArr([140, 168, 3], [150, 172, 1.7], p), a: {...SAD, dx: t < 71.74 ? 0 : shake(t)}}),
   L09: (p, t) => ({set: 'deck', cam: mixArr([150, 172, 1.7], [172, 165, 2.3], p), a: {...SAD, dx: shake(t), mouth: 'hum'}, notes: t}),
   L10: () => ({set: 'deck', cam: [172, 165, 2.3], a: {...SAD, mouth: 'bite'}}),
   L11: (p, t) => ({set: 'deck', cam: mixArr([172, 165, 2.3], [165, 168, 2.3], p), a: {...SAD, dy: breath(t, 84.9, 88)}}),
   L12: (p, t) => ({set: 'deck', cam: mixArr([165, 168, 2.3], CAM.wrist, span(t, 88.8, 90.2)), a: SAD, rub: Math.floor((t - 88.8) * WALK_RATE) % 2}),
-  L13: (p, t) => ({set: 'home', cam: mixArr([190, 165, 2.2], [180, 152, 1.5], span(t, 93.3, 95.3)), a: {expr: 'neutral', facing: 'right', phone: true}, b: {expr: 'shy', dx: -17}, heldScarf: true}),
-  L14: (p, t) => ({set: 'deck', cam: [180, 152, 1.5], a: {...SAD, action: t > 98.9 ? 'hug' : 'idle'}}),
-  I01: (p, t) => ({set: 'deck', cam: mixArr([180, 152, 1.5], CAM.plan, span(t, 102.7, 104.5)), a: {...SAD, dx: Math.round(mix(mix(0, 11, span(t, 102.7, 104)), 0, span(t, 108, 109)))}}),
+  L13: (p, t) => ({set: 'home', cam: mixArr(CAM.wrist, [180, 152, 1.5], span(t, 93.623, 95.3)), a: {expr: t < 93.6 ? 'sad' : 'neutral', facing: 'right', phone: true}, b: {expr: 'shy', dx: Math.round(-17 * span(t, 93.623, 95.3))}, heldScarf: true, corner: true}),
+  L14: (p, t) => ({set: 'deck', cam: [180, 152, 1.5], a: {expr: t < 98.963 ? 'neutral' : 'sad', facing: 'right', action: t >= 98.963 ? 'hug' : 'idle'}}),
+  I01: (p, t) => ({set: 'deck', cam: mixArr([180, 152, 1.5], CAM.plan, span(t, 102.7, 104.5)), a: {...SAD, action: t < 103.259 ? 'hug' : 'idle', dx: Math.round(mix(mix(0, 11, span(t, 103.259, 104)), 0, span(t, 108, 109)))}}),
   I02: (p, t) => ({set: 'home', cam: mixArr(CAM.plan, [200, 160, 2.4], span(t, 112.7, 121)), b: {expr: 'sad', scarf: true, dx: Math.round(-11 * span(t, 112.7, 114))}, emptyA: true, planFolded: span(t, 114, 119)}),
-  L15: (p) => ({set: 'home', cam: mixArr([200, 160, 2.4], [185, 158, 1.7], p), a: {expr: 'neutral', facing: 'right', phone: true}, b: {expr: 'happy', scarf: true, tense: true}, planFolded: 1}),
-  L16: (p, t) => ({set: 'home', cam: mixArr([185, 158, 1.7], [222, 182, 4], span(t, 131.7, 134)), b: {expr: 'sad', scarf: true}, a: {expr: 'neutral', facing: 'right', phone: true}, planFolded: 1,
-    fist: 1.6 + Math.abs(Math.sin((t - 134) * 2)) * 0.5, underEdge: span(t, 132, 134)}),
-  L17: (p, t) => ({set: 'door', cam: mixArr([200, 100, 2.4], [150, 92, 1], span(t, 141, 145)), a: {x: 56, y: 118, facing: 'left', expr: 'neutral'}, b: {x: 203, y: 118, expr: 'sad', scarf: true}, doorOpen: span(t, 142, 146), suitcaseAt: 40}),
-  L18: () => ({set: 'home', cam: CAM.wide, b: {expr: 'sad', scarf: true}, emptyA: true, dinner: true}),
-  L19: (p, t) => ({set: 'door', cam: mixArr([175, 105, 2], [150, 100, 1.4], p), a: {x: 118, y: 118, facing: 'left', expr: 'neutral'}, b: {x: 176, y: 118, expr: 'sad', scarf: true, action: t > 156 ? 'hug' : 'idle'}, doorOpen: 1, suitcaseAt: 102}),
+  L15: (p, t) => {
+    const settled = t >= 123.6;
+    return {set: 'home', cam: mixArr([200, 160, 2.4], [185, 158, 1.7], p), a: {expr: 'neutral', facing: 'right', phone: true}, b: {expr: settled ? 'happy' : 'sad', scarf: true, tense: settled, dx: Math.round(-11 * (1 - span(t, 123.6, 124.7)))}, planFolded: 1};
+  },
+  L16: (p, t) => {
+    const clenched = t >= 132.191;
+    return {set: 'home', cam: mixArr([185, 158, 1.7], [222, 182, 4], span(t, 131.7, 134)), b: {expr: clenched ? 'sad' : 'happy', scarf: true, tense: !clenched}, a: {expr: 'neutral', facing: 'right', phone: true}, planFolded: 1,
+      ...(clenched ? {fist: 1.6 + Math.abs(Math.sin((t - 134) * 2)) * 0.5, underEdge: span(t, 132.191, 134)} : {})};
+  },
+  L17: (p, t) => {
+    const leave = span(t, 146.3, 148.2), x = Math.round(56 + (-50 - 56) * leave);
+    return {set: 'door', cam: mixArr([214, 144, 4], [150, 92, 1], span(t, 140.759, 145)), a: {x, y: 118, facing: 'left', expr: 'neutral', action: leave > 0 && leave < 1 ? 'walk' : 'idle', frame: Math.floor(t * WALK_RATE) % 4}, b: {x: 203, y: 118, expr: 'sad', scarf: true}, doorOpen: span(t, 142, 146), suitcaseAt: x - 16, doorFist: t < 140.759};
+  },
+  L18: (p, t) => ({set: 'home', cam: mixArr([158, 130, 1], CAM.wide, span(t, 149.327, 150.4)), b: {expr: 'sad', scarf: true}, emptyA: true, dinner: true}),
+  L19: (p, t) => ({set: 'door', cam: mixArr([115, 72, 1], [150, 100, 1.4], span(t, 155.736, 158)), a: {x: 118, y: 118, facing: 'left', expr: 'neutral'}, b: {x: 176, y: 118, expr: 'sad', scarf: true, action: t > 156 ? 'hug' : 'idle'}, doorOpen: 1, suitcaseAt: 102}),
   L20: (p, t) => {
-    const x = Math.round(mix(118, -70, span(t, 164.2, 170)));
-    return {set: 'door', cam: [150, 100, 1.4], a: {x, y: 118, facing: 'left', expr: 'neutral', action: 'walk', frame: Math.floor(t * WALK_RATE) % 4}, b: {x: 176, y: 118, expr: 'sad', scarf: true, action: 'hug'}, doorOpen: 1, suitcaseAt: x - 16};
+    const walk = span(t, 164.328, 170), x = Math.round(118 + (-70 - 118) * walk);
+    return {set: 'door', cam: [150, 100, 1.4], a: {x, y: 118, facing: 'left', expr: 'neutral', action: walk > 0 ? 'walk' : 'idle', frame: Math.floor(t * WALK_RATE) % 4}, b: {x: 176, y: 118, expr: 'sad', scarf: true, action: 'hug'}, doorOpen: 1, suitcaseAt: x - 16};
   },
   L21: (p, t) => ({set: 'deck', cam: mixArr([232, 158, 2], [160, 170, 1.9], p), a: {...SAD, dy: breath(t, 172.9, 176)}}),
-  L22: (p, t) => ({set: 'deck', cam: [160, 170, 1.9], a: {...SAD, action: 'hug', dy: Math.round(2 * span(t, 176.8, 179)), dx: shake(t)}}),
+  L22: (p, t) => ({set: 'deck', cam: [160, 170, 1.9], a: {...SAD, action: t < 177.191 ? 'idle' : 'hug', dy: Math.round(2 * span(t, 177.191, 179)), dx: t < 177.191 || t > 180.5 ? 0 : shake(t)}}),
   L23: (p, t) => ({set: 'deck', cam: mixArr([160, 170, 1.9], [172, 165, 2.3], span(t, 181, 183)), a: {...SAD, action: 'hug', dy: 2, mouth: 'hum'}, tear: span(t, 182.5, 185.5)}),
   L24: () => ({set: 'deck', cam: [172, 165, 2.3], a: {...SAD, action: 'hug', dy: 2}}),
-  L25: (p, t) => ({set: 'deck', cam: mixArr([172, 165, 2.3], [168, 172, 2.3], p), a: {...SAD, dy: 2 + breath(t, 190, 193)}}),
-  L26: (p, t) => ({set: 'deck', cam: mixArr([168, 172, 2.3], CAM.wrist, span(t, 193.8, 195.2)), a: {...SAD, dy: 2}, rub: Math.floor((t - 193.8) * 5) % 2}),
-  L27: (p, t) => ({set: 'deck', cam: mixArr([175, 165, 2], [205, 165, 2], span(t, 198.1, 200.3)), a: walkBetween(t, 198.1, 200.3, true)}),
+  L25: (p, t) => ({set: 'deck', cam: mixArr([172, 165, 2.3], [168, 172, 2.3], span(t, 190.032, 193.794)), a: {...SAD, action: t < 190.032 ? 'hug' : 'idle', dy: 2 + breath(t, 190.032, 193)}}),
+  L26: (p, t) => ({set: 'deck', cam: mixArr([168, 172, 2.3], CAM.wrist, span(t, 193.8, 195.2)), a: {...SAD, dy: t < 197.3 ? 2 : t < 197.7 ? 1 : 0}, rub: t < 197.3 ? Math.floor((t - 193.8) * 5) % 2 : undefined}),
+  L27: (p, t) => ({set: 'deck', cam: mixArr(CAM.wrist, [205, 165, 2], span(t, 198.066, 200.3)), a: walkBetween(t, 198.1, 200.3, true)}),
   L28: (p, t) => {
     const a = walkBetween(t, 208.4, 210.7, false);
     return {set: 'deck', cam: mixArr([205, 165, 2], [185, 165, 2], span(t, 208.4, 210.9)), a: {...a, action: t > 203.8 && t < 208.4 ? 'hug' : a.action, facing: t < 208.4 ? 'right' : a.facing}};
   },
   L29: (p, t) => {
     const write = span(t, 212.6, 214.9), onLetter = [Math.round(186 + 22 * write), 140];
-    const a = t < 211.7 ? hopTo(t, 210.93, 211.7, [AX, AY], [186, 140], 'left') : {x: onLetter[0], y: onLetter[1], facing: 'left', expr: 'sad', action: write > 0 && write < 1 ? 'walk' : 'idle', frame: Math.floor(t * WALK_RATE) % 4, front: true};
-    return {set: 'deck', cam: mixArr([185, 165, 2], CAM.letter, span(t, 210.93, 212)), a, pen: t > 212.1 && t < 215.1 ? [onLetter[0] + 0.4, 156.5] : null};
+    const a = t < 212.1 ? hopTo(t, 211.464, 212.1, [AX, AY], [186, 140], 'right') : {x: onLetter[0], y: onLetter[1], facing: 'left', expr: 'sad', action: write > 0 && write < 1 ? 'walk' : 'idle', frame: Math.floor(t * WALK_RATE) % 4, front: true};
+    return {set: 'deck', cam: mixArr([185, 165, 2], CAM.letter, span(t, 211.464, 212.4)), a, pen: t > 212.1 ? [onLetter[0] + 0.4, 156.5] : null};
   },
-  L30: (p, t) => ({set: 'deck', cam: mixArr(CAM.letter, [205, 165, 2.4], span(t, 215.2, 216.6)),
-    a: {...hopTo(t, 215.2, 216.2, [208, 140], STAND, 'right'), action: t > 216.3 ? 'hug' : hopTo(t, 215.2, 216.2, [208, 140], STAND, 'right').action},
-    holdScarf: t >= 216.2 ? Math.max(0.01, span(t, 216.2, 216.8)) : 0}),
-  L31: () => ({set: 'phone', pan: 0, smile: true}),
-  L32: (p, t) => ({set: 'phone', pan: span(t, 225, 227.5), smile: span(t, 225, 226.5) < 1}),
-  L33: (p, t) => ({set: 'deck', cam: mixArr([198, 165, 4], [190, 165, 7], span(t, 228.2, 229.2)), a: {x: 188, y: 154, facing: 'left', expr: 'sad', front: true}, holdScarf: 1, pen: [188 + Math.sin((t - 229) * 6), 170]}),
-  L34: (p, t) => ({set: 'deck', cam: mixArr([190, 165, 7], [204, 165, 7], span(t, 232.4, 233.2)), a: {x: 199, y: 154, facing: 'left', expr: 'sad', front: true}, holdScarf: 1, pen: [199 + Math.sin((t - 233) * 6), 170], sleeve: [229, 180]}),
+  L30: (p, t) => {
+    const hop = hopTo(t, 215.737, 216.4, [208, 140], STAND, t < 215.737 ? 'left' : 'right');
+    return {set: 'deck', cam: mixArr(CAM.letter, [205, 165, 2.4], span(t, 215.737, 216.9)), a: {...hop, action: t >= 216.4 ? 'hug' : hop.action},
+      pen: t < 215.737 ? [208.4, 156.5] : null, holdScarf: t >= 216.4 ? Math.max(0.01, span(t, 216.4, 217)) : 0};
+  },
+  L31: (p, t) => ({set: 'phone', pan: 0, grow: span(t, 220.055, 221.1), expr: t < 220.079 ? 'sad' : 'happy'}),
+  L32: (p, t) => ({set: 'phone', pan: span(t, 225, 227.5), grow: 1, expr: span(t, 225.396, 226.5) < 1 ? 'happy' : 'neutral'}),
+  L33: (p, t) => {
+    const ready = t >= 228.624;
+    return {set: 'deck', cam: mixArr([219.3, 160, 3], [190, 165, 7], span(t, 228.624, 229.7)), a: {x: 188, y: 154, facing: ready ? 'left' : 'front', expr: ready ? 'sad' : 'neutral', action: ready ? 'idle' : 'hug', front: true}, holdScarf: 1, pen: ready ? [188 + Math.sin((t - 229) * 6), 170] : null};
+  },
+  L34: (p, t) => {
+    const walk = span(t, 232.4, 233.2), x = Math.round(188 + 11 * walk);
+    return {set: 'deck', cam: mixArr([190, 165, 7], [204, 165, 7], walk), a: {x, y: 154, facing: 'left', expr: 'sad', action: walk > 0 && walk < 1 ? 'walk' : 'idle', frame: Math.floor(t * WALK_RATE) % 4, front: true}, holdScarf: 1, pen: [x + Math.sin((t - 233) * 6), 170], sleeve: [229, 180]};
+  },
   L35: (p, t) => {
-    const a = hopTo(t, 236.8, 237.8, [199, 154], [AX, AY], 'right');
-    return {set: 'deck', cam: mixArr([204, 165, 7], CAM.wide, span(t, 236.8, 240.6)), a: {...a, expr: 'shy', action: t > 237.8 ? 'hug' : a.action, front: t < 237.8, dy: t > 237.8 ? Math.round(2 * span(t, 237.8, 238.8)) : 0}, holdScarf: 1,
-      sleeve: mixArr([229, 180], [166, 190], span(t, 236.8, 238.8))};
+    const set = t >= 237.192, a = hopTo(t, 237.192, 238.2, [199, 154], [AX, AY], set ? 'right' : 'left');
+    return {set: 'deck', cam: mixArr([204, 165, 7], CAM.wide, span(t, 236.8, 240.6)), a: {...a, expr: set ? 'shy' : 'sad', action: t >= 238.2 ? 'hug' : a.action, front: t < 238.2, dy: t >= 238.2 ? Math.round(2 * span(t, 238.2, 239.2)) : 0}, holdScarf: 1,
+      pen: set ? null : [199 + Math.sin((t - 233) * 6), 170], sleeve: mixArr([229, 180], [166, 190], span(t, 236.8, 238.8))};
   },
-  L36: (p, t) => ({set: 'deck', cam: CAM.wide, a: {...SAD, action: 'hug', dy: 2}, holdScarf: 1, sleeve: t < 245 ? mixArr([166, 190], [210, 260], span(t, 242, 245)) : null}),
-  L37: (p, t) => ({set: 'deck', cam: mixArr(mixArr(CAM.wide, [164, 170, 5], span(t, 250.9, 252.2)), CAM.wide, span(t, 254, 261.944)),
-    a: {...SAD, dy: 1, action: t > 254.3 ? 'hug' : 'idle', dx: Math.round(mix(mix(0, 23, span(t, 250.9, 252)), 0, span(t, 254, 255.2)))}, holdScarf: 1}),
+  L36: (p, t) => ({set: 'deck', cam: CAM.wide, a: {expr: t < 242.556 ? 'shy' : 'sad', facing: 'right', action: 'hug', dy: 2}, holdScarf: 1, sleeve: t < 245 ? mixArr([166, 190], [210, 260], span(t, 242, 245)) : null}),
+  L37: (p, t) => {
+    const moved = t >= 251.426;
+    return {set: 'deck', cam: mixArr(mixArr(CAM.wide, [164, 170, 5], span(t, 250.9, 252.2)), CAM.wide, span(t, 254, 261.944)),
+      a: {...SAD, dy: moved ? 1 : 2, action: !moved || t > 254.3 ? 'hug' : 'idle', dx: Math.round(mix(mix(0, 23, span(t, 251.426, 252.2)), 0, span(t, 254, 255.2)))}, holdScarf: 1};
+  },
 };
 
 // 换景只发生在不透明实物完全遮住画面时；键为进入该镜的衔接。
@@ -385,6 +421,7 @@ export function frameAt(t) {
     if (s.suitcaseAt !== undefined) { d.rect('suitcase', s.suitcaseAt, 126, 16, 19, P.metal); d.rect('suitcaseStrap', s.suitcaseAt + 7, 126, 2, 19, P.whiteDark); }
     if (s.a) clawdA(d, s);
     if (s.b) clawdB(d, s);
+    if (s.doorFist) { d.disk('fistB', s.b.x + 5, s.b.y + 17.5, 2, P.skinLight); d.disk('fistA', s.b.x + 25, s.b.y + 17.5, 2, P.skinLight); }
   }
   if (s.set === 'deck' || s.set === 'home') {
     if (s.set === 'deck') setDeck(d, ts); else setHome(d, {sticker: s.sticker ?? 0});
@@ -392,7 +429,7 @@ export function frameAt(t) {
     const frontA = s.a && (s.a.front || (s.a.dx ?? 0) >= 4), frontB = (s.b?.dx ?? 0) < 0;
     if (s.a && !frontA) clawdA(d, s);
     if (s.b && !frontB) clawdB(d, s);
-    table(d, s.set === 'home' ? {past: true, planOpen: 1 - (s.planFolded ?? 0), planShift: 24 * (s.planFolded ?? 0)} : ts);
+    table(d, s.set === 'home' ? {past: true, planOpen: s.corner ? 0 : 1 - (s.planFolded ?? 0), planShift: 24 * (s.planFolded ?? 0)} : ts);
     if (s.dinner) {
       d.rect('dinnerCover', 152, 151, 60, 30, P.wood);
       for (const [x, id] of [[166, 'dish1'], [198, 'dish2']]) { d.disk(id, x, 166, 9, P.white); d.disk(`${id}Food`, x, 166, 5, P.warmDark); }

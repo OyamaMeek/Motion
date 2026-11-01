@@ -99,4 +99,5 @@
 - 检查原运镜与转场表一致，移除无衔接硬切；不用整屏叠化、额外快切、甩镜或反复推拉。
 - 文档检查只能验证设计完整性；本轮不生成动画，不能据此声称逐帧连续性已实测通过。
 - 实际结果：`.agent/work/verify_transitions.py` 修改前因 0／40 处衔接失败，修改后 40 对顺序与唯一覆盖、起拍、原分镜关键字段及已确认解释表检查通过；`.agent/work/verify_storyboard.py` 的歌词、时间、节拍、输入哈希检查通过。文字复核确认旧信和计划分别保留，准备动作可在句内连续完成。
-- 转场表重写结果：`.agent/work/transition-design.mjs` 校验 40 行、每行前格相机等于 `film.js`、6 处跨场景的角色方框换算相等、无禁止手法与旧手臂动作（修改前失败）。`verify_transitions.py`、`verify_storyboard.py`（已更新过期的状态断言）与 `film.js` 8 项测试通过。表中揭露后的状态是设计目标，`film.js` 未实现，未生成动画影格。
+- 转场表重写结果：`.agent/work/transition-design.mjs` 校验 40 行、每行前格相机等于 `film.js`、6 处跨场景的角色方框换算相等、无禁止手法与旧手臂动作（修改前失败）。`verify_transitions.py`、`verify_storyboard.py`（已更新过期的状态断言）与 `film.js` 8 项测试通过。
+- `film.js` 实现结果：`film.test.mjs` 新增 4 项（衔接方框与相机、逐帧相机与角色不瞬移、笔只有一支、I01 前不露独坐小人），修改前全部失败，修改后 `shots.test.mjs` 与 `film.test.mjs` 共 12 项通过；41 张画面重新生成，最多 26 色，浏览器错误为空；接缝抽帧已检查。未看视频播放，未验证音画同步。

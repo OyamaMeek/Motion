@@ -321,3 +321,24 @@
 - **Git 提交**：`docs: rewrite storyboard transitions from measured frames`，与本条同一提交，哈希以 `git log` 为准；普通推送 origin/main。
 
 ---
+
+## [2026-11-01 23:15] film.js 按衔接表实现
+
+- **需求/问题描述**：
+  > 用户要求修改 `film.js`，解决衔接表列出的相机跳接、角色瞬移、姿态突变和道具问题。
+
+- **实际实现的功能与改动**：
+  - 相机与角色：遮挡前后两侧都在的角色同位同大；L26 → L27 连续拉远，L33 → L34 改为走过去；姿态变化移到下一拍。
+  - P02：A 从电梯旁走到座位，车票先在手尖，到座后纸才展开，全程广景。
+  - 道具：笔始终只有一支；L05、L06、L13 的计划保留折角。
+  - 验证：新增 4 项测试先失败，修改后共 12 项通过；41 张画面重新生成，最多 26 色，浏览器错误为空；接缝抽帧已检查。分镜变化的只有 L05、L06、L13、L19、L25 及总览。未生成视频，未验证音画同步。
+
+- **涉及文件**：
+  - `會呼吸的痛/MV/film.js`、`film.test.mjs`、`README.md`、`分鏡/`
+  - `會呼吸的痛/會呼吸的痛storyboard.md`
+  - `.agent/visual/MV分鏡.md`、`.agent/visual/轉場接縫.png`
+  - `memory/progress.md`、`memory/verify.md`、`docs/CHANGELOG.md`
+
+- **Git 提交**：`fix: make storyboard transitions continuous in film.js`，与本条同一提交，哈希以 `git log` 为准；普通推送 origin/main。
+
+---
