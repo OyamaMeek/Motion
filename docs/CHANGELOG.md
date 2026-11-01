@@ -40,6 +40,6 @@
   - `memory/plan.md`、`memory/progress.md`、`memory/verify.md`、`memory/gotchas.md`
   - `docs/CHANGELOG.md`
 
-- **Git 提交**：待提交。
+- **Git 提交**：`e35b372dee464587df7f8fbaefc7e48e13016d06 docs: use breakup perspective and confirm lyrics`；以随后文档提交补记哈希。未推送：main 未配置 upstream。
 
 ---
