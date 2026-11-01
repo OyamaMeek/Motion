@@ -302,3 +302,22 @@
 - **Git 提交**：`docs: confirm MV storyboard`，与本条同一提交，哈希以 `git log` 为准；普通推送 origin/main。
 
 ---
+
+## [2026-11-01 23:00] 转场方案与相邻镜头衔接
+
+- **需求/问题描述**：
+  > 从一镜到底、卡点切换、拼贴快切中推荐一种，并在 storyboard.md 为每两个相邻镜头写明衔接；要求起点对齐节拍，前后角色大小、位置、姿态一致，推拉时元素不突然消失或出现。
+
+- **实际实现的功能与改动**：
+  - 推荐②卡点切换。原有 40 条仍是长手臂动作，与确认的图像分镜不符，已重写：14 处实物横扫、26 处同场延续，每条写明相机与角色方框；同场的姿态变化改到下一拍。
+  - 分镜末尾列出 `film.js` 的实测差异，包括 L26 → L27 相机跳接与 L33 → L34 角色瞬移。本次未修改 `film.js`，未生成动画。
+  - 验证：新增座标检查先失败后通过；`verify_transitions.py`、`verify_storyboard.py`（更新过期断言）及 `film.js` 8 项测试通过。
+
+- **涉及文件**：
+  - `會呼吸的痛/會呼吸的痛storyboard.md` (+65 / -51)
+  - `會呼吸的痛/MV/README.md` (+0 / -1)
+  - `memory/progress.md`、`memory/verify.md`、`docs/CHANGELOG.md`
+
+- **Git 提交**：`docs: rewrite storyboard transitions from measured frames`，与本条同一提交，哈希以 `git log` 为准；普通推送 origin/main。
+
+---
