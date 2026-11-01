@@ -17,7 +17,7 @@
     "style": "paper",
     "width": 1920,
     "height": 1080,
-    "colors": 19485,
+    "colors": 21249,
     "opaque": true,
     "blocks": false,
     "native": null,
@@ -28,11 +28,11 @@
     "style": "crayon",
     "width": 1920,
     "height": 1080,
-    "colors": 89446,
+    "colors": 93440,
     "opaque": true,
     "blocks": false,
     "native": null,
     "errors": [],
-    "seconds": 14
+    "seconds": 43
   }
 ]

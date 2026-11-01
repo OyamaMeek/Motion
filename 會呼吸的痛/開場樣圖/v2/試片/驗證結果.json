@@ -1,0 +1,36 @@
+[
+  {
+    "style": "pixel",
+    "fps": 12,
+    "frames": 120,
+    "buildSeconds": 1,
+    "frameSeconds": 142,
+    "secondsPerFrame": 1.19,
+    "fullSongMinutes": 64.8,
+    "megabytes": 0.6,
+    "maxColors": 31,
+    "errors": []
+  },
+  {
+    "style": "paper",
+    "fps": 10,
+    "frames": 100,
+    "buildSeconds": 0,
+    "frameSeconds": 32,
+    "secondsPerFrame": 0.32,
+    "fullSongMinutes": 14.4,
+    "megabytes": 2.9,
+    "errors": []
+  },
+  {
+    "style": "crayon",
+    "fps": 8,
+    "frames": 80,
+    "buildSeconds": 27,
+    "frameSeconds": 44,
+    "secondsPerFrame": 0.55,
+    "fullSongMinutes": 20.6,
+    "megabytes": 35.3,
+    "errors": []
+  }
+]

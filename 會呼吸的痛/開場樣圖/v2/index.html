@@ -16,11 +16,21 @@
 <script src="../../../.agent/work/art-libs/p5-2.2.0.min.js"></script>
 <script src="../../../.agent/work/art-libs/p5.brush-3.0.0.js"></script>
 <script type="module">
+  import {createPixel} from './pixel.js';
+  import {createPaper} from './paper.js';
+  import {createCrayon} from './crayon.js';
+  import {FINAL_STATE, clipState} from './clip.js';
+
   const style = new URLSearchParams(location.search).get('style') || 'pixel';
-  const finish = result => { window.artCanvas = result.canvas; window.pixelNative = result.native; window.brushNames = result.brushes; window.artReady = true; };
-  if (style === 'pixel') finish((await import('./pixel.js')).drawPixel());
-  else if (style === 'paper') finish((await import('./paper.js')).drawPaper());
-  else if (style === 'crayon') (await import('./crayon.js')).drawCrayon(finish);
+  const finish = art => {
+    art.render(FINAL_STATE, null);
+    window.art = art;
+    window.clipState = clipState;
+    window.artReady = true;
+  };
+  if (style === 'pixel') finish(createPixel());
+  else if (style === 'paper') finish(createPaper());
+  else if (style === 'crayon') createCrayon(finish);
   else throw new Error('未知画风');
 </script>
 </html>

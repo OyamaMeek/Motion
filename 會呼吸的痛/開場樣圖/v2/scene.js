@@ -93,14 +93,20 @@ export const BENCH = {
 };
 // 主角侧身坐，隔着空位望向铁塔。非像素画风按 character.js 的 32 格比例重画同一造型。
 export const CLAWD = {x: 204, y: 121};
-const clawdBox = (x, y, w, h) => [CLAWD.x + 32 - x - w, CLAWD.y + y, w, h];
-export const CLAWD_PARTS = {
-  legs: [11, 14, 18, 21].map(x => clawdBox(x, 21, 2, 6)),
-  body: clawdBox(10, 7, 14, 15),
-  arm: clawdBox(6, 16, 5, 3),
-  armBack: clawdBox(23, 16, 5, 3),
-  eye: clawdBox(19, 12, 2, 3),
-};
+export function clawdParts(ox, oy, action = 'idle', frame = 0) {
+  const phase = frame % 4;
+  const lift = action === 'jump' ? [1, -3, -6, -3][phase] : action === 'walk' ? -(phase % 2) : 0;
+  const armY = action === 'walk' ? 16 + phase % 2 : 16;
+  const box = (x, y, w, h) => [ox + 32 - x - w, oy + lift + y, w, h];
+  const legHeight = index => 6 + (action === 'walk' ? ((phase + index) % 2 ? -1 : 1) : 0) + (action === 'jump' && phase === 2 ? -2 : 0);
+  return {
+    legs: [11, 14, 18, 21].map((x, index) => box(x, 21, 2, legHeight(index))),
+    body: box(10, 7, 14, 15),
+    arm: box(6, armY, 5, 3),
+    armBack: box(23, armY, 5, 3),
+    eye: box(19, 12, 2, 3),
+  };
+}
 export const TICKETS = [
   [[177, 138], [187, 137], [188, 143], [178, 143]],
   [[191, 137], [201, 139], [200, 143], [190, 143]],

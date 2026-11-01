@@ -140,7 +140,7 @@
   - `memory/agents.md`、`memory/plan.md`、`memory/progress.md`、`memory/verify.md`。
   - `docs/CHANGELOG.md`。
 
-- **Git 提交**：待提交。用户已确认主角全部使用 Clawd，并授权按 `AGENTS.md` 自动提交和普通推送 origin/main。
+- **Git 提交**：`b06ab1779b4b253f47a69c582ce14e3df2d13b9a feat: draw Tokyo Tower opening style samples`；普通推送至 origin/main 成功，远端查询确认哈希一致。用户已确认主角全部使用 Clawd。
 
 ---
 
@@ -181,5 +181,27 @@
   - `docs/CHANGELOG.md`
 
 - **Git 提交**：`07f6ca9258ea69591aecd4f9b4724f32c2fa7993 docs: confirm abstract lyric interpretations`；普通推送 origin/main 成功，远端查询确认哈希一致；本结果通过随后文档提交补记。
+
+---
+
+## [2026-11-01 22:00] 三种画风 10 秒试片
+
+- **需求/问题描述**：
+  > 用户决定三种画风各做一支完整 MV，主角全部使用 Clawd，并授权自动提交和推送。先用同一段试片确认效果与渲染耗时。
+
+- **实际实现的功能与改动**：
+  - 新增 00:14–00:24 三版试片：Clawd 拖行李箱走入，在 L01 前跳上长椅，窗灯和光点随节拍出现，混入原曲音频。
+  - 三个绘制模块改为按状态逐帧渲染，样图等于时间轴最后状态；像素按半拍跳格无补间，纸艺每秒 10 次分层抖动 1–2 像素，蜡笔每秒 8 次笔触切换。
+  - 验证：时间轴测试先失败后 8 项通过；三版真实 Chrome 渲染无错误，像素抽检帧不超过 31 色且 6×6 色块一致；`ffprobe` 确认 1920×1080、24 fps、10 秒含音轨；抽帧检查通过。未听辨音画同步，未在播放器实际观看。
+  - 全片耗时按本场景推算：像素约 65 分钟、纸艺约 14 分钟、蜡笔约 21 分钟；蜡笔另需为每个新场景构建背景。全片尚未制作。
+
+- **涉及文件**：
+  - `會呼吸的痛/開場樣圖/v2/`：`clip.js`、`clip.test.mjs`、`chrome.mjs`、`render-clip.mjs`、`render.mjs`、`scene.js`、`pixel.js`、`paper.js`、`crayon.js`、`index.html`、`README.md`、样图、`驗證結果.json`、`試片/驗證結果.json`。
+  - `.gitignore`：忽略含原曲音频的试片 MP4，三支视频只保存在本地。
+  - `.agent/visual/開場樣圖v2.md`。
+  - `memory/agents.md`、`memory/plan.md`、`memory/progress.md`、`memory/verify.md`。
+  - `docs/CHANGELOG.md`。
+
+- **Git 提交**：待提交。
 
 ---

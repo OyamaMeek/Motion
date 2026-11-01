@@ -1,9 +1,11 @@
 /* global p5, brush */
-import {W, H, U, rng, COLORS as C, TOWER, towerHalf, towerArch, SKYLINE, skylinePolygon, SUN, STARS, RAIL, BENCH,
-  CLAWD_PARTS, TICKETS, SUITCASE, SHADOW, CASE_SHADOW, BRANCH, LEAVES, leafShape} from './scene.js';
+import {isLit} from './clip.js';
+import {W, H, U, rng, COLORS as C, TOWER, towerHalf, towerArch, SKYLINE, skylinePolygon, SUN, STARS, RAIL, BENCH, CLAWD,
+  clawdParts, TICKETS, SUITCASE, SHADOW, CASE_SHADOW, BRANCH, LEAVES, leafShape} from './scene.js';
 
 const PX = W * U, PY = H * U;
-const r = rng(7741);
+const PAPER = '#f6efdf';
+let r = rng(7741);
 const rect = (x, y, w, h) => [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
 
 // 把多边形扫描成一组平行线段，线段就是一笔一笔的蜡笔排线。
@@ -53,8 +55,8 @@ function scribble(points, color, {angle = 20, gap = 9, weight = 1, over = 3, alp
   }
 }
 
-function outline(points, color, weight = 0.5, name = 'wax', closed = true) {
-  brush.set(name, color, weight);
+function outline(points, color, weight = 0.5, closed = true) {
+  brush.set('wax', color, weight);
   const pts = closed ? [...points, points[0]] : points;
   for (let i = 1; i < pts.length; i++) {
     const j = 1.6;
@@ -65,10 +67,8 @@ function outline(points, color, weight = 0.5, name = 'wax', closed = true) {
 const inTower = (x, y) => y >= TOWER.top - 1 && y <= TOWER.base && Math.abs(x - TOWER.cx) <= towerHalf(y) + 1.2 && Math.abs(x - TOWER.cx) >= towerArch(y) - 0.5;
 const inSun = (x, y) => Math.hypot(x - SUN.x, y - SUN.y) <= SUN.r + 0.5;
 const inBox = (x, y, [bx, by, bw, bh], m = 1) => x >= bx - m && x <= bx + bw + m && y >= by - m && y <= by + bh + m;
-const inFront = (x, y) => inBox(x, y, CLAWD_PARTS.body) || inBox(x, y, CLAWD_PARTS.arm) || inBox(x, y, CLAWD_PARTS.armBack)
-  || inBox(x, y, [BENCH.x, BENCH.top, BENCH.w, BENCH.h]) || inBox(x, y, [177, 137, 25, 6]);
-const inFloorThings = (x, y) => inBox(x, y, [BENCH.x, BENCH.top, BENCH.w, BENCH.h]) || BENCH.legs.some(l => inBox(x, y, l)) || inBox(x, y, BENCH.brace)
-  || inBox(x, y, SUITCASE.body) || CLAWD_PARTS.legs.some(l => inBox(x, y, l));
+const inFront = (x, y) => inBox(x, y, [BENCH.x, BENCH.top, BENCH.w, BENCH.h]) || inBox(x, y, [177, 137, 25, 6]);
+const inBench = (x, y) => inBox(x, y, [BENCH.x, BENCH.top, BENCH.w, BENCH.h]) || BENCH.legs.some(l => inBox(x, y, l)) || inBox(x, y, BENCH.brace);
 
 // 一笔一笔地铺大面积，长度、角度、粗细都随机，避免规则条纹。
 function freehand(top, bottom, count, colorAt, reserved) {
@@ -84,8 +84,7 @@ function freehand(top, bottom, count, colorAt, reserved) {
   }
 }
 
-function paint() {
-  // 天空：长短不一的手涂短排线，颜色随高度渐变，笔与笔之间露出纸面。
+function paintBackground() {
   const SKY = ['#c9dcdd', '#deeae0', '#f8f2d8', '#fef4d2', '#fee5bf', '#fbd0a6'];
   freehand(0, 147, 1250, y => SKY[Math.round(Math.min(1, Math.max(0, y / 122 + (r() - 0.5) * 0.14)) * (SKY.length - 1))],
     (x, y) => inTower(x, y) || inSun(x, y));
@@ -94,28 +93,15 @@ function paint() {
   scribble(sun, '#f9dc82', {angle: 30, gap: 4.5, weight: 1.6, over: 1});
   scribble(sun, C.sun, {angle: -40, gap: 8, weight: 1.2, over: 1});
 
-  for (const [x, y, size] of STARS) {
-    const a = (1.5 + size * 1.4) * U;
-    brush.set('wax', '#dd9226', 0.9 + size * 0.3);
-    brush.line(x * U - a, y * U, x * U + a, y * U);
-    brush.line(x * U, y * U - a, x * U, y * U + a);
-  }
-
   scribble(skylinePolygon(SKYLINE.far), '#e0d3b8', {angle: 88, gap: 6, weight: 1.6, over: 2, reserved: inTower});
   scribble(skylinePolygon(SKYLINE.mid), '#c1cdc5', {angle: 80, gap: 5, weight: 1.7, over: 2, reserved: inTower});
   scribble(skylinePolygon(SKYLINE.mid), '#a9b9b3', {angle: 62, gap: 18, weight: 1.1, over: 2, reserved: inTower});
-  outline(skylinePolygon(SKYLINE.mid).slice(1, -1), '#90a29f', 0.8, 'wax', false);
-  for (const l of SKYLINE.mid.lights) {
-    brush.set('wax', l.warm ? '#f3cf74' : C.far, 0.8);
-    brush.line(l.x * U, l.y * U, l.x * U + 5, l.y * U + 1);
-  }
+  outline(skylinePolygon(SKYLINE.mid).slice(1, -1), '#90a29f', 0.8, false);
 
-  // 铁塔分色涂满再压桁架，塔身是全图唯一接近满涂的地方。
+  // 铁塔分色涂满再压桁架。
   for (const [a, b, key] of TOWER.bands) {
     const rows = [];
     for (let y = a; y <= b; y++) rows.push(y);
-    const leftSide = rows.map(y => [TOWER.cx - towerHalf(y), y]);
-    const rightSide = rows.slice().reverse().map(y => [TOWER.cx + towerHalf(y), y]);
     if (a >= 117) {
       const lo = rows.map(y => [TOWER.cx - towerHalf(y), y]), inL = rows.slice().reverse().map(y => [TOWER.cx - Math.max(towerArch(y), 0.1), y]);
       const inR = rows.map(y => [TOWER.cx + Math.max(towerArch(y), 0.1), y]), ro = rows.slice().reverse().map(y => [TOWER.cx + towerHalf(y), y]);
@@ -124,9 +110,8 @@ function paint() {
       }
       continue;
     }
-    const band = [...leftSide, ...rightSide];
-    const color = key === 'red' ? C.red : C.white;
-    scribble(band, key === 'red' ? '#e26f4d' : color, {angle: 72, gap: key === 'red' ? 2.6 : 5, weight: 1, over: 1, wob: 1});
+    const band = [...rows.map(y => [TOWER.cx - towerHalf(y), y]), ...rows.slice().reverse().map(y => [TOWER.cx + towerHalf(y), y])];
+    scribble(band, key === 'red' ? '#e26f4d' : C.white, {angle: 72, gap: key === 'red' ? 2.6 : 5, weight: 1, over: 1, wob: 1});
     if (key === 'white') scribble(band, '#c9b99d', {angle: -50, gap: 11, weight: 0.8, over: 1, wob: 1});
   }
   for (let y = 58; y < TOWER.base - 6; y += 6) {
@@ -138,8 +123,8 @@ function paint() {
   }
   const edgeL = [], edgeR = [];
   for (let y = TOWER.top; y <= 128; y += 2) { edgeL.push([TOWER.cx - towerHalf(y), y]); edgeR.push([TOWER.cx + towerHalf(y), y]); }
-  outline(edgeL, '#7f2d1f', 1.6, 'wax', false);
-  outline(edgeR, '#7f2d1f', 1.6, 'wax', false);
+  outline(edgeL, '#7f2d1f', 1.6, false);
+  outline(edgeR, '#7f2d1f', 1.6, false);
   for (const [a, b, half] of [TOWER.mainDeck, TOWER.topDeck]) {
     outline(rect(TOWER.cx - half, a, half * 2, b - a), '#6d4a3c', 1.6);
     brush.set('wax', C.rail, 1);
@@ -148,12 +133,7 @@ function paint() {
 
   scribble(skylinePolygon(SKYLINE.near), '#a4b7ba', {angle: 76, gap: 4, weight: 2, over: 2, reserved: inFront});
   scribble(skylinePolygon(SKYLINE.near), '#8ca2a8', {angle: 52, gap: 12, weight: 1.4, over: 2, reserved: inFront});
-  outline(skylinePolygon(SKYLINE.near).slice(1, -1), C.rail, 1.1, 'wax', false);
-  for (const l of SKYLINE.near.lights) {
-    brush.set('wax', '#f1b73f', 1.2);
-    brush.line(l.x * U, l.y * U, l.x * U + 9, l.y * U + 1);
-    brush.line(l.x * U + 1, l.y * U + 4, l.x * U + 8, l.y * U + 4);
-  }
+  outline(skylinePolygon(SKYLINE.near).slice(1, -1), C.rail, 1.1, false);
 
   brush.set('wax', C.rail, 1.9);
   brush.spline([[-20, RAIL.top * U + 2], [PX / 2, RAIL.top * U - 3], [PX + 20, RAIL.top * U + 2]], 0.3);
@@ -165,30 +145,66 @@ function paint() {
   }
   scribble(rect(-4, RAIL.wall, W + 8, RAIL.floor - RAIL.wall), '#88a0a6', {angle: 8, gap: 4, weight: 1.5, over: 6, reserved: inFront});
 
-  freehand(RAIL.floor + 1, H + 2, 520, () => (r() < 0.72 ? '#ecdab2' : '#dcc698'), (x, y) => y < RAIL.floor || inFloorThings(x, y));
-  for (const shade of [SHADOW, CASE_SHADOW]) scribble(shade, '#b5a58a', {angle: 32, gap: 5, weight: 1.7, over: 2});
+  freehand(RAIL.floor + 1, H + 2, 520, () => (r() < 0.72 ? '#ecdab2' : '#dcc698'), (x, y) => y < RAIL.floor || inBench(x, y));
+  scribble(SHADOW, '#b5a58a', {angle: 32, gap: 5, weight: 1.7, over: 2});
 
   for (const leg of BENCH.legs) {
     scribble(rect(...leg), C.branch, {angle: 84, gap: 2.2, weight: 1.1, over: 1, wob: 1});
   }
   scribble(rect(...BENCH.brace), C.woodDark, {angle: 2, gap: 2.5, weight: 1, over: 2, wob: 1});
 
+  scribble(rect(BENCH.x, BENCH.top, BENCH.w, BENCH.h), '#cda172', {angle: 3, gap: 3, weight: 1.5, over: 5, wob: 2});
+  scribble(rect(BENCH.x, BENCH.top + 3, BENCH.w, 2), '#a87d57', {angle: 1, gap: 2.5, weight: 1, over: 3, wob: 1});
+  outline(rect(BENCH.x, BENCH.top, BENCH.w, BENCH.h), '#5c3f2e', 1.6);
+
+  TICKETS.forEach((t, i) => {
+    scribble(t, C.white, {angle: 10, gap: 2.4, weight: 1, over: 1, wob: 1});
+    const stub = i === 0 ? t[0][0] + 2 : t[1][0] - 3;
+    scribble(rect(stub, Math.max(t[0][1], t[1][1]) + 0.3, 2, 4), C.red, {angle: 85, gap: 2, weight: 1, over: 0.5, wob: 1});
+    outline(t, '#6d4a3c', 1.3);
+  });
+
+  for (const pts of BRANCH) outline(pts, C.branch, 2.2, false);
+  LEAVES.forEach(([x, y], i) => {
+    const s = leafShape(x, y, i % 2 ? 1 : -1).map(([a, b]) => [x + (a - x) * 1.25, y + (b - y) * 1.25]);
+    scribble(s, i % 3 === 0 ? '#dcaa41' : '#efc962', {angle: 40 + i * 13, gap: 2.2, weight: 1.1, over: 1, wob: 1});
+  });
+}
+
+// 灯和光点集中画在白底上，逐帧按区域取用。
+const crayonLights = [
+  ...SKYLINE.mid.lights.map((l, i) => ({...l, order: i, w: 6, h: 4})),
+  ...SKYLINE.near.lights.map((l, i) => ({...l, order: i + 1000, w: 10, h: 7})),
+].filter(l => l.y < RAIL.wall - 1 && !inFront(l.x, l.y));
+
+function paintEffects() {
+  for (const [x, y, size] of STARS) {
+    const a = (1.5 + size * 1.4) * U;
+    brush.set('wax', '#dd9226', 0.9 + size * 0.3);
+    brush.line(x * U - a, y * U, x * U + a, y * U);
+    brush.line(x * U, y * U - a, x * U, y * U + a);
+  }
+  for (const l of crayonLights) {
+    brush.set('wax', l.w > 6 ? '#e8a020' : '#eab93f', 1.3);
+    for (let y = 1; y < l.h; y += 2) brush.line(l.x * U, l.y * U + y, l.x * U + l.w, l.y * U + y);
+  }
+}
+
+function paintSuitcase() {
   const c = SUITCASE;
-  outline([[c.handle[0], c.body[1]], [c.handle[0], c.handle[1]], [c.handle[0] + c.handle[2], c.handle[1]], [c.handle[0] + c.handle[2], c.body[1]]], C.branch, 1.6, 'wax', false);
+  scribble(CASE_SHADOW, '#b5a58a', {angle: 32, gap: 5, weight: 1.7, over: 2});
+  outline([[c.handle[0], c.body[1]], [c.handle[0], c.handle[1]], [c.handle[0] + c.handle[2], c.handle[1]], [c.handle[0] + c.handle[2], c.body[1]]], C.branch, 1.6, false);
   scribble(rect(...c.body), '#8fafa5', {angle: 75, gap: 3, weight: 1.6, over: 1, wob: 2});
   scribble(rect(c.body[0] + c.body[2] - 4, c.body[1], 4, c.body[3]), '#6f9087', {angle: 70, gap: 2.8, weight: 1.1, over: 1, wob: 1});
   for (const s of c.straps) { brush.set('wax', C.white, 0.9); brush.line(s[0] * U + 3, s[1] * U, s[0] * U + 3, (s[1] + s[3]) * U); }
   outline(rect(...c.body), '#3f5650', 1.5);
+}
 
-  // 主角按 32 格比例重画，涂得最满最深，是画面视线的落点。
-  const p = CLAWD_PARTS;
+function paintClawd(p, walking) {
+  if (walking) {
+    scribble(rect(CLAWD.x + 7, CLAWD.y + 26, 18, 2), '#b5a58a', {angle: 4, gap: 3, weight: 1.2, over: 1, wob: 1});
+  }
   for (const leg of p.legs) scribble(rect(...leg), '#a84f3c', {angle: 88, gap: 2.2, weight: 1, over: 1, wob: 1});
-
-  scribble(rect(BENCH.x, BENCH.top, BENCH.w, BENCH.h), '#cda172', {angle: 3, gap: 3, weight: 1.5, over: 5, wob: 2});
-  scribble(rect(BENCH.x, BENCH.top + 3, BENCH.w, 2), '#a87d57', {angle: 1, gap: 2.5, weight: 1, over: 3, wob: 1});
-  outline(rect(BENCH.x, BENCH.top, BENCH.w, BENCH.h), '#5c3f2e', 1.6);
-  for (const leg of p.legs) scribble(rect(leg[0], leg[1] + 1, leg[2], 5), '#a84f3c', {angle: 88, gap: 2.2, weight: 1, over: 1, wob: 1});
-
   scribble(rect(...p.armBack), '#a84f3c', {angle: 10, gap: 2.4, weight: 1, over: 1, wob: 1});
   scribble(rect(...p.body), '#e58a68', {angle: 58, gap: 2.8, weight: 1.8, over: 1, wob: 2});
   scribble(rect(...p.body), '#d97c5a', {angle: -38, gap: 7, weight: 1.2, over: 1, wob: 2});
@@ -198,55 +214,106 @@ function paint() {
   scribble(rect(...p.arm), '#ed9b75', {angle: 10, gap: 2.2, weight: 1, over: 1, wob: 1});
   outline(rect(...p.arm), '#713f32', 1.6);
   scribble(rect(...p.eye), '#352e2a', {angle: 85, gap: 1.6, weight: 0.9, over: 0.5, wob: 0.5});
-
-  TICKETS.forEach((t, i) => {
-    scribble(t, C.white, {angle: 10, gap: 2.4, weight: 1, over: 1, wob: 1});
-    const stub = i === 0 ? t[0][0] + 2 : t[1][0] - 3;
-    scribble(rect(stub, Math.max(t[0][1], t[1][1]) + 0.3, 2, 4), C.red, {angle: 85, gap: 2, weight: 1, over: 0.5, wob: 1});
-    outline(t, '#6d4a3c', 1.3);
-  });
-
-  for (const pts of BRANCH) outline(pts, C.branch, 2.2, 'wax', false);
-  LEAVES.forEach(([x, y], i) => {
-    const s = leafShape(x, y, i % 2 ? 1 : -1).map(([a, b]) => [x + (a - x) * 1.25, y + (b - y) * 1.25]);
-    scribble(s, i % 3 === 0 ? '#dcaa41' : '#efc962', {angle: 40 + i * 13, gap: 2.2, weight: 1.1, over: 1, wob: 1});
-  });
 }
 
-export function drawCrayon(done) {
-  new p5(p => {
+const POSES = [['idle', 0], ['walk', 0], ['walk', 1], ['walk', 2], ['walk', 3], ['jump', 1], ['jump', 2], ['jump', 3]];
+const BACKGROUND_VARIANTS = 3, SPRITE_VARIANTS = 2;
+
+// 笔触抖动：背景各版本共用同一组笔画，只换颗粒和 1 像素偏移，避免整片天空闪烁。
+export function createCrayon(done) {
+  let job = null;
+  const instance = new p5(p => {
     brush.instance(p);
     p.setup = () => {
       const cnv = p.createCanvas(PX, PY, p.WEBGL);
-      p.pixelDensity(1); p.randomSeed(7741); p.noiseSeed(7741); p.angleMode(p.DEGREES);
+      p.pixelDensity(1); p.noiseSeed(7741); p.angleMode(p.DEGREES);
       // 以内置 crayon 为基础，加厚蜡层、收紧颗粒，让单笔能看清走向。
       brush.add('wax', {type: 'default', weight: 0.62, scatter: 1.15, sharpness: 0.75, grain: 1.5, opacity: 190, spacing: 0.06, pressure: [1.1, 0.9], rotate: 'natural', noise: true});
       p.noLoop();
-      window.crayonSource = cnv.elt;
+      cnv.elt.style.display = 'none';
+      instance.source = cnv.elt;
     };
     p.draw = () => {
-      p.background('#f6efdf'); p.translate(-PX / 2, -PY / 2);
+      if (!job) return;
+      const current = job;
+      job = null;
+      p.randomSeed(current.seed);
+      r = rng(current.strokes);
+      p.background(current.paper); p.translate(-PX / 2 + current.dx, -PY / 2 + current.dy);
       brush.noField(); brush.noFill(); brush.noHatch();
-      paint();
+      current.paint();
       requestAnimationFrame(() => {
-        // 回到 2D 画布压上纸张纹理，纸面的纤维与颗粒透出每一笔。
-        const out = document.createElement('canvas');
-        out.width = PX; out.height = PY;
-        const ctx = out.getContext('2d');
-        ctx.drawImage(window.crayonSource, 0, 0, PX, PY);
-        const tex = document.createElement('canvas');
-        tex.width = 512; tex.height = 512;
-        const t = tex.getContext('2d'), im = t.createImageData(512, 512);
-        for (let i = 0; i < im.data.length; i += 4) {
-          const light = r() > 0.72, v = light ? 255 : 70;
-          im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = r() * (light ? 30 : 24);
-        }
-        t.putImageData(im, 0, 0);
-        ctx.fillStyle = ctx.createPattern(tex, 'repeat'); ctx.fillRect(0, 0, PX, PY);
-        window.crayonSource.style.display = 'none';
-        document.body.append(out);
-        done({canvas: out, brushes: brush.box()});
+        const copy = document.createElement('canvas');
+        copy.width = PX; copy.height = PY;
+        copy.getContext('2d').drawImage(instance.source, 0, 0, PX, PY);
+        current.resolve(copy);
       });
     };
   });
+  const capture = (paint, {paper = '#ffffff', seed, strokes = seed, dx = 0, dy = 0}) => new Promise(resolve => {
+    job = {paint, paper, seed, strokes, dx, dy, resolve};
+    instance.redraw();
+  });
+
+  async function build() {
+    while (!instance.source) await new Promise(ok => setTimeout(ok, 20));
+    const backgrounds = [];
+    for (let i = 0; i < BACKGROUND_VARIANTS; i++) {
+      backgrounds.push(await capture(paintBackground, {paper: PAPER, seed: 7741 + i, strokes: 7741, dx: i === 1 ? 1 : 0, dy: i === 2 ? 1 : 0}));
+    }
+    const effects = await capture(paintEffects, {seed: 501});
+    const suitcases = [], sprites = new Map();
+    for (let v = 0; v < SPRITE_VARIANTS; v++) {
+      suitcases.push(await capture(paintSuitcase, {seed: 601 + v}));
+      for (const [action, frame] of POSES) {
+        const p = clawdParts(CLAWD.x, CLAWD.y, action, frame);
+        sprites.set(`${action}:${frame}:${v}`, {canvas: await capture(() => paintClawd(p, action === 'walk'), {seed: 701 + v * 31 + frame}), parts: p});
+      }
+    }
+
+    const tex = document.createElement('canvas');
+    tex.width = 512; tex.height = 512;
+    const t = tex.getContext('2d'), im = t.createImageData(512, 512);
+    const grain = rng(911);
+    for (let i = 0; i < im.data.length; i += 4) {
+      const light = grain() > 0.72, v = light ? 255 : 70;
+      im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = grain() * (light ? 30 : 24);
+    }
+    t.putImageData(im, 0, 0);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = PX; canvas.height = PY;
+    document.body.append(canvas);
+    const ctx = canvas.getContext('2d');
+    const knock = (x, y, w, h, m = 4) => { ctx.fillStyle = PAPER; ctx.fillRect(x * U - m, y * U - m, w * U + m * 2, h * U + m * 2); };
+    const pigment = source => { ctx.globalCompositeOperation = 'multiply'; source(); ctx.globalCompositeOperation = 'source-over'; };
+
+    function render(s, tick = 0) {
+      const boil = tick ?? 0, variant = boil % SPRITE_VARIANTS;
+      ctx.drawImage(backgrounds[Math.floor(boil / 2) % BACKGROUND_VARIANTS], 0, 0);
+
+      pigment(() => STARS.slice(0, s.stars).forEach(([x, y, size]) => {
+        const a = (2 + size * 1.4) * U + 4;
+        ctx.drawImage(effects, x * U - a, y * U - a, a * 2, a * 2, x * U - a, y * U - a, a * 2, a * 2);
+      }));
+      for (const l of crayonLights) {
+        if (!isLit(l.order, s.lit)) continue;
+        ctx.fillStyle = PAPER; ctx.fillRect(l.x * U, l.y * U, l.w, l.h);
+        pigment(() => ctx.drawImage(effects, l.x * U - 3, l.y * U - 4, l.w + 7, l.h + 7, l.x * U - 3, l.y * U - 4, l.w + 7, l.h + 7));
+      }
+
+      const dc = s.caseX - SUITCASE.body[0];
+      knock(SUITCASE.body[0] + dc, SUITCASE.body[1], SUITCASE.body[2], SUITCASE.body[3]);
+      pigment(() => ctx.drawImage(suitcases[variant], dc * U, 0));
+
+      const sprite = sprites.get(`${s.action}:${s.frame}:${variant}`);
+      const ox = s.x - CLAWD.x, oy = s.y - CLAWD.y, parts = sprite.parts;
+      for (const box of [parts.body, parts.arm, parts.armBack, ...parts.legs]) knock(box[0] + ox, box[1] + oy, box[2], box[3], 3);
+      pigment(() => ctx.drawImage(sprite.canvas, ox * U, oy * U));
+
+      ctx.fillStyle = ctx.createPattern(tex, 'repeat'); ctx.fillRect(0, 0, PX, PY);
+    }
+    return {canvas, render, brushes: brush.box()};
+  }
+  build().then(done);
 }
