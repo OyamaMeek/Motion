@@ -267,3 +267,22 @@
 - **Git 提交**：`dba76f9d497d4bd3ea136668911b7efeb68c2645 fix: keep Clawd arms in proportion in the storyboard`；普通推送 origin/main 成功。
 
 ---
+
+## [2026-11-01 23:05] 分镜手臂改为设计稿长度
+
+- **需求/问题描述**：
+  > 用户指出手还是很长，要求与设计稿一样长。
+
+- **实际实现的功能与改动**：
+  - 删除所有自画手臂，只用 `character.js` 自带的手；伸手动作改用模块的双手前伸姿势。
+  - 够不到时角色移动或物件移动：A 跳上桌子写字，走到空椅旁取圍巾，贴近桌边移动车票；座位外移，让朝前的手不被桌子挡住。差异写入 `會呼吸的痛/MV/README.md`。
+  - 验证：禁止自画手臂的测试先失败，修改后两个测试文件共 8 项通过；41 张画面重新生成，最多 26 色，浏览器错误为空；检查了总览和 6 张放大图。未做动画或视频。
+
+- **涉及文件**：
+  - `會呼吸的痛/MV/film.js`、`film.test.mjs`、`README.md`、`分鏡/`。
+  - `.agent/visual/MV分鏡.md`、`memory/progress.md`、`memory/verify.md`、`memory/gotchas.md`。
+  - `docs/CHANGELOG.md`。
+
+- **Git 提交**：待提交。
+
+---

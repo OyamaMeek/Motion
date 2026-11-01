@@ -6,15 +6,13 @@ import {frameAt, WIPE_SECONDS} from './film.js';
 const ids = frame => new Set(frame.items.map(i => i.id));
 const armLength = item => Math.hypot(item.pts[1][0] - item.pts[0][0], item.pts[1][1] - item.pts[0][1]);
 
-test('全片每个时刻都能生成画面，手臂长度合理', () => {
+test('全片每个时刻都能生成画面，手只来自角色模块，不另画手臂', () => {
   for (const t of frameTimes(12)) {
     const frame = frameAt(t);
     assert.ok(frame.items.length > 0, `${t}`);
     for (const item of frame.items) {
-      if (!/^(arm.*Fill|wristFill)$/.test(item.id)) continue;
-      const [ox, oy] = item.pts[0], {cx, cy, z} = frame.cam;
-      const shoulderVisible = Math.abs((ox - cx) * z) < 160 && Math.abs((oy - cy) * z) < 90;
-      if (shoulderVisible) assert.ok(armLength(item) <= 16, `${frame.shot} ${t} 手臂长 ${armLength(item).toFixed(0)}`);
+      assert.ok(!/^(arm|wrist|ownPhoneArm)/.test(item.id), `${frame.shot} ${t} 另画了手臂 ${item.id}`);
+      if (item.id === 'penInHand') assert.ok(armLength(item) <= 9, `${frame.shot} ${t} 笔过长`);
     }
   }
 });
