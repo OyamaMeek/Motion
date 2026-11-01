@@ -57,8 +57,8 @@ export async function openChrome() {
   };
   await page('Emulation.setDeviceMetricsOverride', {width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false});
 
-  async function openStyle(style) {
-    await page('Page.navigate', {url: `http://127.0.0.1:${port}/${encodeURI(path.relative(root, here))}/index.html?style=${style}`});
+  async function openStyle(style, dir = here) {
+    await page('Page.navigate', {url: `http://127.0.0.1:${port}/${encodeURI(path.relative(root, dir))}/index.html?style=${style}`});
     let state = {};
     for (let i = 0; i < 2400; i++) {
       await new Promise(ok => setTimeout(ok, 250));

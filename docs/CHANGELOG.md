@@ -226,3 +226,25 @@
 - **Git 提交**：`35beba0d5a6b452f3eb69d20b1d90d23a54fd838 feat: add 10-second style test clips for the MV`；普通推送 origin/main 成功，远端查询确认哈希一致。仅提交本任务增量，三支 MP4 保留本地。
 
 ---
+
+## [2026-11-01 22:25] 图像分镜
+
+- **需求/问题描述**：
+  > 场景按文字分镜的观景层，MP4 不推送；先做分镜，不渲染全片。
+
+- **实际实现的功能与改动**：
+  - 新增 41 镜时间表、与画风无关的绘制清单和像素绘制模块，输出 41 张 1920×1080 关键画面与带镜号、时间的总览。
+  - 观景层是连续场景，桌面特写由相机推近；Clawd 几何取自 `character.js`。与文字分镜的差异列在 `會呼吸的痛/MV/README.md`。
+  - 验证：`shots.test.mjs`、`film.test.mjs` 共 8 项通过（`film.test.mjs` 修改前 3 项失败）；时间表与分镜、节拍 CSV 逐项一致；关键画面最多 25 色，浏览器错误为空；用户授权后检查了总览及换景中的画面。
+  - 未做动画、纸艺与蜡笔模块、音画同步验证，未生成 MP4。
+
+- **涉及文件**：
+  - `會呼吸的痛/MV/`：`shots.js`、`shots.test.mjs`、`film.js`、`film.test.mjs`、`geometry.js`、`pixel.js`、`render.mjs`、`index.html`、`README.md`、`分鏡/`。
+  - `會呼吸的痛/開場樣圖/v2/chrome.mjs`：`openStyle` 可指定页面目录。
+  - `.gitignore`、`.agent/visual/MV分鏡.md`。
+  - `memory/plan.md`、`memory/progress.md`、`memory/verify.md`、`memory/gotchas.md`。
+  - `docs/CHANGELOG.md`。
+
+- **Git 提交**：待提交。
+
+---
