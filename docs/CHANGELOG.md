@@ -59,6 +59,6 @@
   - `assets/clawd/styles/`、`assets/clawd/expressions/`、`assets/clawd/licenses/`
   - `docs/CHANGELOG.md`
 
-- **Git 提交**：待提交；main 未配置 upstream，无法向已配置的跟踪分支推送。
+- **Git 提交**：`27f36fba93a38d100e3fedd50b702513c1a7edaf docs: collect Clawd visual references for future MVs`；以随后文档提交补记哈希。未推送：main 未配置 upstream。
 
 ---
