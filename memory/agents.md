@@ -1,6 +1,12 @@
 # 当前任务环境
 
-## 当前：Clawd 像素角色模块
+## 当前：开场样图 v2
+
+- 主代理独立完成三张静态样图；不调用图像生成模型，不读取 `261031/` 的美术内容。
+- 绘制：Canvas 2D、p5.js 2.2.0、p5.brush 3.0.0；像素版的角色调用 `assets/clawd/character.js`。
+- 渲染：`render.mjs` 用 Node 内置 WebSocket 驱动本机 Chrome 无头模式，临时配置放在 `.agent/work/`。用户要求输出样图，视觉检查限于这三张导出图。
+
+## 已完成：Clawd 像素角色模块
 
 - 主代理独立实现 Canvas 2D ES module；复用已有 Clawd 像素参考，不新增依赖。
 - 应用 ponytail 技能控制范围；ego-browser 用于真实 Canvas 测试、设定图导出和视觉检查。

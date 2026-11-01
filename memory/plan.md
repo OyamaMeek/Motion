@@ -1,6 +1,14 @@
 # 《會呼吸的痛》分析计划
 
-## 当前：Clawd 像素角色设定
+## 当前：开场样图 v2
+
+- 用户重新下达三种画风样图任务。上一版的海边构图保留不动，新版放在 `會呼吸的痛/開場樣圖/v2/`。
+- 共同画面依据 L01–L04：黄昏东京铁塔、露台长椅、Clawd 隔着空位与两张车票望向铁塔；光点坠向城市对应 L02。
+- 场景几何集中在 `scene.js`，三种画风各用一个绘制模块。用户确认全片主角使用 Clawd。
+- 用户要求三种画风各生成一支完整 MV。先用 00:14–00:24 做三版同一段 10 秒试片，确认效果与实际渲染耗时；通过后再做全片。
+- 共用分镜沿用单独进行的 `會呼吸的痛storyboard.md`，本任务不另写一份。
+
+## 已完成：Clawd 像素角色设定
 
 - 用户选择像素风；新增 `assets/clawd/character.js`，统一 `drawCharacter(ctx, {x, y, scale, facing, expression, action, frame, prop})`。
 - `facing` 支持 front/right/left/back；表情 neutral/happy/shy/sad；动作 idle/walk/jump/hug/hold。帧号决定离散像素姿势，无随机数或补间。

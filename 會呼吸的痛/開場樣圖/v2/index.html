@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>會呼吸的痛 · 開場樣圖 v2</title>
+<style>
+  html,body { margin:0; background:#eee8d9; overflow:hidden; }
+  canvas { display:block; width:100vw!important; height:auto!important; }
+</style>
+<body>
+<script>
+  window.renderErrors = [];
+  window.addEventListener('error', e => renderErrors.push(e.message));
+  window.addEventListener('unhandledrejection', e => renderErrors.push(String(e.reason)));
+</script>
+<script src="../../../.agent/work/art-libs/p5-2.2.0.min.js"></script>
+<script src="../../../.agent/work/art-libs/p5.brush-3.0.0.js"></script>
+<script type="module">
+  const style = new URLSearchParams(location.search).get('style') || 'pixel';
+  const finish = result => { window.artCanvas = result.canvas; window.pixelNative = result.native; window.brushNames = result.brushes; window.artReady = true; };
+  if (style === 'pixel') finish((await import('./pixel.js')).drawPixel());
+  else if (style === 'paper') finish((await import('./paper.js')).drawPaper());
+  else if (style === 'crayon') (await import('./crayon.js')).drawCrayon(finish);
+  else throw new Error('未知画风');
+</script>
+</html>

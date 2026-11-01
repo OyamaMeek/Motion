@@ -1,0 +1,38 @@
+[
+  {
+    "style": "pixel",
+    "width": 1920,
+    "height": 1080,
+    "colors": 31,
+    "opaque": true,
+    "blocks": true,
+    "native": [
+      320,
+      180
+    ],
+    "errors": [],
+    "seconds": 3
+  },
+  {
+    "style": "paper",
+    "width": 1920,
+    "height": 1080,
+    "colors": 19485,
+    "opaque": true,
+    "blocks": false,
+    "native": null,
+    "errors": [],
+    "seconds": 3
+  },
+  {
+    "style": "crayon",
+    "width": 1920,
+    "height": 1080,
+    "colors": 89446,
+    "opaque": true,
+    "blocks": false,
+    "native": null,
+    "errors": [],
+    "seconds": 14
+  }
+]
