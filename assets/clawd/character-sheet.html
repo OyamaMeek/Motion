@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-Hans">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clawd · 像素角色设定</title>
+<style>
+  body { margin: 0; background: #f6f0e2; }
+  canvas { display: block; width: 100%; height: auto; }
+</style>
+<canvas width="1920" height="1440" role="img" aria-label="Clawd 像素小螃蟹设定图：三视图、开心害羞难过表情、走跳拥抱持物动作"></canvas>
+<script>
+  window.renderErrors = [];
+  window.addEventListener('error', event => window.renderErrors.push(event.message));
+  window.addEventListener('unhandledrejection', event => window.renderErrors.push(String(event.reason)));
+</script>
+<script type="module">
+  import {drawCharacter, CHARACTER_COLORS} from './character.js';
+
+  const canvas = document.querySelector('canvas');
+  const ctx = canvas.getContext('2d');
+  const ink = '#493c34', muted = '#8a7968', rule = '#ded4c1';
+  ctx.fillStyle = '#f6f0e2';
+  ctx.fillRect(0, 0, 1920, 1440);
+  const text = (content, x, y, size = 22, color = ink, weight = 400) => {
+    ctx.fillStyle = color;
+    ctx.font = `${weight} ${size}px "PingFang SC", "Microsoft YaHei", sans-serif`;
+    ctx.fillText(content, x, y);
+  };
+  const line = y => { ctx.fillStyle = rule; ctx.fillRect(64, y, 1792, 1); };
+  const label = (number, title, y) => {
+    text(number, 64, y, 18, muted, 600);
+    text(title, 112, y, 25, ink, 600);
+  };
+  function sprite(center, top, options = {}, scale = 8) {
+    return drawCharacter(ctx, {x: center - 16 * scale, y: top, scale, ...options});
+  }
+
+  text('CLAWD', 64, 78, 48, ink, 700);
+  text('像素角色设定 / 待确认', 300, 76, 26, muted);
+  text('统一身体 · 四足 · 双手 · 固定色板 · 离散动作帧', 64, 119, 21, muted);
+  const swatches = Object.values(CHARACTER_COLORS);
+  swatches.forEach((color, i) => { ctx.fillStyle = color; ctx.fillRect(1430 + i * 40, 62, 28, 28); });
+  line(148);
+
+  label('01', '三视图', 194);
+  for (const [center, facing, caption] of [[370, 'front', '正面 / FRONT'], [960, 'right', '右侧 / SIDE'], [1550, 'back', '背面 / BACK']]) {
+    sprite(center, 210, {facing}, 9);
+    text(caption, center - 95, 490, 22, ink, 500);
+  }
+  line(524);
+
+  label('02', '表情表', 568);
+  for (const [index, expression, caption] of [[0, 'neutral', '平静'], [1, 'happy', '开心'], [2, 'shy', '害羞'], [3, 'sad', '难过']]) {
+    const center = 300 + index * 440;
+    sprite(center, 577, {expression}, 7);
+    text(caption, center - 27, 795, 23, ink, 500);
+  }
+  line(828);
+
+  label('03', '动作与手部绑定', 872);
+  text('走 / WALK', 100, 918, 20, muted);
+  [0, 1, 2, 3].forEach((frame, i) => sprite(140 + i * 120, 932, {action: 'walk', frame, facing: 'right'}, 4));
+  text('跳 / JUMP', 650, 918, 20, muted);
+  [0, 1, 2, 3].forEach((frame, i) => sprite(675 + i * 115, 932, {action: 'jump', frame}, 4));
+  text('拥抱 / HUG', 1160, 918, 20, muted);
+  sprite(1250, 932, {action: 'hug', facing: 'right', expression: 'happy'}, 5);
+  sprite(1330, 932, {action: 'hug', facing: 'left', expression: 'shy'}, 5);
+  text('张开双手', 1512, 918, 20, muted);
+  sprite(1600, 932, {action: 'hug', expression: 'happy'}, 5);
+
+  text('手持道具 / HOLD', 100, 1145, 20, muted);
+  for (const [i, prop, caption] of [[0, 'ticket', '车票'], [1, 'flower', '花'], [2, 'suitcase', '旅行箱']]) {
+    const center = 240 + i * 385;
+    sprite(center, 1152, {action: 'hold', prop, expression: i === 1 ? 'shy' : 'neutral'}, 5);
+    text(caption, center + 120, 1274, 20, ink);
+  }
+  text('手与道具共用握点', 1415, 1207, 23, ink, 500);
+  text('道具保持在面部下方', 1415, 1243, 21, muted);
+  text('所有角色均由 character.js 绘制', 1415, 1280, 21, muted);
+  line(1354);
+  text('32 px 基准网格 · 整数倍绘制 · front / left / right / back · 待造型确认后制作镜头', 64, 1403, 19, muted);
+  window.artReady = true;
+</script>
+</html>

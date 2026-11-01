@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "checks": 63760,
+  "combinations": 320,
+  "propCases": 192,
+  "canvas": "real browser Canvas 2D",
+  "sheet": {
+    "width": 1920,
+    "height": 1440,
+    "errors": []
+  }
+}

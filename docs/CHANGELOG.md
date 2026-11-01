@@ -83,3 +83,24 @@
 - **Git 提交**：`d9f70b625d63c1eecb3f87cc3599a45f809720b4 feat: draw three coded MV opening style samples`；以随后文档提交补记哈希。未推送：main 未配置 upstream。
 
 ---
+
+## [2026-11-01 17:30] 统一 Clawd 像素角色模块与设定图
+
+- **需求/问题描述**：
+  > 采用像素风，将角色封装到 character.js，支持朝向、开心/害羞/难过表情，以及走、跳、拥抱、手持道具；输出三视图和表情设定图等待确认，后续镜头统一调用模块，道具贴手且避开脸部。
+
+- **实际实现的功能与改动**：
+  - 提供无外部依赖的 Canvas 2D `drawCharacter`，四种朝向、四种表情、五种动作状态与四帧离散姿势；车票、花和旅行箱随手部握点绘制。
+  - 三视图、表情、动作与双角色拥抱共用该模块，导出 1920×1440 角色设定 PNG，等待用户确认后继续镜头制作。
+  - 测试先因目标模块缺失失败；实现后真实 Canvas 的 320 组姿势、192 组持物组合通过，覆盖像素连通、面部净空、确定性、镜像、整数倍率、状态恢复及非法输入。
+  - JavaScript 语法检查、浏览器渲染、sips 尺寸核验和实际图片检查通过；无浏览器脚本错误。未调用图像生成模型，未制作完整 MV。
+
+- **涉及文件**：
+  - `assets/clawd/character.js`、`character.test.js`、`character-sheet.html`、`render.mjs`、`README.md`、`character-verification.json`、`角色設定圖.png`。
+  - `.agent/visual/Clawd角色設定.md`、`.agent/visual/clawd-character-browser.png`。
+  - `memory/agents.md`、`memory/plan.md`、`memory/progress.md`、`memory/verify.md`。
+  - `docs/CHANGELOG.md`。
+
+- **Git 提交**：待提交；main 未配置 upstream，未推送。
+
+---
