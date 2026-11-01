@@ -286,3 +286,19 @@
 - **Git 提交**：`5a23c772ab72427a34b5a5efe5004ffac11f9d25 fix: use the character sheet's arm length in the storyboard`；普通推送 origin/main 成功。
 
 ---
+
+## [2026-11-01 23:10] 确认整体分镜
+
+- **需求/问题描述**：
+  > 用户确认修改手臂后的这版分镜。
+
+- **实际实现的功能与改动**：
+  - 将文字分镜状态改为已确认，画面以 41 张图像分镜为准，动作调整以 `MV/README.md` 为准；移除已失效的待确认说明，保留尾音待预览验证的问题。
+  - 本次只改文档，未生成画面或视频，未运行测试。
+
+- **涉及文件**：
+  - `會呼吸的痛/會呼吸的痛storyboard.md`、`memory/progress.md`、`docs/CHANGELOG.md`
+
+- **Git 提交**：`docs: confirm MV storyboard`，与本条同一提交，哈希以 `git log` 为准；普通推送 origin/main。
+
+---
