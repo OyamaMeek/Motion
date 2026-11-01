@@ -379,6 +379,6 @@
   - `.agent/visual/MV成片.md`、`MV成片每句起點.png`、`MV成片全片取樣.png`
   - `memory/agents.md`、`plan.md`、`progress.md`、`verify.md`、`docs/CHANGELOG.md`
 
-- **Git 提交**：`feat: render the full pixel MV with fixed lyric layer`，与本条同一提交，哈希以 `git log` 为准；普通推送 origin/main。
+- **Git 提交**：`c8b671a feat: render the full pixel MV with fixed lyric layer`；普通推送 origin/main。
 
 ---
