@@ -119,6 +119,6 @@
   - `memory/progress.md`
   - `docs/CHANGELOG.md`
 
-- **Git 提交**：待提交；推送完成后补记实际提交与远端核对结果。
+- **Git 提交**：`e89d70c66800510b1888fe135f1810095ea2c926 docs: record repository push scope`；普通推送至 origin/main 成功，upstream 已设置，远端查询确认提交哈希一致；本条结果通过随后文档提交保存。
 
 ---

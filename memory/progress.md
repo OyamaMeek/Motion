@@ -36,5 +36,5 @@
 ## 当前：推送远端仓库
 
 - 用户授权将项目推送远端；目标为现有 origin（`https://github.com/OyamaMeek/Motion.git`）的 main。
-- 已确认远端没有分支，已跟踪文件无未提交改动；准备普通推送并设置 upstream。
+- [x] 普通推送成功，main 已跟踪 origin/main；`git ls-remote --heads origin main` 确认远端与本地提交 `e89d70c66800510b1888fe135f1810095ea2c926` 一致。
 - 未跟踪的 `.hyperframes/`、`261031/` 和原始 M4A、LRC 保留本地，不纳入提交。
