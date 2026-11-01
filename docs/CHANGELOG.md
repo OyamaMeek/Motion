@@ -342,3 +342,22 @@
 - **Git 提交**：`fix: make storyboard transitions continuous in film.js`，与本条同一提交，哈希以 `git log` 为准；普通推送 origin/main。
 
 ---
+
+## [2026-11-01 23:20] 分镜总览 storyboard.png
+
+- **需求/问题描述**：
+  > 用户确认分镜，要求暂不渲染成片，为每个镜头绘制关键帧草图并拼接为一张总览图 `storyboard.png` 供检查，确认后再制作完整视频。
+
+- **实际实现的功能与改动**：
+  - 总览：`render.mjs` 改为输出 `分鏡/storyboard.png`，取代 `分鏡總覽.png`；每格用原生画面的整数 2 倍，下方标注镜号、起止时间、关键帧时刻和歌词（前奏、间奏标明段落）。
+  - 关键帧：沿用 `film.js` 与 41 张已确认画面，重新生成后单镜 PNG 没有变化。
+  - 验证：说明文字测试先失败，修改后共 13 项通过；41 镜渲染成功，最多 26 色，浏览器错误为空；`sips` 确认 3896×3116；总览图已检查。未渲染视频，未验证动作和音画同步。
+
+- **涉及文件**：
+  - `會呼吸的痛/MV/render.mjs`、`shots.js`、`shots.test.mjs`、`README.md`、`分鏡/`
+  - `.agent/visual/MV分鏡.md`
+  - `memory/progress.md`、`memory/verify.md`、`docs/CHANGELOG.md`
+
+- **Git 提交**：`feat: output captioned storyboard overview sheet`，与本条同一提交，哈希以 `git log` 为准；普通推送 origin/main。
+
+---

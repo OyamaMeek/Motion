@@ -25,4 +25,12 @@ export function shotIndexAt(t) {
   return index;
 }
 
+export function shotCaption(shot, storyboardText) {
+  if (shot.id.startsWith('P')) return '前奏';
+  if (shot.id.startsWith('I')) return '间奏';
+  const line = storyboardText.split('\n').find(l => l.startsWith(`| ${shot.id} |`));
+  if (!line) throw new RangeError(`分镜表没有 ${shot.id}`);
+  return line.split('|')[3].trim();
+}
+
 export const frameTimes = fps => Array.from({length: Math.ceil(SONG_SECONDS * fps)}, (_, i) => i / fps);
