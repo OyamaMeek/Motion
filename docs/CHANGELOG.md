@@ -202,6 +202,6 @@
   - `memory/agents.md`、`memory/plan.md`、`memory/progress.md`、`memory/verify.md`。
   - `docs/CHANGELOG.md`。
 
-- **Git 提交**：待提交。
+- **Git 提交**：`35beba0d5a6b452f3eb69d20b1d90d23a54fd838 feat: add 10-second style test clips for the MV`；普通推送 origin/main 成功，远端查询确认哈希一致。仅提交本任务增量，三支 MP4 保留本地。
 
 ---
