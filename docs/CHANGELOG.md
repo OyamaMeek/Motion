@@ -245,6 +245,6 @@
   - `memory/plan.md`、`memory/progress.md`、`memory/verify.md`、`memory/gotchas.md`。
   - `docs/CHANGELOG.md`。
 
-- **Git 提交**：待提交。
+- **Git 提交**：`940c842ad7a55ebe6478f5e768e93ffee48e5b30 feat: add image storyboard for the MV`；普通推送 origin/main 成功，远端查询确认哈希一致，提交不含 MP4 与原曲音频。
 
 ---
