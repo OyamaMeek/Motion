@@ -92,16 +92,16 @@ function letterFace(d, s) {
 }
 
 function planFace(d, s) {
-  const x = 153, y = 152;
+  const x = 153 + (s.planShift ?? 0), y = 152;
   d.rect('plan', x, y, 28, 26, P.white);
-  d.poly('planTower', [[x + 7, y + 15], [x + 10, y + 3], [x + 13, y + 15]], P.red);
-  d.rect('planFigA', x + 5, y + 16, 3, 5, P.skinDark);
-  d.rect('planFigB', x + 12, y + 16, 3, 5, P.skinDark);
-  d.rect('planChair1', x + 19, y + 7, 3, 5, P.woodDark);
-  d.rect('planChair2', x + 24, y + 7, 3, 5, P.woodDark);
-  d.rect('planLonely', x + 19.4, y + 3.6, 2.2, 3.5, P.skinDark);
+  d.poly('planTower', [[x + 16, y + 15], [x + 19, y + 3], [x + 22, y + 15]], P.red);
+  d.rect('planFigA', x + 14, y + 16, 3, 5, P.skinDark);
+  d.rect('planFigB', x + 22, y + 16, 3, 5, P.skinDark);
+  d.rect('planChair1', x + 2, y + 7, 3, 5, P.woodDark);
+  d.rect('planChair2', x + 7, y + 7, 3, 5, P.woodDark);
+  d.rect('planLonely', x + 2.4, y + 3.6, 2.2, 3.5, P.skinDark);
   const open = s.planOpen;
-  if (open < 1) d.poly('planFold', [[x + 28, y], [x + 28 - 13 * (1 - open) - 0.5, y], [x + 28, y + 15 * (1 - open) + 0.5]], P.whiteDark);
+  if (open < 1) d.poly('planFold', [[x, y], [x + 13 * (1 - open) + 0.5, y], [x, y + 15 * (1 - open) + 0.5]], P.whiteDark);
 }
 
 function ticket(d, id, [x, y], used) {
@@ -177,6 +177,8 @@ function setDeck(d, s) {
   scarfOnChair(d, s.scarf);
 }
 
+const stickerX = p => mix(228, 248, p);
+
 function setHome(d, s) {
   d.rect('homeWall', -40, -30, 400, 205, P.warm, 'torn');
   d.rect('homeFloor', -40, 172, 400, 90, P.floorWarm, 'torn');
@@ -184,10 +186,10 @@ function setHome(d, s) {
   d.rect('homeDoor', 18, 66, 44, 106, P.woodDark);
   d.rect('homeDoorInset', 24, 74, 32, 42, P.wood);
   d.disk('homeKnob', 54, 124, 2, P.lamp);
-  d.rect('calendar', 224, 88, 40, 46, P.white);
-  d.rect('calendarHead', 224, 88, 40, 9, P.red);
-  for (let r = 0; r < 3; r++) for (let c = 0; c < 5; c++) d.rect(`cal${r}${c}`, 227 + c * 7, 101 + r * 10, 5, 7, P.paperShade);
-  d.rect('calSticker', mix(234, 255, s.sticker), 111, 5, 7, P.scarf);
+  d.rect('calendar', 222, 108, 36, 42, P.white);
+  d.rect('calendarHead', 222, 108, 36, 8, P.red);
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 5; c++) d.rect(`cal${r}${c}`, 224.5 + c * 6.5, 119 + r * 10, 5, 7, P.paperShade);
+  d.rect('calSticker', stickerX(s.sticker), 139, 5, 7, P.scarf);
   d.rect('lampCord', 181, -30, 1.4, 60, P.line);
   d.poly('lampShade', [[168, 30], [196, 30], [204, 44], [160, 44]], P.scarf);
   chairs(d, true);
@@ -202,8 +204,8 @@ function setDoor(d, s) {
   d.rect('doorJamb', 150, 24, 8, 121, P.woodDark);
   d.rect('doorJamb2', 202, 24, 8, 121, P.woodDark);
   const w = 44 * (1 - s.doorOpen) + 7;
-  d.rect('doorLeaf', 202 - w, 34, w, 111, P.wood);
-  d.disk('doorKnob', 202 - w + 3.5, 118, 1.8, P.lamp);
+  d.rect('doorLeaf', 158, 34, w, 111, P.wood);
+  d.disk('doorKnob', 158 + w - 3.5, 128, 1.8, P.lamp);
 }
 
 function setPhone(d, s) {
@@ -220,24 +222,34 @@ function setPhone(d, s) {
   d.poly('selfieScarf', [[130 + shift, 134], [178 + shift, 134], [174 + shift, 160], [134 + shift, 160]], P.scarf);
 }
 
-const AX = 126, AY = 156, BX = 208, BY = 156, ARM_A = [153, 173], ARM_B = [215, 173];
-const CAM = {wide: [150, 110, 1], plan: [167, 165, 6], letter: [198, 165, 6], wrist: [163, 180, 5]};
-const CHEST = [145, 172], SCARF_REACH = [224, 172], PEN_REST = [205, 172];
+const AX = 126, AY = 156, BX = 208, BY = 156, STAND_X = 196, STAND_Y = 165;
+const CAM = {wide: [150, 110, 1], plan: [167, 165, 6], letter: [198, 165, 6], wrist: [150, 176, 5]};
+const CHEST = [145, 172], PEN_REST = [205, 172];
 
+// 手臂只比身体略短；够不到的东西由角色凑近或走过去。
 function arm(d, id, from, to) {
-  d.line(`${id}Under`, [from, to], P.line, 6.4);
-  d.line(`${id}Fill`, [from, to], P.skin, 4.4);
-  d.disk(`${id}Hand`, to[0], to[1], 3.1, P.skinLight);
+  d.line(`${id}Under`, [from, to], P.line, 5);
+  d.line(`${id}Fill`, [from, to], P.skin, 3.4);
+  d.disk(`${id}Hand`, to[0], to[1], 2.4, P.skinLight);
+}
+const shoulderA = a => [(a.x ?? AX) + (a.dx ?? 0) + 27, (a.y ?? AY) + (a.dy ?? 0) + 17];
+const shoulderB = b => [(b.x ?? BX) + (b.dx ?? 0) + 7, (b.y ?? BY) + (b.dy ?? 0) + 17];
+
+// A 在座位和空椅之间走动；走动时在桌子前方。
+function walkBetween(t, t0, t1, toChair) {
+  const p = span(t, t0, t1), k = toChair ? p : 1 - p;
+  return {x: AX + (STAND_X - AX) * ease(k), y: AY + (STAND_Y - AY) * Math.min(1, k * 6), facing: toChair ? 'right' : 'left', expr: 'sad',
+    action: p > 0 && p < 1 ? 'walk' : 'idle', frame: Math.floor(t * WALK_RATE) % 4, front: k > 0};
 }
 
 function tableState(t) {
-  let ticketA = mixArr([161, 181], [158, 172], span(t, 44.2, 47)), ticketB = mixArr([168, 182], [176, 174], span(t, 44.2, 46));
+  let ticketA = mixArr([161, 181], [164, 173], span(t, 44.2, 47)), ticketB = [177, 162];
   const finish = span(t, 251.4, 253.9);
-  ticketA = mixArr(ticketA, [158, 175.5], finish); ticketB = mixArr(ticketB, [170, 175.5], finish);
+  ticketA = mixArr(ticketA, [168, 176], finish); ticketB = mixArr(ticketB, [176, 176], finish);
   const writing = (t > 212.1 && t < 215.1) || (t > 228.5 && t < 236.8);
   let scarf = 'draped';
-  if (t >= 198.6) scarf = 'gathered';
-  if (t >= 215.8) scarf = 'held';
+  if (t >= 200.5) scarf = 'gathered';
+  if (t >= 216.2) scarf = 'held';
   return {
     ticketA, ticketB, used: t > 44.2, penAt: writing ? null : PEN_REST, scarf,
     planOpen: span(t, 104.2, 108), flip: span(t, 211.4, 212.3),
@@ -256,41 +268,45 @@ const WALK_RATE = 3.75;
 const SCRIPT = {
   P01: (p, t) => ({set: 'tower', cam: [mix(170, 280, p), 100, 1], walker: {x: mix(40, 340, p), frame: Math.floor(t * WALK_RATE) % 4}}),
   P02: (p, t) => ({set: 'deck', cam: mixArr([110, 140, 1.5], CAM.wide, span(t, 9.2, 14.21)), a: {expr: 'neutral', facing: 'right'},
-    arm: mixArr([156, 172], [167, 170], span(t, 9.2, 13))}),
+    arm: mixArr([156, 172], [164, 170], span(t, 9.2, 13))}),
   L01: (p) => ({set: 'deck', cam: mixArr(CAM.wide, [130, 128, 1.6], p), a: {expr: 'neutral', facing: 'back'}}),
   L02: (p) => ({set: 'deck', cam: mixArr([130, 128, 1.6], [130, 126, 2.1], p), a: {expr: 'neutral', facing: 'back'}}),
   L03: (p) => ({set: 'deck', cam: mixArr([130, 126, 2.1], [170, 160, 1.7], p), a: {...SAD, dy: 1}}),
-  L04: (p, t) => ({set: 'deck', cam: mixArr([170, 160, 1.7], CAM.plan, span(t, 43.77, 46)), a: {...SAD, dy: 1},
-    arm: mixArr([161, 178], [158, 170], span(t, 44.2, 47))}),
-  L05: (p, t) => ({set: 'home', cam: mixArr(CAM.plan, [170, 112, 1.15], span(t, 50.5, 53)), a: {expr: 'happy', facing: 'right'}, b: {expr: 'happy', scarf: true},
-    armB: mixArr([206, 165], [240, 122], span(t, 52, 55)), sticker: span(t, 53.5, 56.5), suitcase: true}),
-  L06: (p, t) => ({set: 'home', cam: mixArr([170, 112, 1.15], [172, 160, 1.9], p), a: {expr: 'sad', facing: 'right'}, b: {expr: 'sad', scarf: true},
-    armB: mixArr([205, 172], [188, 172], span(t, 60, 62.5)), key: mix(186, 160, span(t, 60, 64)), sticker: 1, armA: mixArr([156, 172], CHEST, span(t, 64.5, 66.8))}),
+  L04: (p, t) => ({set: 'deck', cam: mixArr([170, 160, 1.7], CAM.plan, span(t, 43.77, 46)), a: {...SAD, dy: 1, dx: Math.round(8 * span(t, 43.8, 44.4))},
+    arm: mixArr([166, 178], [165, 172], span(t, 44.2, 47))}),
+  L05: (p, t) => {
+    const sticker = span(t, 53.5, 56.5), rise = span(t, 51.5, 52.8);
+    return {set: 'home', cam: mixArr(CAM.plan, [170, 112, 1.15], span(t, 50.5, 53)), a: {expr: 'happy', facing: 'right'},
+      b: {expr: 'happy', scarf: true, dx: Math.round(mix(0, 8 + 20 * sticker, rise)), dy: Math.round(mix(0, -18, rise))},
+      armB: rise < 1 ? null : [stickerX(sticker) + 2.5, 143], sticker, suitcase: true};
+  },
+  L06: (p, t) => ({set: 'home', cam: mixArr([170, 112, 1.15], [172, 160, 1.9], p), a: {expr: 'sad', facing: 'right'}, b: {expr: 'sad', scarf: true, dx: Math.round(mix(0, -14, span(t, 59, 60)))},
+    armB: mixArr([200, 172], [190, 172], span(t, 60, 62)), key: mix(186, 160, span(t, 60, 64)), sticker: 1, armA: mixArr([156, 172], CHEST, span(t, 64.5, 66.8))}),
   L07: (p, t) => ({set: 'deck', cam: [140, 168, 3], a: {...SAD, dy: breath(t, 67.8, 70.6)}, arm: CHEST}),
   L08: (p, t) => ({set: 'deck', cam: mixArr([140, 168, 3], [150, 172, 1.7], p), a: {...SAD, dx: shake(t)}, arm: [CHEST[0] + shake(t), CHEST[1]]}),
   L09: (p, t) => ({set: 'deck', cam: mixArr([150, 172, 1.7], [172, 165, 2.3], p), a: {...SAD, dx: shake(t), mouth: 'hum'}, notes: t}),
   L10: () => ({set: 'deck', cam: [172, 165, 2.3], a: {...SAD, mouth: 'bite'}}),
   L11: (p, t) => ({set: 'deck', cam: mixArr([172, 165, 2.3], [165, 168, 2.3], p), a: {...SAD, dy: breath(t, 84.9, 88)}}),
   L12: (p, t) => ({set: 'deck', cam: mixArr([165, 168, 2.3], CAM.wrist, span(t, 88.8, 90.2)), a: SAD, wrist: Math.floor((t - 88.8) * WALK_RATE) % 2}),
-  L13: (p, t) => ({set: 'home', cam: mixArr([190, 165, 2.2], [180, 152, 1.5], span(t, 93.3, 95.3)), a: {expr: 'neutral', facing: 'right', phone: true}, b: {expr: 'shy'},
-    armB: mixArr([205, 170], [178, 165], span(t, 93.5, 96)), heldScarf: true}),
-  L14: (p, t) => ({set: 'deck', cam: [180, 152, 1.5], a: SAD, arm: mixArr(ARM_A, [218, 166], span(t, 98.9, 101.5))}),
-  I01: (p, t) => ({set: 'deck', cam: mixArr([180, 152, 1.5], CAM.plan, span(t, 102.7, 104.5)), a: SAD,
-    arm: mixArr(mixArr([218, 166], [178, 156], span(t, 102.7, 104.2)), [170, 182], span(t, 104.3, 108))}),
-  I02: (p, t) => ({set: 'home', cam: mixArr(CAM.plan, [200, 160, 2.4], span(t, 112.7, 121)), b: {expr: 'sad', scarf: true}, emptyA: true,
-    armB: mixArr([198, 170], [181, 165], span(t, 114, 119)), planFolded: span(t, 114, 119)}),
+  L13: (p, t) => ({set: 'home', cam: mixArr([190, 165, 2.2], [180, 152, 1.5], span(t, 93.3, 95.3)), a: {expr: 'neutral', facing: 'right', phone: true}, b: {expr: 'shy', dx: -14},
+    armB: mixArr([198, 170], [189, 166], span(t, 93.5, 96)), heldScarf: true}),
+  L14: (p, t) => ({set: 'deck', cam: [180, 152, 1.5], a: SAD, arm: mixArr([156, 172], [165, 163], span(t, 98.9, 101.5))}),
+  I01: (p, t) => ({set: 'deck', cam: mixArr([180, 152, 1.5], CAM.plan, span(t, 102.7, 104.5)), a: {...SAD, dx: Math.round(8 * span(t, 102.7, 104))},
+    arm: mixArr(mixArr([165, 163], [162, 159], span(t, 102.7, 104.2)), [161, 166], span(t, 104.3, 108))}),
+  I02: (p, t) => ({set: 'home', cam: mixArr(CAM.plan, [200, 160, 2.4], span(t, 112.7, 121)), b: {expr: 'sad', scarf: true, dx: Math.round(-8 * span(t, 112.7, 114))}, emptyA: true,
+    armB: mixArr([206, 170], [200, 166], span(t, 114, 119)), planFolded: span(t, 114, 119)}),
   L15: (p) => ({set: 'home', cam: mixArr([200, 160, 2.4], [185, 158, 1.7], p), a: {expr: 'neutral', facing: 'right', phone: true}, b: {expr: 'happy', scarf: true, tense: true}, planFolded: 1}),
   L16: (p, t) => ({set: 'home', cam: mixArr([185, 158, 1.7], [222, 182, 4], span(t, 131.7, 134)), b: {expr: 'sad', scarf: true}, a: {expr: 'neutral', facing: 'right', phone: true}, planFolded: 1,
-    fist: 2.4 + Math.abs(Math.sin((t - 134) * 2)) * 1.1, underEdge: span(t, 132, 134)}),
+    fist: 2 + Math.abs(Math.sin((t - 134) * 2)) * 0.7, underEdge: span(t, 132, 134)}),
   L17: (p, t) => ({set: 'door', cam: mixArr([200, 100, 2.4], [150, 92, 1], span(t, 141, 145)), a: {x: 56, y: 118, facing: 'left', expr: 'neutral'}, b: {x: 214, y: 118, expr: 'sad', scarf: true},
-    doorOpen: span(t, 142, 146), suitcaseAt: 40, armB: mixArr([206, 130], [198, 118], span(t, 141, 142))}),
+    doorOpen: span(t, 142, 146), suitcaseAt: 40, armB: mixArr([214, 132], [208, 128], span(t, 141, 142))}),
   L18: () => ({set: 'home', cam: CAM.wide, b: {expr: 'sad', scarf: true}, emptyA: true, dinner: true}),
-  L19: (p, t) => ({set: 'door', cam: mixArr([175, 105, 2], [150, 100, 1.4], p), a: {x: 100, y: 118, facing: 'left', expr: 'neutral'}, b: {x: 176, y: 118, expr: 'sad', scarf: true},
-    doorOpen: 1, suitcaseAt: 84, armB: mixArr([172, 134], [140, 134], span(t, 156, 160))}),
+  L19: (p, t) => ({set: 'door', cam: mixArr([175, 105, 2], [150, 100, 1.4], p), a: {x: 118, y: 118, facing: 'left', expr: 'neutral'}, b: {x: 176, y: 118, expr: 'sad', scarf: true},
+    doorOpen: 1, suitcaseAt: 102, armB: mixArr([176, 134], [168, 133], span(t, 156, 160))}),
   L20: (p, t) => {
-    const x = mix(100, -70, span(t, 164.2, 170));
+    const x = mix(118, -70, span(t, 164.2, 170));
     return {set: 'door', cam: [150, 100, 1.4], a: {x, y: 118, facing: 'left', expr: 'neutral', action: 'walk', frame: Math.floor(t * WALK_RATE) % 4}, b: {x: 176, y: 118, expr: 'sad', scarf: true},
-      doorOpen: 1, suitcaseAt: x - 16, armB: [140, 134]};
+      doorOpen: 1, suitcaseAt: x - 16, armB: [168, 133]};
   },
   L21: (p, t) => ({set: 'deck', cam: mixArr([232, 158, 2], [160, 170, 1.9], p), a: {...SAD, dy: breath(t, 172.9, 176)}}),
   L22: (p, t) => ({set: 'deck', cam: [160, 170, 1.9], a: {...SAD, action: 'hug', dy: Math.round(2 * span(t, 176.8, 179)), dx: shake(t)}}),
@@ -298,24 +314,27 @@ const SCRIPT = {
   L24: (p, t) => ({set: 'deck', cam: [172, 165, 2.3], a: {...SAD, dy: 2}, arm: mixArr([156, 176], [150, 174], span(t, 186.3, 187.6))}),
   L25: (p, t) => ({set: 'deck', cam: mixArr([172, 165, 2.3], [168, 172, 2.3], p), a: {...SAD, dy: 2 + breath(t, 190, 193)}}),
   L26: (p, t) => ({set: 'deck', cam: mixArr([168, 172, 2.3], CAM.wrist, span(t, 193.8, 195.2)), a: {...SAD, dy: 2}, wrist: Math.floor((t - 193.8) * 5) % 2}),
-  L27: (p, t) => ({set: 'deck', cam: mixArr([195, 165, 2], [205, 165, 2], p), a: SAD, arm: mixArr(mixArr(ARM_A, [218, 172], span(t, 198.1, 198.7)), SCARF_REACH, span(t, 199, 203))}),
-  L28: (p, t) => ({set: 'deck', cam: mixArr([205, 165, 2], [195, 165, 2], span(t, 203.4, 205)), a: SAD, arm: mixArr(SCARF_REACH, [216, 150], span(t, 203.8, 207))}),
-  L29: (p, t) => ({set: 'deck', cam: mixArr([195, 165, 2], CAM.letter, span(t, 210.93, 212)), a: SAD,
-    arm: mixArr(mixArr([216, 150], [190, 174], span(t, 210.93, 211.6)), [188 + 18 * span(t, 212.6, 214.9), 172], span(t, 212.2, 212.6)),
+  L27: (p, t) => ({set: 'deck', cam: mixArr([175, 165, 2], [205, 165, 2], span(t, 198.1, 200.3)), a: walkBetween(t, 198.1, 200.3, true),
+    arm: t > 200.3 ? mixArr([226, 180], [232, 176], span(t, 200.3, 203)) : null}),
+  L28: (p, t) => ({set: 'deck', cam: mixArr([205, 165, 2], [185, 165, 2], span(t, 208.4, 210.9)), a: walkBetween(t, 208.4, 210.7, false),
+    arm: t < 208.2 ? mixArr([232, 176], [232, 170], span(t, 203.8, 206)) : null}),
+  L29: (p, t) => ({set: 'deck', cam: mixArr([185, 165, 2], CAM.letter, span(t, 210.93, 212)), a: SAD,
+    arm: t < 211.7 ? null : mixArr([192, 178], [188 + 18 * span(t, 212.6, 214.9), 172], span(t, 212.2, 212.6)), handIn: true,
     pen: t > 212.1 && t < 215.1 ? [186.4 + 21.6 * span(t, 212.6, 214.9), 157] : null}),
-  L30: (p, t) => ({set: 'deck', cam: mixArr(CAM.letter, [150, 164, 2.6], span(t, 215.2, 216.8)), a: {...SAD, action: t > 216.4 ? 'hug' : 'idle'}, holdScarf: span(t, 215.8, 216.6),
-    arm: t > 216.4 ? null : mixArr(PEN_REST, SCARF_REACH, span(t, 215.2, 215.9))}),
+  L30: (p, t) => ({set: 'deck', cam: mixArr(CAM.letter, [205, 165, 2.4], span(t, 215.2, 216.6)),
+    a: {...walkBetween(t, 215.2, 216.2, true), action: t > 216.3 ? 'hug' : walkBetween(t, 215.2, 216.2, true).action},
+    holdScarf: t >= 216.2 ? Math.max(0.01, span(t, 216.2, 216.8)) : 0}),
   L31: () => ({set: 'phone', pan: 0, smile: true}),
   L32: (p, t) => ({set: 'phone', pan: span(t, 225, 227.5), smile: span(t, 225, 226.5) < 1}),
   L33: (p, t) => ({set: 'deck', cam: mixArr([198, 165, 4], [190, 165, 7], span(t, 228.2, 229.2)), a: {...SAD, action: 'hug'}, holdScarf: 1,
-    arm: [188 + 2 * Math.sin((t - 229) * 6), 178], pen: [190 + Math.sin((t - 229) * 6), 170]}),
+    arm: [188 + 2 * Math.sin((t - 229) * 6), 178], handIn: true, pen: [190 + Math.sin((t - 229) * 6), 170]}),
   L34: (p, t) => ({set: 'deck', cam: mixArr([190, 165, 7], [204, 165, 7], span(t, 232.4, 233.2)), a: {...SAD, action: 'hug'}, holdScarf: 1,
-    arm: [202 + 2 * Math.sin((t - 233) * 6), 178], pen: [202 + Math.sin((t - 233) * 6), 170], sleeve: [222, 175]}),
+    arm: [202 + 2 * Math.sin((t - 233) * 6), 178], handIn: true, pen: [202 + Math.sin((t - 233) * 6), 170], sleeve: [222, 175]}),
   L35: (p, t) => ({set: 'deck', cam: mixArr([204, 165, 7], CAM.wide, span(t, 236.8, 240.6)), a: {expr: 'shy', facing: 'right', action: 'hug', dy: Math.round(2 * span(t, 237, 238.5))}, holdScarf: 1,
     sleeve: mixArr([222, 175], [166, 190], span(t, 236.8, 238.8))}),
   L36: (p, t) => ({set: 'deck', cam: CAM.wide, a: {...SAD, action: 'hug', dy: 2}, holdScarf: 1, sleeve: t < 245 ? mixArr([166, 190], [210, 260], span(t, 242, 245)) : null}),
-  L37: (p, t) => ({set: 'deck', cam: mixArr(mixArr(CAM.wide, [164, 170, 5], span(t, 250.9, 252.2)), CAM.wide, span(t, 254, 261.944)), a: {...SAD, dy: 1, action: t > 254.3 ? 'hug' : 'idle'}, holdScarf: 1,
-    arm: t < 254.3 ? mixArr(mixArr(ARM_A, [158, 178], span(t, 250.9, 251.4)), [170, 178], span(t, 251.4, 253.9)) : null}),
+  L37: (p, t) => ({set: 'deck', cam: mixArr(mixArr(CAM.wide, [164, 170, 5], span(t, 250.9, 252.2)), CAM.wide, span(t, 254, 261.944)), a: {...SAD, dy: 1, action: t > 254.3 ? 'hug' : 'idle', dx: Math.round(mix(mix(0, 12, span(t, 250.9, 251.4)), 0, span(t, 254, 255)))}, holdScarf: 1,
+    arm: t > 251.4 && t < 254 ? mixArr([170, 178], [176, 178], span(t, 251.4, 253.9)) : null}),
 };
 
 // 换景只发生在不透明实物完全遮住画面时；键为进入该镜的衔接。
@@ -327,7 +346,7 @@ export const WIPE_SECONDS = 0.534;
 
 // 分镜关键画面的取样时刻；未列出的镜头取本镜 72% 处。
 export const KEY_TIMES = {
-  P01: 3, L05: 55.5, L06: 64, L13: 96.5, L14: 101.8, I01: 110, L16: 137, L27: 202, L28: 208, L29: 214.5,
+  P01: 3, L05: 55.5, L06: 64, L13: 96.5, L14: 101.8, I01: 110, L16: 137, L27: 202.5, L28: 207, L29: 214.5, L30: 218.5,
   L33: 231.6, L34: 235.8, L35: 240.8, L36: 248, L37: 268,
 };
 
@@ -340,9 +359,9 @@ function clawdA(d, s) {
 }
 
 function clawdB(d, s) {
-  const b = s.b, x = b.x ?? BX, y = b.y ?? BY;
+  const b = s.b, x = (b.x ?? BX) + (b.dx ?? 0), y = (b.y ?? BY) + (b.dy ?? 0);
   d.clawd('B', x, y, {facing: 'left', expression: b.expr ?? 'neutral', action: 'idle', frame: 0});
-  if (b.scarf) { d.rect('bScarf', x + 7, y + 14, 16, 3.4, P.scarf); d.poly('bScarfTail', [[x + 19, y + 16], [x + 23, y + 16], [x + 24, y + 24], [x + 20, y + 24]], P.scarf); }
+  if (b.scarf) { d.rect('bScarf', x + 7, y + 20, 16, 3, P.scarf); d.poly('bScarfTail', [[x + 19, y + 22], [x + 23, y + 22], [x + 24, y + 29], [x + 20, y + 29]], P.scarf); }
   if (b.tense) d.rect('bTense', x + 9, y + 11, 5, 0.9, P.ink);
 }
 
@@ -378,36 +397,41 @@ export function frameAt(t) {
   if (s.set === 'deck' || s.set === 'home') {
     if (s.set === 'deck') setDeck(d, ts); else setHome(d, {sticker: s.sticker ?? 0});
     if (s.suitcase) { d.rect('homeSuitcase', 96, 165, 18, 30, P.metal); d.rect('homeStrap', 104, 165, 2, 30, P.whiteDark); }
-    if (s.a) clawdA(d, s);
-    if (s.b) clawdB(d, s);
-    table(d, s.set === 'home' ? {past: true, planOpen: 1 - (s.planFolded ?? 0)} : ts);
+    if (s.a && !s.a.front) clawdA(d, s);
+    const leaningB = (s.b?.dx ?? 0) < 0;
+    if (s.b && !leaningB) clawdB(d, s);
+    table(d, s.set === 'home' ? {past: true, planOpen: 1 - (s.planFolded ?? 0), planShift: 24 * (s.planFolded ?? 0)} : ts);
+    if (s.a?.front) clawdA(d, s);
+    if (s.b && leaningB) clawdB(d, s);
     if (s.dinner) {
       d.rect('dinnerCover', 152, 151, 60, 30, P.wood);
       for (const [x, id] of [[166, 'dish1'], [198, 'dish2']]) { d.disk(id, x, 166, 9, P.white); d.disk(`${id}Food`, x, 166, 5, P.warmDark); }
     }
     if (s.key !== undefined) { d.disk('key', s.key, 170, 2.6, P.lamp); d.rect('keyStem', s.key + 2, 169.4, 6, 1.4, P.lamp); }
-    if (s.heldScarf) d.poly('offeredScarf', [[s.armB[0] - 16, s.armB[1] - 6], [s.armB[0] + 6, s.armB[1] - 6], [s.armB[0] + 4, s.armB[1] + 8], [s.armB[0] - 18, s.armB[1] + 8]], P.scarf);
-    if (s.armB) arm(d, 'armB', ARM_B, s.armB);
-    if (s.armA) arm(d, 'armA', ARM_A, s.armA);
-    if (s.arm) arm(d, 'arm', ARM_A, s.arm);
+    if (s.heldScarf) d.poly('offeredScarf', [[s.armB[0] - 26, s.armB[1] - 5], [s.armB[0] + 4, s.armB[1] - 5], [s.armB[0] + 3, s.armB[1] + 6], [s.armB[0] - 28, s.armB[1] + 6]], P.scarf);
+    if (s.armB) arm(d, 'armB', shoulderB(s.b), s.armB);
+    if (s.armA) arm(d, 'armA', shoulderA(s.a), s.armA);
+    if (s.arm) arm(d, 'arm', s.handIn ? [s.arm[0] - 4, s.arm[1] + 44] : shoulderA(s.a), s.arm);
     if (s.holdScarf) {
-      const k = ease(s.holdScarf), hx = mix(235, 146, k), hy = mix(172, 176, k);
+      const k = ease(s.holdScarf), ax = (s.a.x ?? AX) + (s.a.dx ?? 0), ay = (s.a.y ?? AY) + (s.a.dy ?? 0);
+      const hx = mix(235, ax + 20, k), hy = mix(172, ay + 20, k);
       d.poly('heldScarf', [[hx - 8, hy - 4], [hx + 8, hy - 4], [hx + 8, hy + 4], [hx + 6, hy + 4], [hx + 6, hy + 15], [hx + 3, hy + 15], [hx + 3, hy + 4], [hx - 3, hy + 4], [hx - 3, hy + 12], [hx - 6, hy + 12], [hx - 6, hy + 4], [hx - 8, hy + 4]], P.scarf);
     }
     if (s.wrist !== undefined) {
-      d.line('wristBase', [[150, 176], [176, 184]], P.line, 8);
-      d.line('wristFill', [[150, 176], [176, 184]], P.skin, 6);
-      d.disk('thumb', 161 + s.wrist * 5, 179.5 + s.wrist * 1.5, 2.4, P.skinLight);
+      const dy = s.a.dy ?? 0;
+      d.line('wristBase', [[150, 173 + dy], [162, 176 + dy]], P.line, 5);
+      d.line('wristFill', [[150, 173 + dy], [162, 176 + dy]], P.skin, 3.4);
+      d.disk('thumb', 155 + s.wrist * 3.5, 174.5 + dy + s.wrist * 0.8, 1.6, P.skinLight);
     }
     if (s.fist !== undefined) {
-      d.disk('fistB', 213, 179, s.fist, P.skinLight);
-      d.disk('fistA', 219, 181, s.fist, P.skin);
+      d.disk('fistB', 215, 178, s.fist, P.skinLight);
+      d.disk('fistA', 220, 179, s.fist, P.skin);
       if (s.underEdge > 0) d.rect('underEdge', 170, 128, 100, 40, P.woodDark);
     }
     if (s.pen && s.arm) d.line('penInHand', [s.arm, s.pen], P.ink, 1.1);
     if (s.notes !== undefined) d.dots('hummedNotes', [[156, 160 - (s.notes % 2) * 3], [161, 154 - ((s.notes + 1) % 2) * 3]], P.ink, 0.9);
-    if (s.tear > 0 && s.tear < 1) d.disk('tearDrop', mix(146, 174, s.tear), mix(170, 158, s.tear), 1, P.tear);
-    if (s.set === 'deck' && buildT > 184 && buildT < 211) d.disk('tearMark', 174, 158, 1.1, P.tear);
+    if (s.tear > 0 && s.tear < 1) d.disk('tearDrop', mix(146, 158, s.tear), mix(172, 158, s.tear), 1, P.tear);
+    if (s.set === 'deck' && buildT > 184 && buildT < 211) d.disk('tearMark', 158, 158, 1.1, P.tear);
     if (s.sleeve) { const [x, y] = s.sleeve; d.line('sleeve', [[x + 22, y + 60], [x, y]], P.cityNear, 7); d.rect('tissue', x - 7, y - 6, 9, 8, P.white); }
   }
   return {shot: build.id, cam: {cx: cam[0], cy: cam[1], z: cam[2]}, items: d.items, wipe};

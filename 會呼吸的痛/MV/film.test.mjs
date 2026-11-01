@@ -11,7 +11,10 @@ test('全片每个时刻都能生成画面，手臂长度合理', () => {
     const frame = frameAt(t);
     assert.ok(frame.items.length > 0, `${t}`);
     for (const item of frame.items) {
-      if (/^arm.*Fill$/.test(item.id)) assert.ok(armLength(item) <= 72, `${frame.shot} ${t} 手臂长 ${armLength(item).toFixed(0)}`);
+      if (!/^(arm.*Fill|wristFill)$/.test(item.id)) continue;
+      const [ox, oy] = item.pts[0], {cx, cy, z} = frame.cam;
+      const shoulderVisible = Math.abs((ox - cx) * z) < 160 && Math.abs((oy - cy) * z) < 90;
+      if (shoulderVisible) assert.ok(armLength(item) <= 16, `${frame.shot} ${t} 手臂长 ${armLength(item).toFixed(0)}`);
     }
   }
 });
