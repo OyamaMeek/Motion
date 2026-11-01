@@ -62,3 +62,24 @@
 - **Git 提交**：`27f36fba93a38d100e3fedd50b702513c1a7edaf docs: collect Clawd visual references for future MVs`；以随后文档提交补记哈希。未推送：main 未配置 upstream。
 
 ---
+
+## [2026-11-01 17:25] 绘制三种 MV 开场画风样图
+
+- **需求/问题描述**：
+  > 基于《會呼吸的痛》主题与情绪，用代码为同一开场绘制像素、纸艺拼贴、蜡笔绘本三张 1920×1080 样图，各附一句理由，完成后等待选择。
+
+- **实际实现的功能与改动**：
+  - 共用「独自抵达约定海边」构图，提供三张 PNG、Canvas 2D 与 p5.js/p5.brush 源码、重现方法及适配理由。
+  - 像素版原生 320×180，24 色点阵、关闭平滑 6 倍放大；纸艺版有剪纸白边、撕边、投影和纤维；蜡笔版实际使用 crayon 与 2B 笔刷。
+  - 验证：JavaScript 语法检查、真实浏览器三版重绘与自检、sips 独立尺寸检查通过；像素版 24 色与全部 6×6 色块检查通过；三张原图视觉检查完成。
+  - 未使用图像生成模型；未制作动画，已暂停等待画风选择。
+
+- **涉及文件**：
+  - `會呼吸的痛/開場樣圖/`：HTML、绘图与渲染脚本、README、验证 JSON、三张 PNG。
+  - `.agent/visual/`：Markdown 视觉记录与三张浏览器截图。
+  - `memory/agents.md`、`memory/plan.md`、`memory/progress.md`、`memory/verify.md`。
+  - `docs/CHANGELOG.md`。
+
+- **Git 提交**：待提交；main 未配置 upstream，无法向已配置的跟踪分支推送。
+
+---

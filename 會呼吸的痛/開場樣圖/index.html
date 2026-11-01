@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>會呼吸的痛 · 開場樣圖</title>
+<style>
+  html,body { margin:0; background:#eee8d9; overflow:hidden; }
+  canvas { display:block; width:100vw!important; height:auto!important; }
+</style>
+<body>
+<script>
+  window.renderErrors = [];
+  window.addEventListener('error', e => renderErrors.push(e.message));
+  window.addEventListener('unhandledrejection', e => renderErrors.push(String(e.reason)));
+</script>
+<script src="../../.agent/work/art-libs/p5-2.2.0.min.js"></script>
+<script src="../../.agent/work/art-libs/p5.brush-3.0.0.js"></script>
+<script src="scene.js"></script>
+</html>

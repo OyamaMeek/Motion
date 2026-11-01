@@ -1,0 +1,56 @@
+[
+  {
+    "style": "pixel",
+    "errors": [],
+    "ready": true,
+    "width": 1920,
+    "height": 1080,
+    "colors": 24,
+    "opaque": true,
+    "blocks": true,
+    "allowed": true,
+    "native": [
+      320,
+      180
+    ],
+    "brushes": null
+  },
+  {
+    "style": "paper",
+    "errors": [],
+    "ready": true,
+    "width": 1920,
+    "height": 1080,
+    "colors": 28794,
+    "opaque": true,
+    "blocks": true,
+    "allowed": true,
+    "native": null,
+    "brushes": null
+  },
+  {
+    "style": "crayon",
+    "errors": [],
+    "ready": true,
+    "width": 1920,
+    "height": 1080,
+    "colors": 69416,
+    "opaque": true,
+    "blocks": true,
+    "allowed": true,
+    "native": null,
+    "brushes": [
+      "pen",
+      "rotring",
+      "2B",
+      "HB",
+      "2H",
+      "cpencil",
+      "pastel",
+      "crayon",
+      "charcoal",
+      "spray",
+      "marker"
+    ]
+  }
+]
