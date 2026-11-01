@@ -80,6 +80,6 @@
   - `memory/agents.md`、`memory/plan.md`、`memory/progress.md`、`memory/verify.md`。
   - `docs/CHANGELOG.md`。
 
-- **Git 提交**：待提交；main 未配置 upstream，无法向已配置的跟踪分支推送。
+- **Git 提交**：`d9f70b625d63c1eecb3f87cc3599a45f809720b4 feat: draw three coded MV opening style samples`；以随后文档提交补记哈希。未推送：main 未配置 upstream。
 
 ---

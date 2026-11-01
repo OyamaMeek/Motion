@@ -7,7 +7,7 @@
 - [x] 绘制 Canvas 像素、纸艺拼贴及 p5.brush 蜡笔版本。
 - [x] 导出与验证三张 1920×1080 PNG；浏览器错误为空，像素版实际 24 色、6×6 色块和调色板检查通过。
 - [x] 检查三张原图，保存 `.agent/visual/開場樣圖.md` 及三张浏览器截图；附适配理由与重现方法。
-- [ ] 完成当前任务提交；main 未配置 upstream，不指定新推送目标。
+- [x] 完成本地提交 `d9f70b6 feat: draw three coded MV opening style samples`；main 未配置 upstream，未推送。
 - 当前已停止后续美术与动画制作，等待用户选择 1、2 或 3。
 
 ## 已完成：音频分析与叙事修订
