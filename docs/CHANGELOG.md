@@ -283,6 +283,6 @@
   - `.agent/visual/MV分鏡.md`、`memory/progress.md`、`memory/verify.md`、`memory/gotchas.md`。
   - `docs/CHANGELOG.md`。
 
-- **Git 提交**：待提交。
+- **Git 提交**：`5a23c772ab72427a34b5a5efe5004ffac11f9d25 fix: use the character sheet's arm length in the storyboard`；普通推送 origin/main 成功。
 
 ---
