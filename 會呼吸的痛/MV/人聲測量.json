@@ -1,0 +1,338 @@
+{
+ "method": "声像中央提取后用 pyin 跟踪 205–800 Hz 音高；不是人声分离或 ASR，伴奏旋律可能混入",
+ "lines": [
+  {
+   "line": 1,
+   "text": "在東京鐵塔 第一次眺望",
+   "lrc": 18.16,
+   "pitchOnset": 18.288,
+   "offset": 0.128,
+   "pitchEnd": 24.055,
+   "nextLrc": 26.77
+  },
+  {
+   "line": 2,
+   "text": "看燈火模仿 墜落的星光",
+   "lrc": 26.77,
+   "pitchOnset": 26.879,
+   "offset": 0.109,
+   "pitchEnd": 35.27,
+   "nextLrc": 35.27
+  },
+  {
+   "line": 3,
+   "text": "我終於到達 但卻更悲傷",
+   "lrc": 35.27,
+   "pitchOnset": 34.901,
+   "offset": -0.369,
+   "pitchEnd": 40.927,
+   "nextLrc": 43.88
+  },
+  {
+   "line": 4,
+   "text": "一個人完成 我們的夢想",
+   "lrc": 43.88,
+   "pitchOnset": 44.289,
+   "offset": 0.409,
+   "pitchEnd": 50.366,
+   "nextLrc": 50.56
+  },
+  {
+   "line": 5,
+   "text": "你總說 時間還很多 你可以等我",
+   "lrc": 50.56,
+   "pitchOnset": 50.116,
+   "offset": -0.444,
+   "pitchEnd": 58.717,
+   "nextLrc": 59.17
+  },
+  {
+   "line": 6,
+   "text": "以前我不懂得 未必明天 就有以後",
+   "lrc": 59.17,
+   "pitchOnset": 59.325,
+   "offset": 0.155,
+   "pitchEnd": 66.409,
+   "nextLrc": 67.58
+  },
+  {
+   "line": 7,
+   "text": "想念是會呼吸的痛",
+   "lrc": 67.58,
+   "pitchOnset": 67.786,
+   "offset": 0.206,
+   "pitchEnd": 70.46,
+   "nextLrc": 71.73
+  },
+  {
+   "line": 8,
+   "text": "它活在我身上所有角落",
+   "lrc": 71.73,
+   "pitchOnset": 74.59,
+   "offset": 2.86,
+   "pitchEnd": 74.98,
+   "nextLrc": 76.31
+  },
+  {
+   "line": 9,
+   "text": "哼你愛的歌會痛 看你的信會痛",
+   "lrc": 76.31,
+   "pitchOnset": null,
+   "offset": null,
+   "pitchEnd": null,
+   "nextLrc": 81.38
+  },
+  {
+   "line": 10,
+   "text": "連沉默也痛",
+   "lrc": 81.38,
+   "pitchOnset": null,
+   "offset": null,
+   "pitchEnd": null,
+   "nextLrc": 84.85
+  },
+  {
+   "line": 11,
+   "text": "遺憾是會呼吸的痛",
+   "lrc": 84.85,
+   "pitchOnset": null,
+   "offset": null,
+   "pitchEnd": null,
+   "nextLrc": 88.87
+  },
+  {
+   "line": 12,
+   "text": "它流在血液中來回滾動",
+   "lrc": 88.87,
+   "pitchOnset": 91.143,
+   "offset": 2.273,
+   "pitchEnd": 91.702,
+   "nextLrc": 93.38
+  },
+  {
+   "line": 13,
+   "text": "後悔不貼心會痛 恨不懂你會痛",
+   "lrc": 93.38,
+   "pitchOnset": null,
+   "offset": null,
+   "pitchEnd": null,
+   "nextLrc": 98.44
+  },
+  {
+   "line": 14,
+   "text": "想見不能見最痛",
+   "lrc": 98.44,
+   "pitchOnset": 98.945,
+   "offset": 0.505,
+   "pitchEnd": 121.873,
+   "nextLrc": 123.18
+  },
+  {
+   "line": 15,
+   "text": "沒看你臉上 張揚過哀傷",
+   "lrc": 123.18,
+   "pitchOnset": 123.41,
+   "offset": 0.23,
+   "pitchEnd": 128.877,
+   "nextLrc": 131.74
+  },
+  {
+   "line": 16,
+   "text": "那是種多麼 寂寞的倔強",
+   "lrc": 131.74,
+   "pitchOnset": 132.18,
+   "offset": 0.44,
+   "pitchEnd": 137.438,
+   "nextLrc": 140.24
+  },
+  {
+   "line": 17,
+   "text": "你拆了城牆 讓我去流浪",
+   "lrc": 140.24,
+   "pitchOnset": 144.482,
+   "offset": 4.242,
+   "pitchEnd": 145.439,
+   "nextLrc": 148.88
+  },
+  {
+   "line": 18,
+   "text": "在原地等我 把自己綑綁",
+   "lrc": 148.88,
+   "pitchOnset": 149.091,
+   "offset": 0.211,
+   "pitchEnd": 154.329,
+   "nextLrc": 155.54
+  },
+  {
+   "line": 19,
+   "text": "你沒說 你也會軟弱 需要倚賴我",
+   "lrc": 155.54,
+   "pitchOnset": 155.736,
+   "offset": 0.196,
+   "pitchEnd": 160.495,
+   "nextLrc": 164.17
+  },
+  {
+   "line": 20,
+   "text": "我就裝不曉得 自由移動 自我地過",
+   "lrc": 164.17,
+   "pitchOnset": 165.903,
+   "offset": 1.733,
+   "pitchEnd": 166.931,
+   "nextLrc": 172.65
+  },
+  {
+   "line": 21,
+   "text": "想念是會呼吸的痛",
+   "lrc": 172.65,
+   "pitchOnset": 172.807,
+   "offset": 0.157,
+   "pitchEnd": 175.471,
+   "nextLrc": 176.7
+  },
+  {
+   "line": 22,
+   "text": "它活在我身上所有角落",
+   "lrc": 176.7,
+   "pitchOnset": null,
+   "offset": null,
+   "pitchEnd": null,
+   "nextLrc": 181.2
+  },
+  {
+   "line": 23,
+   "text": "哼你愛的歌會痛 看你的信會痛",
+   "lrc": 181.2,
+   "pitchOnset": null,
+   "offset": null,
+   "pitchEnd": null,
+   "nextLrc": 186.38
+  },
+  {
+   "line": 24,
+   "text": "連沉默也痛",
+   "lrc": 186.38,
+   "pitchOnset": null,
+   "offset": null,
+   "pitchEnd": null,
+   "nextLrc": 189.8
+  },
+  {
+   "line": 25,
+   "text": "遺憾是會呼吸的痛",
+   "lrc": 189.8,
+   "pitchOnset": null,
+   "offset": null,
+   "pitchEnd": null,
+   "nextLrc": 193.84
+  },
+  {
+   "line": 26,
+   "text": "它流在血液中來回滾動",
+   "lrc": 193.84,
+   "pitchOnset": 196.154,
+   "offset": 2.314,
+   "pitchEnd": 196.533,
+   "nextLrc": 198.38
+  },
+  {
+   "line": 27,
+   "text": "後悔不貼心會痛 恨不懂你會痛",
+   "lrc": 198.38,
+   "pitchOnset": null,
+   "offset": null,
+   "pitchEnd": null,
+   "nextLrc": 203.49
+  },
+  {
+   "line": 28,
+   "text": "想見不能見最痛",
+   "lrc": 203.49,
+   "pitchOnset": 203.946,
+   "offset": 0.456,
+   "pitchEnd": 205.982,
+   "nextLrc": 211.25
+  },
+  {
+   "line": 29,
+   "text": "我發誓不再說謊了",
+   "lrc": 211.25,
+   "pitchOnset": 211.37,
+   "offset": 0.12,
+   "pitchEnd": 214.842,
+   "nextLrc": 215.32
+  },
+  {
+   "line": 30,
+   "text": "多愛你就會抱你多緊的",
+   "lrc": 215.32,
+   "pitchOnset": 215.341,
+   "offset": 0.021,
+   "pitchEnd": 219.242,
+   "nextLrc": 219.95
+  },
+  {
+   "line": 31,
+   "text": "我的微笑都假了 靈魂像飄浮著",
+   "lrc": 219.95,
+   "pitchOnset": 220.1,
+   "offset": 0.15,
+   "pitchEnd": 224.92,
+   "nextLrc": 224.92
+  },
+  {
+   "line": 32,
+   "text": "你在就好了",
+   "lrc": 224.92,
+   "pitchOnset": 225.328,
+   "offset": 0.408,
+   "pitchEnd": 228.072,
+   "nextLrc": 228.47
+  },
+  {
+   "line": 33,
+   "text": "我發誓不讓你等候",
+   "lrc": 228.47,
+   "pitchOnset": null,
+   "offset": null,
+   "pitchEnd": 228.072,
+   "nextLrc": 232.49
+  },
+  {
+   "line": 34,
+   "text": "陪你做想做的無論什麼",
+   "lrc": 232.49,
+   "pitchOnset": 234.717,
+   "offset": 2.227,
+   "pitchEnd": 235.225,
+   "nextLrc": 236.72
+  },
+  {
+   "line": 35,
+   "text": "我越來越像貝殼 怕心被人觸碰",
+   "lrc": 236.72,
+   "pitchOnset": null,
+   "offset": null,
+   "pitchEnd": null,
+   "nextLrc": 242.14
+  },
+  {
+   "line": 36,
+   "text": "你回來那就好了",
+   "lrc": 242.14,
+   "pitchOnset": 242.499,
+   "offset": 0.359,
+   "pitchEnd": 250.191,
+   "nextLrc": 251.1
+  },
+  {
+   "line": 37,
+   "text": "能重來那就好了",
+   "lrc": 251.1,
+   "pitchOnset": 251.149,
+   "offset": 0.049,
+   "pitchEnd": 273.0,
+   "nextLrc": 273.043
+  }
+ ]
+}

@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>會呼吸的痛 · 分鏡</title>
+<title>會呼吸的痛 · MV</title>
 <style>
   html,body { margin:0; background:#eee8d9; overflow:hidden; }
   canvas { display:block; width:100vw!important; height:auto!important; }
@@ -16,12 +16,22 @@
 <script type="module">
   import {frameAt} from './film.js';
   import {createPixel} from './pixel.js';
-  import {SHOTS} from './shots.js';
+  import {SHOTS, FPS} from './shots.js';
+  import {lyricTimeline, lyricAtFrame} from './lyrics.js';
 
+  const [lrc, measured] = await Promise.all([
+    fetch('../會呼吸的痛.lrc').then(r => r.text()),
+    fetch('./人聲測量.json').then(r => r.json()),
+  ]);
+  const timeline = lyricTimeline(lrc, measured, FPS.pixel);
   const art = createPixel();
   window.art = art;
   window.shotList = SHOTS;
+  window.lyricTimelineData = timeline;
   window.renderAt = t => art.render(frameAt(t));
+  // 成片按帧号取时间：背景和歌词在同一张画布上依次绘制。
+  window.renderFilmFrame = i => art.render(frameAt(i / FPS.pixel), lyricAtFrame(timeline, i));
+  await document.fonts.ready;
   window.artReady = true;
 </script>
 </html>

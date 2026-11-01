@@ -361,3 +361,24 @@
 - **Git 提交**：`feat: output captioned storyboard overview sheet`，与本条同一提交，哈希以 `git log` 为准；普通推送 origin/main。
 
 ---
+
+## [2026-11-01 23:51] 完整 MV 成片
+
+- **需求/问题描述**：
+  > 草图已确认，制作完整 MV：背景、角色、道具同一画布绘制并随镜头运动；歌词读取 LRC，置于最上层、画面下方、不随镜头运动；配原曲，按分镜画幅与帧率导出 MP4；用 ffmpeg 抽帧核对歌词时间，测量响度与原曲一致。任务描述中的「10-second film」与完整 MV 的要求矛盾，按整首制作。
+
+- **实际实现的功能与改动**：
+  - 全片美术：在 `film.js`、`pixel.js` 同一清单上补材质、光影、纵深视差、呼吸与眨眼、随响度变化的灯火、L02 落下的灯火带、玄关夜景、空电梯灯光、有材质的换景实物。
+  - 歌词：`lyrics.js` 读取 LRC；`vocal_measure.py` 测量人声起止；歌词在最上层固定绘制。
+  - 导出：`render-film.mjs` 输出 1920×1080、12 fps、3277 帧的 MP4，音轨直接复制原曲；文件 48.6 MB，只留本地。
+  - 验证：新增测试先失败，修改后共 27 项通过；全片抽查最多 31 色；`verify-export.mjs` 抽帧确认 37 句出现时间与 LRC 误差不超过 0.04 秒；原曲与导出均为 -9.8 LUFS，解码后 PCM 哈希相同。未听辨、未在播放器中连续观看；17 句的音高跟踪测不到句首，只有能量估算。
+
+- **涉及文件**：
+  - `會呼吸的痛/MV/film.js`、`pixel.js`、`index.html`、`README.md`
+  - `會呼吸的痛/MV/lyrics.js`、`lyrics.test.mjs`、`art.test.mjs`、`energy.js`、`人聲測量.json`、`vocal_measure.py`、`render-film.mjs`、`verify-export.mjs`
+  - `.agent/visual/MV成片.md`、`MV成片每句起點.png`、`MV成片全片取樣.png`
+  - `memory/agents.md`、`plan.md`、`progress.md`、`verify.md`、`docs/CHANGELOG.md`
+
+- **Git 提交**：`feat: render the full pixel MV with fixed lyric layer`，与本条同一提交，哈希以 `git log` 为准；普通推送 origin/main。
+
+---

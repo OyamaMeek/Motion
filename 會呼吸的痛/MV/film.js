@@ -1,12 +1,13 @@
 import {SHOTS, shotIndexAt} from './shots.js';
+import {ENERGY} from './energy.js';
 
 export const P = {
-  sky0: '#6f8ca6', sky1: '#8aa5b8', sky2: '#a9bdc6', cool: '#b7c6cb',
+  nightDeep: '#465f76', night: '#587489', sky0: '#6f8ca6', sky1: '#8aa5b8', sky2: '#a9bdc6', cool: '#b7c6cb',
   cityFar: '#7d96a8', cityMid: '#64808f', cityNear: '#4f6873', lamp: '#f6c35e', lampHi: '#fbe8a8',
   red: '#d85a38', redDark: '#a8432f', white: '#f6efdf', whiteDark: '#d9cfbb',
   floorCool: '#94a9b0', metal: '#7f939c',
   wood: '#b98a5c', woodDark: '#8f6545',
-  warm: '#f2dcb0', warmDark: '#e3c08a', floorWarm: '#c99b66',
+  warm: '#f2dcb0', warmDark: '#e3c08a', floorWarm: '#c99b66', floorWarmDark: '#a97c50',
   paper: '#f5e7c9', paperShade: '#e0cfa8', scarf: '#e5b547', scarfDark: '#c9932f',
   ink: '#352e2a', tear: '#83bdcf', skin: '#da7758', skinLight: '#ed9b75', skinDark: '#b85d47', line: '#713f32',
 };
@@ -20,64 +21,125 @@ const rng = seed => { let s = seed >>> 0; return () => { s = (s + 0x6d2b79f5) >>
 
 class Draw {
   items = [];
-  poly(id, pts, color, edge = 'cut') { this.items.push({kind: 'poly', id, pts, color, edge}); }
+  layer = {};
+  add(item) { this.items.push({...item, ...this.layer}); }
+  within(layer, paint) { const old = this.layer; this.layer = {...old, ...layer}; paint(); this.layer = old; }
+  poly(id, pts, color, edge = 'cut') { this.add({kind: 'poly', id, pts, color, edge}); }
   rect(id, x, y, w, h, color, edge = 'cut') { this.poly(id, [[x, y], [x + w, y], [x + w, y + h], [x, y + h]], color, edge); }
   disk(id, x, y, r, color, edge = 'cut') { this.poly(id, Array.from({length: 18}, (_, i) => [x + Math.cos(i / 18 * 6.2832) * r, y + Math.sin(i / 18 * 6.2832) * r]), color, edge); }
-  line(id, pts, color, width) { this.items.push({kind: 'line', id, pts, color, width}); }
-  dots(id, pts, color, size) { this.items.push({kind: 'dots', id, pts, color, size}); }
-  text(id, x, y, size, text, color) { this.items.push({kind: 'text', id, x, y, size, text, color}); }
-  sky(id, x, y, w, h, stops) { this.items.push({kind: 'sky', id, x, y, w, h, stops}); }
-  clawd(id, x, y, opts) { this.items.push({kind: 'clawd', id, x, y, ...opts}); }
+  line(id, pts, color, width) { this.add({kind: 'line', id, pts, color, width}); }
+  dots(id, pts, color, size) { this.add({kind: 'dots', id, pts, color, size}); }
+  text(id, x, y, size, text, color) { this.add({kind: 'text', id, x, y, size, text, color}); }
+  sky(id, x, y, w, h, stops, shift = 0) { this.add({kind: 'sky', id, x, y, w, h, stops, shift}); }
+  clawd(id, x, y, opts) { this.add({kind: 'clawd', id, x, y, ...opts}); }
+  // 用点阵表现明暗：density 为 0–1 的覆盖比例。
+  shade(id, pts, color, density) { this.add({kind: 'poly', id, pts, color, edge: 'cut', density}); }
+  shadeRect(id, x, y, w, h, color, density) { this.shade(id, [[x, y], [x + w, y], [x + w, y + h], [x, y + h]], color, density); }
+  oval(id, x, y, rx, ry, color, density) { this.shade(id, Array.from({length: 20}, (_, i) => [x + Math.cos(i / 20 * 6.2832) * rx, y + Math.sin(i / 20 * 6.2832) * ry]), color, density); }
+  glow(id, x, y, r, color, strength) { this.add({kind: 'glow', id, x, y, r, color, strength}); }
 }
+
+const hash = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+const energyAt = t => ENERGY[Math.max(0, Math.min(ENERGY.length - 1, Math.round(t * 12)))] / 99;
 
 function makeCity(seed, x0, x1, base, [lo, hi], [wLo, wHi], odds) {
   const r = rng(seed), out = [], lamps = [];
   for (let x = x0; x < x1;) {
     const w = Math.round(wLo + r() * (wHi - wLo)), top = Math.round(lo + r() * (hi - lo));
     out.push([x, top, w, base - top]);
-    for (let y = top + 3; y < base - 1; y += 4) for (let lx = x + 2; lx < x + w - 1; lx += 3) if (r() < odds) lamps.push([lx, y]);
+    for (let y = top + 3; y < base - 1; y += 4) for (let lx = x + 2; lx < x + w - 1; lx += 3) if (r() < odds) lamps.push([lx, y, r()]);
     x += w;
   }
   return {out, lamps};
 }
-const WINDOW = {x0: 24, x1: 206};
-const CITY = [makeCity(11, 20, 210, 142, [66, 92], [10, 22], 0.06), makeCity(23, 20, 210, 142, [84, 112], [9, 18], 0.14), makeCity(37, 20, 210, 142, [104, 126], [7, 15], 0.28)];
+const WINDOW = {x0: 24, x1: 206, y0: 16, y1: 142};
+const WINDOW_CLIP = [WINDOW.x0, WINDOW.y0, WINDOW.x1, WINDOW.y1];
+const CITY = [makeCity(11, -260, 480, 300, [66, 92], [10, 22], 0.07), makeCity(23, -260, 480, 300, [84, 112], [9, 18], 0.15), makeCity(37, -260, 480, 300, [104, 126], [7, 15], 0.28)];
+const CITY_DEPTH = [0.34, 0.52, 0.72];
 const TOWN = [makeCity(41, -40, 700, 175, [100, 135], [14, 30], 0.08), makeCity(53, -40, 700, 175, [128, 152], [12, 24], 0.2)];
+const BEACONS = [CITY[0].out[7], CITY[0].out[19], CITY[0].out[31]];
+
+// 灯火亮起的比例跟随原曲响度；尾奏逐渐熄灭，只留电梯的光。
+function lampShare(t) {
+  const outro = 1 - span(t, 261.944, 272.6);
+  return (0.62 + 0.38 * energyAt(t)) * outro * outro;
+}
+const lampLit = (lamp, share, t) => lamp[2] < share && Math.floor(t * 1.5 + lamp[2] * 97) % 29 !== 0;
 
 function towerBody(d, cx, base, top, scale) {
   const half = y => { const k = (base - y) / (base - top); return (k < 0.33 ? 26 - 54 * k : k < 0.68 ? 8.2 - 12 * (k - 0.33) : 4 * (1 - k) + 0.6) * scale; };
   for (let i = 0; i < 7; i++) {
     const a = base - (base - top) * i / 7, b = base - (base - top) * (i + 1) / 7;
     d.poly(`towerband${i}`, [[cx - half(a), a], [cx + half(a), a], [cx + half(b), b], [cx - half(b), b]], i % 2 ? P.white : P.red);
+    // 钢架的交叉斜撑：每节一组 X。
+    const shade = i % 2 ? P.whiteDark : P.redDark;
+    for (let j = 0; j < 3; j++) {
+      const p = a + (b - a) * j / 3, q = a + (b - a) * (j + 1) / 3;
+      d.line(`towerbrace${i}${j}`, [[cx - half(p), p], [cx + half(q), q]], shade, 0.5);
+      d.line(`towerbraceB${i}${j}`, [[cx + half(p), p], [cx - half(q), q]], shade, 0.5);
+    }
   }
   d.rect('towerdeck', cx - 12 * scale, base - (base - top) * 0.34 - 3, 24 * scale, 5, P.white);
+  d.rect('towerdeckGlass', cx - 11 * scale, base - (base - top) * 0.34 - 2, 22 * scale, 2, P.lamp);
   d.rect('towerdeck2', cx - 5 * scale, base - (base - top) * 0.68 - 2, 10 * scale, 4, P.white);
+  d.rect('towerdeck2Glass', cx - 4.5 * scale, base - (base - top) * 0.68 - 1, 9 * scale, 1.4, P.lampHi);
   d.poly('towerarch', [[cx - 12 * scale, base], [cx, base - 22 * scale], [cx + 12 * scale, base]], P.sky2);
 }
 
-function setTower(d) {
-  d.sky('sky', -60, -40, 800, 240, [P.sky0, P.sky1, P.sky2, P.cool]);
-  for (const [i, c] of [[0, P.cityFar], [1, P.cityMid]]) {
+function setTower(d, t) {
+  d.within({depth: 0.08}, () => {
+    d.sky('sky', -200, -40, 1100, 240, [P.night, P.sky0, P.sky1, P.sky2, P.cool]);
+    const stars = [];
+    for (let i = 0; i < 46; i++) if (Math.floor(t * 1.2 + i * 3) % 11) stars.push([-40 + hash(i) * 500, -30 + hash(i + 50) * 80]);
+    d.dots('stars', stars, P.white, 0.6);
+    for (let i = 0; i < 4; i++) {
+      const x = ((hash(i + 9) * 520 + t * (0.5 + i * 0.2)) % 560) - 60, y = 18 + i * 13, w = 70 + i * 16;
+      d.shadeRect(`cloud${i}`, x, y, w, 2, P.sky2, 0.45);
+      d.shadeRect(`cloudTop${i}`, x + w * 0.22, y - 2, w * 0.45, 2, P.sky2, 0.3);
+      d.shadeRect(`cloudLow${i}`, x + w * 0.4, y + 2, w * 0.5, 1.5, P.sky2, 0.28);
+    }
+  });
+  const share = lampShare(t);
+  for (const [i, c] of [[0, P.cityFar], [1, P.cityMid]]) d.within({depth: [0.3, 0.5][i]}, () => {
     d.poly(`town${i}`, [[-40, 175], ...TOWN[i].out.flatMap(([x, top, w]) => [[x, top], [x + w, top]]), [700, 175]], c);
-    d.dots(`townlamps${i}`, TOWN[i].lamps, i ? P.lamp : P.lampHi, 1);
-  }
-  towerBody(d, 180, 176, 8, 1.2);
+    d.dots(`townlamps${i}`, TOWN[i].lamps.filter(l => lampLit(l, 0.45 + share * 0.5, t)), i ? P.lamp : P.lampHi, 1);
+  });
+  d.within({depth: 0.62}, () => towerBody(d, 180, 176, 8, 1.2));
   d.rect('street', -60, 172, 800, 80, P.floorCool, 'torn');
+  d.rect('streetCurb', -60, 172, 800, 2, P.metal);
+  for (let x = -60; x < 700; x += 26) d.rect(`paving${x}`, x, 176 + (x % 3), 14, 1, P.metal);
   d.rect('entry', 330, 92, 150, 84, P.white);
+  for (let x = 336; x < 476; x += 8) d.rect(`entryRib${x}`, x, 96, 1, 22, P.whiteDark);
   d.rect('entryRoof', 322, 84, 166, 10, P.red);
+  d.rect('entryRoofShade', 322, 92, 166, 2, P.redDark);
   d.rect('entryDoor', 365, 120, 44, 56, P.cityNear);
+  d.rect('entryGlow', 368, 123, 38, 53, P.lamp);
+  d.shadeRect('entryGlowEdge', 368, 123, 38, 53, P.lampHi, 0.5);
+  d.shade('entrySpill', [[366, 176], [408, 176], [430, 200], [340, 200]], P.lamp, 0.42);
   d.rect('entryPost', 360, 116, 6, 60, P.woodDark);
   d.rect('entryPost2', 408, 116, 6, 60, P.woodDark);
+  // 前景的路灯和灌木比角色更快掠过，拉出纵深。
+  d.within({depth: 1.35}, () => {
+    for (let x = 60; x < 620; x += 118) {
+      d.rect(`lampPost${x}`, x, 110, 2, 80, P.cityNear);
+      d.rect(`lampHead${x}`, x - 4, 108, 10, 3, P.cityNear);
+      d.glow(`lampGlow${x}`, x + 1, 112, 16, P.lampHi, 0.5);
+      d.rect(`lampBulb${x}`, x - 2, 111, 6, 1.4, P.lampHi);
+    }
+    for (let x = -20; x < 660; x += 34) d.oval(`bush${x}`, x, 198, 20 + (x % 7), 8, P.cityNear, 1);
+  });
 }
 
 const LETTER = {x: 184, y: 152, w: 28, h: 26};
 function letterFace(d, s) {
   const {x, y, w, h} = LETTER, mid = Math.abs(s.flip - 0.5) * 2 * (s.layLetter ?? 1);
+  d.shadeRect('letterShadow', x + w / 2 - w / 2 * mid + 0.8, y + 0.8, w * mid, h, P.woodDark, 0.7);
   d.rect('letter', x + w / 2 - w / 2 * mid, y, w * mid, h, P.paper);
   if (mid < 0.5) return;
   if (s.flip < 0.5) {
-    for (let i = 0; i < 4; i++) d.line(`letterline${i}`, [[x + 3, y + 8 + i * 4], [x + 25, y + 8 + i * 4]], P.paperShade, 0.7);
+    for (let i = 0; i < 4; i++) d.line(`letterline${i}`, [[x + 3, y + 8 + i * 4], [x + 25 - (i % 3) * 3, y + 8 + i * 4]], P.paperShade, 0.7);
     d.line('melody', [[x + 4, y + 4], [x + 10, y + 2.5], [x + 15, y + 4.5], [x + 22, y + 3]], P.line, 0.7);
+    for (const [nx, ny] of [[4, 4], [10, 2.5], [15, 4.5], [22, 3]]) d.oval(`note${nx}`, x + nx, y + ny, 0.7, 0.5, P.line, 1);
     return;
   }
   d.rect('sketchDoor', x + 2, y + 7, 11, 15, P.paperShade);
@@ -93,52 +155,81 @@ function letterFace(d, s) {
 
 function planFace(d, s) {
   const x = 153 + (s.planShift ?? 0), y = 152;
+  d.shadeRect('planShadow', x + 0.8, y + 0.8, 28 * (s.layPlan ?? 1), 26, P.woodDark, 0.7);
   d.rect('plan', x, y, 28 * (s.layPlan ?? 1), 26, P.white);
   if ((s.layPlan ?? 1) < 1) return;
+  d.line('planCrease', [[x + 14, y], [x + 14, y + 26]], P.whiteDark, 0.35);
+  d.line('planCrease2', [[x, y + 13], [x + 28, y + 13]], P.whiteDark, 0.35);
   d.poly('planTower', [[x + 16, y + 15], [x + 19, y + 3], [x + 22, y + 15]], P.red);
-  d.rect('planFigA', x + 14, y + 16, 3, 5, P.skinDark);
-  d.rect('planFigB', x + 22, y + 16, 3, 5, P.skinDark);
+  d.line('planTowerBrace', [[x + 17.6, y + 9], [x + 20.4, y + 9]], P.white, 0.5);
+  d.line('planTowerBrace2', [[x + 17, y + 12], [x + 21, y + 12]], P.white, 0.5);
+  d.line('planRoute', [[x + 3, y + 7], [x + 7, y + 4], [x + 11, y + 6], [x + 15, y + 8]], P.scarfDark, 0.4);
+  for (const [id, fx] of [['planFigA', 14], ['planFigB', 22]]) {
+    d.rect(id, x + fx, y + 16, 3, 5, P.skinDark);
+    d.disk(`${id}Head`, x + fx + 1.5, y + 15, 1.2, P.skin);
+  }
   d.rect('planChair1', x + 2, y + 18, 3, 5, P.woodDark);
   d.rect('planChair2', x + 7, y + 18, 3, 5, P.woodDark);
   d.rect('planLonely', x + 2.4, y + 14.6, 2.2, 3.5, P.skinDark);
+  d.disk('planLonelyHead', x + 3.5, y + 13.8, 1, P.skin);
   const open = s.planOpen;
   if (open < 1) d.poly('planFold', [[x, y + 26], [x + 13 * (1 - open) + 0.5, y + 26], [x, y + 26 - 15 * (1 - open) - 0.5]], P.whiteDark);
 }
 
 function ticket(d, id, [x, y], used) {
+  d.shadeRect(`${id}Shadow`, x - 3.1, y - 1.6, 7, 4, P.woodDark, 0.6);
   d.rect(id, x - 3.5, y - 2, 7, 4, P.paper);
   d.rect(`${id}stub`, x + 1.5, y - 2, 1.6, 4, used ? P.redDark : P.red);
+  d.line(`${id}Text`, [[x - 2.6, y - 0.7], [x + 0.6, y - 0.7]], P.line, 0.3);
+  d.line(`${id}Text2`, [[x - 2.6, y + 0.6], [x - 0.2, y + 0.6]], P.paperShade, 0.3);
 }
 
 function table(d, s) {
   d.rect('tableTop', 150, 148, 64, 38, P.wood);
+  d.rect('tableTopEdge', 150, 148, 64, 1, P.warmDark);
+  for (let i = 0; i < 7; i++) {
+    const from = 151 + hash(i) * 28;
+    d.shadeRect(`grain${i}`, from, 151 + i * 5, Math.min(26 + hash(i + 5) * 34, 213 - from), 0.6, P.woodDark, 0.55);
+  }
   d.rect('tableFront', 150, 186, 64, 6, P.woodDark);
+  d.rect('tableFrontLip', 150, 186, 64, 1, P.floorWarmDark);
   d.rect('tableLegL', 155, 192, 6, 26, P.woodDark);
   d.rect('tableLegR', 203, 192, 6, 26, P.woodDark);
   if (s.past) {
     planFace(d, s);
     d.rect('cup', 196, 143, 6, 8, P.white);
+    d.rect('cupWater', 196.8, 146, 4.4, 4, P.warmDark);
     return;
   }
-  if (s.envelope) d.rect('envelope', 156, 179, 20, 6, P.paperShade);
+  if (s.envelope) {
+    d.rect('envelope', 156, 179, 20, 6, P.paperShade);
+    d.line('envelopeFlap', [[156, 179], [166, 183], [176, 179]], P.whiteDark, 0.5);
+  }
   planFace(d, s);
   letterFace(d, s);
   d.rect('cup', 196, 143, 6, 8, P.cool);
+  d.rect('cupWater', 196.8, 146, 4.4, 4, P.sky1);
+  d.rect('cupGleam', 197.2, 144, 1, 6, P.white);
   d.rect('phone', 204, 140, 7, 11, P.cityNear);
   d.rect('phoneGlass', 204.8, 141, 5.4, 9, P.sky2);
+  d.shadeRect('phoneScreenCity', 204.8, 146, 5.4, 4, P.cityMid, 1);
   ticket(d, 'ticketA', s.ticketA, s.used);
   ticket(d, 'ticketB', s.ticketB, false);
   if (s.penAt) { const [x, y] = s.penAt; d.line('pen', [[x, y], [x + 4, y + 5]], P.ink, 1.1); }
 }
 
 function chairs(d, warm) {
-  const c = warm ? P.woodDark : P.metal, seat = warm ? P.wood : P.cityFar;
+  const c = warm ? P.woodDark : P.metal, seat = warm ? P.wood : P.cityFar, edge = warm ? P.warmDark : P.sky2;
   d.rect('chairABack', 122, 136, 5, 66, c);
+  d.rect('chairABackGleam', 122, 136, 1, 44, edge);
   d.rect('chairASeat', 122, 180, 28, 5, seat);
+  d.rect('chairASeatEdge', 122, 180, 28, 1, edge);
   d.rect('chairALeg', 124, 185, 4, 33, c);
   d.rect('chairALeg2', 144, 185, 4, 33, c);
   d.rect('chairBBack', 247, 136, 5, 66, c);
+  d.rect('chairBBackGleam', 251, 136, 1, 44, edge);
   d.rect('chairBSeat', 218, 180, 34, 5, seat);
+  d.rect('chairBSeatEdge', 218, 180, 34, 1, edge);
   d.rect('chairBLeg', 220, 185, 4, 33, c);
   d.rect('chairBLeg2', 246, 185, 4, 33, c);
 }
@@ -147,79 +238,231 @@ function scarfOnChair(d, state) {
   if (state === 'draped') {
     d.poly('scarfDraped', [[242, 138], [250, 138], [251, 172], [241, 180], [224, 180], [228, 170], [242, 168]], P.scarf);
     d.line('scarfFold', [[244, 140], [245, 166]], P.scarfDark, 1);
+    for (let y = 144; y < 166; y += 5) d.line(`scarfKnit${y}`, [[242.5, y], [250, y]], P.scarfDark, 0.4);
+    for (let x = 226; x < 240; x += 3) d.line(`scarfFringe${x}`, [[x, 179.5], [x - 1, 184]], P.scarfDark, 0.6);
   } else if (state === 'gathered') {
     d.poly('scarfGathered', [[222, 166], [244, 164], [248, 180], [220, 181]], P.scarf);
     d.line('scarfCrease', [[226, 172], [242, 171]], P.scarfDark, 1.2);
+    d.line('scarfCrease2', [[224, 177], [245, 176]], P.scarfDark, 0.6);
   }
 }
 
-function setDeck(d, s) {
+function dustMotes(d, id, seed, t, [x0, y0, x1, y1], color) {
+  const pts = [];
+  for (let i = 0; i < 18; i++) {
+    const w = x1 - x0, h = y1 - y0, drift = t * (0.8 + hash(seed + i) * 1.4);
+    pts.push([x0 + ((hash(seed + i * 7) * w + drift) % w), y0 + ((hash(seed + i * 13) * h - drift * 0.45 + h * 40) % h) + Math.sin(t * 0.7 + i) * 1.4]);
+  }
+  d.dots(id, pts, color, 0.5);
+}
+
+function setDeck(d, s, t) {
   d.rect('wall', -40, -30, 400, 205, P.cool, 'torn');
+  d.rect('wallDado', 206, 150, 170, 22, P.sky2);
+  d.rect('wallDadoLine', 206, 150, 170, 1, P.metal);
+  d.rect('wallLeft', -40, 150, 60, 22, P.sky2);
   d.rect('floor', -40, 172, 400, 90, P.floorCool, 'torn');
-  d.sky('nightWindow', WINDOW.x0, 16, WINDOW.x1 - WINDOW.x0, 128, [P.sky0, P.sky1, P.sky2]);
-  CITY.forEach((layer, i) => {
-    d.poly(`city${i}`, [[WINDOW.x0, 142], ...layer.out.flatMap(([x, top, w]) => [[Math.max(WINDOW.x0, x), top], [Math.min(WINDOW.x1, x + w), top]]), [WINDOW.x1, 142]], [P.cityFar, P.cityMid, P.cityNear][i]);
-    d.dots(`citylamps${i}`, layer.lamps.filter(([x]) => x > WINDOW.x0 + 2 && x < WINDOW.x1 - 2), i ? P.lamp : P.lampHi, i === 2 ? 1.2 : 0.9);
+  for (let x = -40; x < 360; x += 26) d.line(`tile${x}`, [[x, 172], [x - (x - 150) * 0.28, 232]], P.metal, 0.35);
+  for (const y of [180, 192, 208]) d.line(`tileRow${y}`, [[-40, y], [360, y]], P.metal, 0.35);
+  d.rect('skirting', -40, 169, 400, 3, P.metal);
+
+  const night = span(t, 18, 110);
+  d.within({clip: WINDOW_CLIP}, () => {
+    d.within({depth: 0.15}, () => d.sky('nightWindow', -240, 16, 700, 128, [P.nightDeep, P.night, P.sky0, P.sky1, P.sky2], mix(1.6, 0, night)));
+    const share = lampShare(t);
+    CITY.forEach((layer, i) => d.within({depth: CITY_DEPTH[i]}, () => {
+      d.poly(`city${i}`, [[-260, 300], ...layer.out.flatMap(([x, top, w]) => [[x, top], [x + w, top]]), [480, 300]], [P.cityFar, P.cityMid, P.cityNear][i]);
+      d.dots(`citylamps${i}`, layer.lamps.filter(l => lampLit(l, share, t)), i ? P.lamp : P.lampHi, i === 2 ? 1.2 : 0.9);
+    }));
+    d.within({depth: CITY_DEPTH[0]}, () => {
+      const blink = Math.floor(t * 1.87) % 2 === 0;
+      if (blink && share > 0.02) d.dots('beacons', BEACONS.map(([x, top, w]) => [x + w / 2, top - 1]), P.red, 1.2);
+    });
+    // L02：一道更亮的灯火由高楼沿视线落到街道。
+    if (t >= 26.657 && t < 35.225) {
+      const front = mix(84, 236, (t - 26.657) / 8.568);
+      d.within({depth: CITY_DEPTH[2]}, () => d.dots('fallingLights', CITY[2].lamps.filter(l => Math.abs(l[1] - front) < 13 && l[2] < 0.82), P.lampHi, 1.5));
+    }
+    d.within({depth: 0.88}, () => {
+      const cars = [];
+      for (let i = 0; i < 16; i++) cars.push([-80 + ((hash(i) * 460 + t * (i % 2 ? 9 : -7) + 4600) % 460), 137.5 + (i % 2) * 2]);
+      d.rect('road', -240, 136, 700, 7, P.nightDeep);
+      if (t < 268) d.dots('carLights', cars, P.lampHi, 0.9);
+    });
+    // 面向窗外时，玻璃上有 A 的倒影和呼吸的雾气。
+    if (s.reflect) {
+      d.clawd('reflectionA', AX + 4, AY - 31, {facing: 'front', expression: t < 35 ? 'neutral' : 'sad', action: 'idle', frame: 0, unit: 0.9, density: 0.3, blink: blinkAt(t, 1.3)});
+      d.glow('breathFog', AX + 18, AY - 12, 8 + 5 * lung(t, 1), P.white, 0.08 + 0.2 * lung(t, 1));
+    }
   });
+  d.rect('handrail', 20, 122, 190, 2, P.metal);
+  d.rect('handrailGleam', 20, 122, 190, 0.7, P.cool);
+  for (const x of [50, 113, 176]) d.rect(`railPost${x}`, x, 124, 1.4, 18, P.metal);
   d.rect('frameTop', 20, 12, 190, 5, P.metal);
   d.rect('frameBottom', 20, 142, 190, 6, P.metal);
+  d.rect('frameBottomGleam', 20, 142, 190, 1, P.cool);
   d.rect('frameLeft', 20, 12, 5, 136, P.metal);
   d.rect('frameRight', 205, 12, 5, 136, P.metal);
   d.rect('mullion1', 80, 12, 3, 136, P.metal);
   d.rect('mullion2', 143, 12, 3, 136, P.metal);
+  d.rect('mullion1Gleam', 80, 12, 1, 136, P.sky2);
+  d.rect('mullion2Gleam', 143, 12, 1, 136, P.sky2);
+  // 窗光落在地上，顺着窗格分成三块。
+  for (const [i, [a, b]] of [[25, 80], [83, 143], [146, 205]].entries()) d.shade(`windowLight${i}`, [[a, 172], [b, 172], [b - 34, 204], [a - 42, 204]], P.sky2, 0.62 - 0.24 * night);
+  d.oval('tableShadow', 182, 214, 48, 6, P.metal, 0.75);
+  d.oval('chairAShadow', 136, 216, 22, 4, P.metal, 0.75);
+  d.oval('chairBShadow', 234, 216, 24, 4, P.metal, 0.75);
 
   d.rect('elevFrame', 214, 72, 58, 100, P.metal);
-  d.rect('elevInside', 218, 78, 50, 94, P.cityFar);
-  const gap = 25 * s.elevator;
+  d.rect('elevFrameGleam', 214, 72, 58, 1, P.cool);
+  const open = s.elevator;
+  d.rect('elevInside', 218, 78, 50, 94, open > 0 ? P.white : P.cityFar);
+  if (open > 0) {
+    // 门开后看得见轿厢的进深：两侧壁向后收，后壁更亮，地面没有人。
+    d.poly('elevSideL', [[218, 78], [229, 88], [229, 152], [218, 172]], P.paperShade);
+    d.poly('elevSideR', [[268, 78], [257, 88], [257, 152], [268, 172]], P.paperShade);
+    d.rect('elevBackWall', 229, 88, 28, 64, P.lampHi);
+    d.poly('elevCeiling', [[218, 78], [268, 78], [257, 88], [229, 88]], P.white);
+    d.rect('elevCeilingStrip', 232, 82, 22, 2, P.lampHi);
+    d.poly('elevFloor', [[229, 152], [257, 152], [268, 172], [218, 172]], P.whiteDark);
+    d.rect('elevRail', 229, 128, 28, 1.2, P.scarfDark);
+  }
+  const gap = 25 * open;
   d.rect('elevDoorL', 218, 78, 25 - gap, 94, P.whiteDark);
   d.rect('elevDoorR', 243 + gap, 78, 25 - gap, 94, P.whiteDark);
-  d.rect('elevLamp', 237, 66, 12, 4, s.elevator > 0 ? P.lamp : P.sky2);
+  d.rect('elevDoorSeam', 242.6 - gap, 78, 0.8, 94, P.metal);
+  d.rect('elevDoorSeamR', 242.6 + gap, 78, 0.8, 94, P.metal);
+  d.rect('elevJambL', 217, 78, 1.6, 94, P.metal);
+  d.rect('elevJambR', 267.4, 78, 1.6, 94, P.metal);
+  // 楼层指示灯在 L36 前走到本层，门才打开。
+  d.rect('elevPanel', 233, 65, 20, 6, P.nightDeep);
+  const arrive = span(t, 238.5, 242.556);
+  for (let i = 0; i < 4; i++) d.rect(`elevDot${i}`, 235.5 + i * 4.2, 67, 2, 2, Math.round(arrive * 3) === i && t > 238.5 ? P.lampHi : P.metal);
+  d.rect('elevLamp', 237, 66, 12, 4, P.nightDeep);
+  d.rect('elevLampOn', 237 + (Math.round(arrive * 3)) * 4, 67, 3, 2, open > 0 ? P.lampHi : P.lamp);
+  if (open > 0) d.shade('elevatorSpill', [[218, 172], [268, 172], [268, 222], [150, 222]], P.lampHi, 0.5 * open);
   chairs(d, false);
   scarfOnChair(d, s.scarf);
+  dustMotes(d, 'dust', 3, t, [20, 40, 260, 170], P.white);
 }
 
 const stickerX = p => mix(225, 244, p);
 
-function setHome(d, s) {
+function setHome(d, s, t) {
+  const dim = s.dim ?? 0;
   d.rect('homeWall', -40, -30, 400, 205, P.warm, 'torn');
+  for (let y = -24; y < 156; y += 9) for (let x = -36 + (y % 2) * 4; x < 360; x += 12) d.dots(`paper${x}${y}`, [[x, y]], P.warmDark, 0.7);
   d.rect('homeFloor', -40, 172, 400, 90, P.floorWarm, 'torn');
+  for (let i = 0; i < 12; i++) d.line(`plank${i}`, [[-40 + i * 34, 172], [-40 + i * 34 - (i * 34 - 190) * 0.3, 232]], P.floorWarmDark, 0.4);
   d.rect('homeBand', -40, 156, 400, 16, P.warmDark);
+  d.rect('homeBandTop', -40, 156, 400, 1, P.wood);
+  d.rect('homeSkirt', -40, 170, 400, 2, P.woodDark);
   d.rect('homeDoor', 18, 66, 44, 106, P.woodDark);
   d.rect('homeDoorInset', 24, 74, 32, 42, P.wood);
+  d.rect('homeDoorInset2', 24, 122, 32, 42, P.wood);
   d.disk('homeKnob', 54, 124, 2, P.lamp);
+  d.rect('photoFrame', 88, 92, 20, 24, P.woodDark);
+  d.rect('photoMat', 90, 94, 16, 20, P.paper);
+  d.poly('photoTower', [[95, 112], [98, 97], [101, 112]], P.red);
+  d.rect('shelf', 82, 124, 40, 2, P.woodDark);
+  d.rect('shelfBook', 88, 114, 4, 10, P.redDark);
+  d.rect('shelfBook2', 93, 116, 3, 8, P.scarfDark);
   d.rect('calendar', 216, 128, 36, 44, P.white);
   d.rect('calendarHead', 216, 128, 36, 8, P.red);
+  d.rect('calendarRing', 233, 125, 2, 5, P.line);
   for (let r = 0; r < 3; r++) for (let c = 0; c < 5; c++) d.rect(`cal${r}${c}`, 218.5 + c * 6.5, 141 + r * 10, 5, 7, P.paperShade);
   d.rect('calSticker', stickerX(s.sticker), 161, 5, 7, P.scarf);
   d.rect('lampCord', 181, -30, 1.4, 60, P.line);
+  d.glow('lampPool', 182, 72, 96 - 30 * dim, P.lampHi, 0.7 - 0.4 * dim);
   d.poly('lampShade', [[168, 30], [196, 30], [204, 44], [160, 44]], P.scarf);
+  d.rect('lampRim', 160, 43, 44, 1.4, P.scarfDark);
+  d.rect('lampBulb', 176, 44, 12, 2, P.lampHi);
+  d.shade('lampCone', [[162, 46], [202, 46], [236, 148], [128, 148]], P.lampHi, 0.2 - 0.12 * dim);
+  // 等得越久屋里越暗：四周压上地板的深色。
+  if (dim > 0) { d.shadeRect('dusk', -40, -30, 170, 202, P.floorWarmDark, 0.32 * dim); d.shadeRect('dusk2', 236, -30, 130, 202, P.floorWarmDark, 0.32 * dim); }
+  d.oval('tableShadow', 182, 214, 48, 6, P.floorWarmDark, 0.8);
+  d.oval('chairAShadow', 136, 216, 22, 4, P.floorWarmDark, 0.8);
+  d.oval('chairBShadow', 234, 216, 24, 4, P.floorWarmDark, 0.8);
   chairs(d, true);
+  dustMotes(d, 'dust', 19, t, [120, 50, 250, 150], P.lampHi);
 }
 
-function setDoor(d, s) {
-  d.rect('doorOutside', -60, -40, 230, 260, P.sky2, 'torn');
+function setDoor(d, s, t) {
+  d.rect('doorOutside', -60, -40, 230, 260, P.night, 'torn');
+  d.within({clip: [-60, -40, 158, 145]}, () => {
+    d.sky('doorSky', -60, -40, 230, 185, [P.nightDeep, P.night, P.sky0, P.sky1]);
+    d.within({depth: 0.55}, () => {
+      for (let i = 0; i < 9; i++) {
+        const x = -70 + i * 30, top = 60 + hash(i + 2) * 40, c = i % 2 ? P.cityMid : P.cityNear;
+        d.rect(`house${i}`, x, top, 28, 150 - top, c);
+        d.poly(`roof${i}`, [[x - 2, top], [x + 14, top - 12], [x + 30, top]], P.nightDeep);
+        if (hash(i + 30) > 0.3) d.rect(`houseLamp${i}`, x + 9, top + 12, 7, 8, Math.floor(t / 7 + i) % 5 ? P.lamp : P.cityFar);
+      }
+    });
+    d.rect('fence', -60, 132, 230, 13, P.nightDeep);
+    for (let x = -56; x < 160; x += 8) d.rect(`fencePost${x}`, x, 128, 3, 17, P.cityNear);
+    d.rect('streetPole', 40, 44, 2, 101, P.nightDeep);
+    d.glow('streetLampGlow', 41, 46, 30, P.lampHi, 0.5);
+    d.rect('streetLampHead', 34, 42, 14, 3, P.nightDeep);
+    d.rect('streetLampBulb', 36, 45, 10, 1.4, P.lampHi);
+  });
   d.rect('doorStreet', -60, 145, 230, 80, P.floorCool, 'torn');
+  d.rect('doorCurb', -60, 145, 230, 2, P.metal);
+  for (let x = -56; x < 158; x += 22) d.rect(`street${x}`, x, 152 + (x % 4), 12, 1, P.metal);
+  d.oval('streetLampPool', 41, 152, 34, 6, P.sky2, 0.65);
   d.rect('doorWall', 170, -40, 240, 260, P.warm, 'torn');
+  for (let y = -30; y < 118; y += 9) for (let x = 174 + (y % 2) * 4; x < 400; x += 12) d.dots(`hallPaper${x}${y}`, [[x, y]], P.warmDark, 0.7);
+  d.rect('hallDado', 170, 118, 240, 27, P.warmDark);
+  d.rect('hallDadoLine', 170, 118, 240, 1, P.wood);
   d.rect('doorFloor', 170, 145, 240, 80, P.floorWarm, 'torn');
+  for (let x = 170; x < 410; x += 18) d.line(`hallPlank${x}`, [[x, 145], [x + (x - 190) * 0.3, 225]], P.floorWarmDark, 0.35);
+  d.rect('hook', 228, 74, 22, 2, P.woodDark);
+  if (s.clock) {
+    // 与回信草图相同的 19:00：时针指 7，分针随时间微微走动。
+    d.disk('hallClock', 232, 52, 8, P.woodDark);
+    d.disk('hallClockFace', 232, 52, 6.6, P.white);
+    d.line('hallClockHour', [[232, 52], [229.2, 56.3]], P.ink, 0.8);
+    const minute = (t % 60) / 60 * Math.PI / 5 - Math.PI / 2;
+    d.line('hallClockMinute', [[232, 52], [232 + Math.cos(minute) * 5.4, 52 + Math.sin(minute) * 5.4]], P.ink, 0.55);
+  }
+  const open = s.doorOpen;
+  if (open > 0) d.shade('doorSpill', [[158, 145], [202, 145], [122 - 90 * open, 225], [40 - 90 * open, 225]], P.lamp, 0.5 * open);
   d.rect('doorHead', 150, 24, 60, 10, P.woodDark);
   d.rect('doorJamb', 150, 24, 8, 121, P.woodDark);
   d.rect('doorJamb2', 202, 24, 8, 121, P.woodDark);
-  const w = 44 * (1 - s.doorOpen) + 7;
+  d.rect('doorJambLine', 156, 34, 1, 111, P.line);
+  d.rect('doorJambLine2', 203, 34, 1, 111, P.line);
+  const w = 44 * (1 - open) + 7;
   d.rect('doorLeaf', 158, 34, w, 111, P.wood);
+  if (w > 20) { d.rect('doorPanel', 162, 42, w - 8, 44, P.woodDark); d.rect('doorPanel2', 162, 92, w - 8, 44, P.woodDark); d.rect('doorPanelIn', 163.5, 43.5, w - 11, 41, P.wood); d.rect('doorPanelIn2', 163.5, 93.5, w - 11, 41, P.wood); }
   d.disk('doorKnob', 158 + w - 3.5, 135, 1.8, P.lamp);
 }
 
-function setPhone(d, s) {
-  d.rect('phoneBack', -20, -20, 360, 220, P.cool, 'torn');
-  d.rect('phoneBody', 86, -8, 148, 196, P.cityNear);
-  d.sky('phoneSky', 94, 2, 132, 176, [P.sky0, P.sky1, P.sky2]);
-  d.poly('phoneCity', [[94, 130], [116, 118], [134, 126], [160, 110], [188, 124], [226, 112], [226, 178], [94, 178]], P.cityMid);
-  d.dots('phoneLamps', [[108, 150], [124, 140], [150, 134], [168, 150], [194, 140], [212, 150], [140, 164], [186, 164], [120, 170], [206, 170]], P.lamp, 1.3);
-  const shift = mix(0, -46, s.pan), u = mix(2.4, 3, s.grow), x = mix(138, 112, s.grow) + shift, y = mix(90, 72, s.grow);
-  d.rect('phoneChairBack', 214 + shift, 88, 8, 90, P.metal);
-  d.rect('phoneChairSeat', 176 + shift, 150, 44, 7, P.cityFar);
-  d.clawd('selfie', x, y, {facing: 'front', expression: s.expr, action: 'hug', frame: 0, unit: u});
-  d.poly('selfieScarf', [[x + 6 * u, y + 20.67 * u], [x + 22 * u, y + 20.67 * u], [x + 20.67 * u, y + 29.33 * u], [x + 7.33 * u, y + 29.33 * u]], P.scarf);
+function setPhone(d, s, t) {
+  d.rect('phoneBack', -20, -20, 360, 220, P.wood, 'torn');
+  d.rect('phoneWall', -20, -20, 360, 110, P.nightDeep);
+  d.rect('phoneTableEdge', -20, 90, 360, 2, P.woodDark);
+  for (let i = 0; i < 9; i++) d.glow(`bokeh${i}`, hash(i) * 340 - 10, 8 + hash(i + 20) * 72, 7 + hash(i + 40) * 6, i % 3 ? P.lamp : P.sky2, 0.5 + 0.3 * Math.sin(t * 0.6 + i) ** 2);
+  for (let i = 0; i < 6; i++) d.shadeRect(`phoneGrain${i}`, -20 + hash(i + 3) * 150, 104 + i * 15, 90 + hash(i + 9) * 150, 1, P.woodDark, 0.55);
+  d.shadeRect('phoneShadow', 94, -2, 152, 198, P.woodDark, 0.75);
+  d.rect('phoneBody', 86, -8, 148, 196, P.ink);
+  d.rect('phoneBodyEdge', 88, -6, 144, 192, P.cityNear);
+  d.within({clip: [94, 2, 226, 178]}, () => {
+    d.sky('phoneSky', 94, 2, 132, 176, [P.nightDeep, P.night, P.sky0, P.sky1]);
+    d.poly('phoneCity', [[94, 130], [116, 118], [134, 126], [160, 110], [188, 124], [226, 112], [226, 178], [94, 178]], P.cityMid);
+    const lamps = [];
+    for (let i = 0; i < 34; i++) if (Math.floor(t * 1.5 + i * 2.3) % 9) lamps.push([94 + hash(i + 4) * 132, 128 + hash(i + 44) * 48]);
+    d.dots('phoneLamps', lamps, P.lamp, 1.3);
+    const shift = mix(0, -46, s.pan), u = mix(2.4, 3, s.grow), x = mix(138, 112, s.grow) + shift, y = mix(90, 72, s.grow);
+    d.rect('phoneChairBack', 214 + shift, 88, 8, 90, P.metal);
+    d.rect('phoneChairSeat', 176 + shift, 150, 44, 7, P.cityFar);
+    d.clawd('selfie', x, y, {facing: 'front', expression: s.expr, action: 'hug', frame: 0, unit: u, breath: lung(t, 0.7), blink: blinkAt(t, 0.4)});
+    d.poly('selfieScarf', [[x + 6 * u, y + 20.67 * u], [x + 22 * u, y + 20.67 * u], [x + 20.67 * u, y + 29.33 * u], [x + 7.33 * u, y + 29.33 * u]], P.scarf);
+    d.line('selfieScarfKnit', [[x + 7 * u, y + 24 * u], [x + 21 * u, y + 24 * u]], P.scarfDark, 1);
+    d.shade('phoneGlare', [[150, 2], [176, 2], [116, 178], [94, 178], [94, 150]], P.cool, 0.14);
+  });
+  d.rect('phoneNotch', 146, -6, 28, 6, P.ink);
+  d.disk('phoneLens', 168, -3, 1.4, P.night);
 }
 
 const AX = 121, AY = 156, BX = 211, BY = 156, STAND = [196, 165];
@@ -271,6 +514,15 @@ function tableState(t) {
 }
 
 const breath = (t, a, b) => (Math.sin(span(t, a, b) * Math.PI) > 0.45 ? -1 : 0);
+
+// 半速约 56 BPM，两拍一次呼吸；副歌里呼吸更深。
+const LUNG_SECONDS = 2 * 60 / 56;
+function lung(t, amount) { return amount * (0.5 - 0.5 * Math.cos(2 * Math.PI * t / LUNG_SECONDS)); }
+const inChorus = t => (t >= 67.315 && t < 102.702) || (t >= 172.362 && t < 210.93);
+function blinkAt(t, seed) {
+  const slot = Math.floor((t + seed) / 3.7), at = slot * 3.7 + hash(slot + seed) * 2.6;
+  return t + seed - at >= 0 && t + seed - at < 0.17;
+}
 const shake = t => (Math.floor(t * 8) % 2 ? 1 : 0);
 const SAD = {expr: 'sad', facing: 'right'};
 
@@ -368,8 +620,8 @@ const SCRIPT = {
 
 // 换景只发生在不透明实物完全遮住画面时；键为进入该镜的衔接。
 const OCCLUDERS = {
-  P02: P.woodDark, L05: P.paperShade, L06: P.white, L07: P.scarf, L13: P.scarf, L14: P.scarf, I02: P.white,
-  L15: P.woodDark, L17: P.woodDark, L18: P.woodDark, L19: P.woodDark, L21: P.woodDark, L31: P.cityNear, L33: P.cityNear,
+  P02: 'post', L05: 'envelope', L06: 'calendar', L07: 'scarf', L13: 'scarf', L14: 'scarf', I02: 'plan',
+  L15: 'post', L17: 'post', L18: 'post', L19: 'post', L21: 'post', L31: 'phone', L33: 'phone',
 };
 export const WIPE_SECONDS = 0.534;
 
@@ -381,7 +633,10 @@ export const KEY_TIMES = {
 
 function clawdA(d, s) {
   const a = s.a, x = (a.x ?? AX) + (a.dx ?? 0), y = (a.y ?? AY) + (a.dy ?? 0);
-  d.clawd('A', x, y, {facing: a.facing ?? 'right', expression: a.expr ?? 'neutral', action: a.action ?? 'idle', frame: a.frame ?? 0});
+  d.oval('shadowA', x + 16, y + 27.5, 12, 1.6, s.set === 'home' ? P.floorWarmDark : P.metal, 0.8);
+  const still = (a.action ?? 'idle') === 'idle' || a.action === 'hug';
+  d.clawd('A', x, y, {facing: a.facing ?? 'right', expression: a.expr ?? 'neutral', action: a.action ?? 'idle', frame: a.frame ?? 0,
+    breath: still ? lung(s.t, inChorus(s.t) ? 1.9 : 1) : 0, blink: (a.facing ?? 'right') !== 'back' && blinkAt(s.t, 0)});
   if (a.mouth === 'hum') d.disk('mouthHum', x + 21.5, y + 18.5, 1.2, P.ink);
   if (a.mouth === 'bite') d.rect('mouthBite', x + 20, y + 18.5, 3, 0.9, P.ink);
   if (a.phone) d.rect('ownPhone', x + 27, y + 9, 4, 8, P.cityNear);
@@ -389,42 +644,56 @@ function clawdA(d, s) {
 
 function clawdB(d, s) {
   const b = s.b, x = (b.x ?? BX) + (b.dx ?? 0), y = (b.y ?? BY) + (b.dy ?? 0);
-  d.clawd('B', x, y, {facing: 'left', expression: b.expr ?? 'neutral', action: b.action ?? 'idle', frame: 0});
-  if (b.scarf) { d.rect('bScarf', x + 7, y + 20, 16, 3, P.scarf); d.poly('bScarfTail', [[x + 19, y + 22], [x + 23, y + 22], [x + 24, y + 29], [x + 20, y + 29]], P.scarf); }
+  d.oval('shadowB', x + 16, y + 27.5, 12, 1.6, s.set === 'home' ? P.floorWarmDark : P.metal, 0.8);
+  d.clawd('B', x, y, {facing: 'left', expression: b.expr ?? 'neutral', action: b.action ?? 'idle', frame: 0, breath: lung(s.t + 0.7, 0.9), blink: blinkAt(s.t, 1.9)});
+  if (b.scarf) {
+    d.rect('bScarf', x + 7, y + 20, 16, 3, P.scarf);
+    d.rect('bScarfShade', x + 7, y + 22.4, 16, 0.6, P.scarfDark);
+    d.poly('bScarfTail', [[x + 19, y + 22], [x + 23, y + 22], [x + 24, y + 29], [x + 20, y + 29]], P.scarf);
+    d.line('bScarfTailKnit', [[x + 19.5, y + 25.5], [x + 23.5, y + 25.5]], P.scarfDark, 0.4);
+  }
   if (b.tense) d.rect('bTense', x + 9, y + 11, 5, 0.9, P.ink);
 }
 
 export function frameAt(t) {
   const index = shotIndexAt(t), shot = SHOTS[index];
   let build = shot, buildT = t, wipe = null;
-  const color = OCCLUDERS[shot.id];
-  if (color && t - shot.start < WIPE_SECONDS) {
+  const kind = OCCLUDERS[shot.id];
+  if (kind && t - shot.start < WIPE_SECONDS) {
     const w = (t - shot.start) / WIPE_SECONDS;
-    wipe = {x: 320 - 700 * w, width: 380, color};
+    wipe = {x: 320 - 700 * w, width: 380, kind};
     if (w < 0.5) { build = SHOTS[index - 1]; buildT = build.end - 1e-4; }
   }
   const d = new Draw();
   const s = SCRIPT[build.id](span(buildT, build.start, build.end), buildT);
+  s.t = buildT;
   const ts = tableState(buildT);
   const cam = s.cam ?? [160, 90, 1];
 
   if (s.set === 'tower') {
-    setTower(d);
+    setTower(d, buildT);
     const {x, frame} = s.walker;
-    d.clawd('A', x, 148, {facing: 'right', expression: 'neutral', action: 'walk', frame});
+    d.oval('shadowA', x + 16, 175.5, 12, 1.6, P.metal, 0.8);
+    d.clawd('A', x, 148, {facing: 'right', expression: 'neutral', action: 'walk', frame, blink: blinkAt(buildT, 0)});
     ticket(d, 'handTicket', [x + 31, 167], false);
     ticket(d, 'handTicket2', [x + 33, 170], false);
   }
-  if (s.set === 'phone') setPhone(d, s);
+  if (s.set === 'phone') setPhone(d, s, buildT);
   if (s.set === 'door') {
-    setDoor(d, s);
-    if (s.suitcaseAt !== undefined) { d.rect('suitcase', s.suitcaseAt, 126, 16, 19, P.metal); d.rect('suitcaseStrap', s.suitcaseAt + 7, 126, 2, 19, P.whiteDark); }
+    setDoor(d, {...s, clock: build.id === 'L19' || build.id === 'L20'}, buildT);
+    if (s.suitcaseAt !== undefined) {
+      d.rect('suitcase', s.suitcaseAt, 126, 16, 19, P.metal);
+      d.rect('suitcaseStrap', s.suitcaseAt + 7, 126, 2, 19, P.whiteDark);
+      d.rect('suitcaseHandle', s.suitcaseAt + 5, 123, 6, 3, P.cityNear);
+      d.oval('suitcaseShadow', s.suitcaseAt + 8, 145, 10, 1.2, P.metal, 0.8);
+    }
     if (s.a) clawdA(d, s);
     if (s.b) clawdB(d, s);
     if (s.doorFist) { d.disk('fistB', s.b.x + 5, s.b.y + 17.5, 2, P.skinLight); d.disk('fistA', s.b.x + 25, s.b.y + 17.5, 2, P.skinLight); }
   }
   if (s.set === 'deck' || s.set === 'home') {
-    if (s.set === 'deck') setDeck(d, ts); else setHome(d, {sticker: s.sticker ?? 0});
+    if (s.set === 'deck') setDeck(d, {...ts, reflect: s.a?.facing === 'back'}, buildT);
+    else setHome(d, {sticker: s.sticker ?? 0, dim: s.dinner ? span(buildT, 148.793, 155.2) : 0}, buildT);
     if (s.suitcase) { d.rect('homeSuitcase', 96, 165, 18, 30, P.metal); d.rect('homeStrap', 104, 165, 2, 30, P.whiteDark); }
     const frontA = s.a && (s.a.front || (s.a.dx ?? 0) >= 4), frontB = (s.b?.dx ?? 0) < 0;
     if (s.a && !frontA) clawdA(d, s);
@@ -432,7 +701,9 @@ export function frameAt(t) {
     table(d, s.set === 'home' ? {past: true, planOpen: s.corner ? 0 : 1 - (s.planFolded ?? 0), planShift: 24 * (s.planFolded ?? 0)} : ts);
     if (s.dinner) {
       d.rect('dinnerCover', 152, 151, 60, 30, P.wood);
-      for (const [x, id] of [[166, 'dish1'], [198, 'dish2']]) { d.disk(id, x, 166, 9, P.white); d.disk(`${id}Food`, x, 166, 5, P.warmDark); }
+      for (const [x, id] of [[166, 'dish1'], [198, 'dish2']]) { d.disk(id, x, 166, 9, P.white); d.disk(`${id}Rim`, x, 166, 7.4, P.whiteDark); d.disk(`${id}Food`, x, 166, 5, P.warmDark); d.disk(`${id}Top`, x - 1, 165, 2.4, P.scarfDark); }
+      // 饭菜的热气在这一句的前段散尽。
+      if (buildT < 152.5) d.dots('dinnerSteam', [166, 198].flatMap(x => [0, 1, 2].map(i => [x + Math.sin(buildT * 2 + i * 2) * 2, 158 - ((buildT * 5 + i * 5) % 15)])), P.white, 0.7);
     }
     if (s.key !== undefined) { d.disk('key', s.key, 171, 2.6, P.lamp); d.rect('keyStem', s.key + 2, 170.4, 6, 1.4, P.lamp); }
     if (frontA) clawdA(d, s);
@@ -461,5 +732,6 @@ export function frameAt(t) {
     if (s.set === 'deck' && buildT > 184 && buildT < 211) d.disk('tearMark', 158, 168, 1.1, P.tear);
     if (s.sleeve) { const [x, y] = s.sleeve; d.line('sleeve', [[x + 22, y + 60], [x, y]], P.cityNear, 7); d.rect('tissue', x - 7, y - 6, 9, 8, P.white); }
   }
-  return {shot: build.id, cam: {cx: cam[0], cy: cam[1], z: cam[2]}, items: d.items, wipe};
+  const vignette = {color: s.set === 'home' ? P.floorWarmDark : P.nightDeep, amount: 0.42 + (inChorus(buildT) ? 0.14 : 0) + 0.26 * span(buildT, 262, 272)};
+  return {shot: build.id, cam: {cx: cam[0], cy: cam[1], z: cam[2]}, items: d.items, wipe, vignette};
 }
