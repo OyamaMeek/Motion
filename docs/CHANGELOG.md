@@ -43,3 +43,22 @@
 - **Git 提交**：`e35b372dee464587df7f8fbaefc7e48e13016d06 docs: use breakup perspective and confirm lyrics`；以随后文档提交补记哈希。未推送：main 未配置 upstream。
 
 ---
+
+## [2026-11-01 17:23] 收集 Clawd 小螃蟹 MV 参考素材
+
+- **需求/问题描述**：
+  > 上网搜寻并获得 Clawd 小螃蟹的样式图，供后续生成 MV 使用。
+
+- **实际实现的功能与改动**：
+  - 核实两个社区素材库，下载 6 种风格 GIF、8 种表情动作 SVG，并从 GIF 提取 6 张首帧 PNG。
+  - 记录原始来源、固定版本、用途建议、图片分辨率与许可证原文。
+  - 验证：下载全部成功，ffmpeg 提帧成功；文件格式与 200×200 尺寸检查通过。未生成新角色图或 MV。
+
+- **涉及文件**：
+  - `assets/clawd/README.md`
+  - `assets/clawd/styles/`、`assets/clawd/expressions/`、`assets/clawd/licenses/`
+  - `docs/CHANGELOG.md`
+
+- **Git 提交**：待提交；main 未配置 upstream，无法向已配置的跟踪分支推送。
+
+---
