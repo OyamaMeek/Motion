@@ -546,6 +546,6 @@
   - `嘉宾/MV/kit.js`、`sets.js`、`poses.js`、`export-stills.sh`、`boards/`
   - `.agent/visual/嘉宾图像分镜.md`、`memory/agents.md`、`verify.md`、`gotchas.md`、`docs/CHANGELOG.md`
 
-- **Git 提交**：待提交
+- **Git 提交**：`afda37ad3f3fe955c62f680adaf53e4e3a4d27f1 fix: correct Jiabin storyboard stills after visual review`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
