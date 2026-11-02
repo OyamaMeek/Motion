@@ -493,6 +493,6 @@
   - `嘉宾/开场样图/scene.js`、`paper.js`、`inspect.js`、`render.mjs`、`scene.test.mjs`、`index.html`、`README.md`、`验证结果.json`、`02-纸艺拼贴.png`
   - `memory/agents.md`、`plan.md`、`progress.md`、`verify.md`、`gotchas.md`、`docs/CHANGELOG.md`
 
-- **Git 提交**：待提交
+- **Git 提交**：`1f5c3ee3c359f36416a9bc246b34b073f91bc21b feat: use Clawd as the lead in the Jiabin paper opening`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
