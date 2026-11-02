@@ -401,3 +401,19 @@
 - **Git 提交**：`32d14d1ccc3cdc5b433fa2dea9c80c84ab8f051b docs: analyze Jiabin lyrics themes and measured rhythm`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
+
+## [2026-11-02 10:39] 确认嘉宾歌词用字「订做」
+
+- **需求/问题描述**：
+  > 用户确认 00:52.55 的歌词采用「订做」。
+
+- **实际实现的功能与改动**：
+  - `song.md` 记录 L06「订做」已获确认，移除待确认表与询问文字；保留原始 LRC，音频和测量结果不变。
+  - 同步歌词确认状态及验证记录；沿用现有数据检查，核对输入哈希、46 行歌词、报告时间和确认状态，未重新测量音频、未执行 ASR 或听辨。
+
+- **涉及文件**：
+  - `嘉宾/song.md`、`memory/progress.md`、`memory/verify.md`、`docs/CHANGELOG.md`
+
+- **Git 提交**：待提交。
+
+---
