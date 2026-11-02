@@ -496,3 +496,20 @@
 - **Git 提交**：`1f5c3ee3c359f36416a9bc246b34b073f91bc21b feat: use Clawd as the lead in the Jiabin paper opening`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
+
+## [2026-11-02 21:41] 嘉宾 MV 文字分镜
+
+- **需求/问题描述**：
+  > 按 HyperFrames 分镜流程输出《嘉宾》的 storyboard.md：以 LRC 为准每句一镜，抽象歌词拆成连续动作，标注起止时间、场景、动作和运镜，Clawd 尽量正面，切镜落在 song.md 的节拍点，完成后暂停等待确认。
+
+- **实际实现的功能与改动**：
+  - 分镜：52 镜（46 句歌词、前奏 2、间奏 2、尾奏 2），每镜一个主要动作；歌词以 L 行号引用 LRC，正文不写入。任务第 4 项是占位文字，抽象歌词表由主代理拟定并标明待确认。
+  - 验证：Python 标准库脚本检查切点、拍号、连续性、起唱归属、poster、reads 窗口、歌词片段和禁用表达，错误 0。切点未经听辨校准；没有制作草图、截图或动画。
+
+- **涉及文件**：
+  - `嘉宾/storyboard.md` (+1030)
+  - `memory/agents.md`、`plan.md`、`progress.md`、`verify.md`、`docs/CHANGELOG.md`
+
+- **Git 提交**：待提交
+
+---

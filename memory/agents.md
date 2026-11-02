@@ -1,5 +1,9 @@
 # 当前任务环境
 
+## 2026-11-02：嘉宾 MV 分镜
+
+- 主代理独立完成文字分镜；依据 HyperFrames v0.8.223 自带的 `types/music.md`、`story.md`、`storyboard.md`、`storyboard-format.md`。Python 标准库校验，未调用图像、截图或渲染工具。
+
 ## 2026-11-02：嘉宾纸艺开场样图
 
 - 主代理独立完成。绘制：Canvas 2D ES module；渲染：复用 `會呼吸的痛/開場樣圖/v2/chrome.mjs` 驱动本机 Chrome 无头模式；字体 Songti SC；Clawd 几何经 `會呼吸的痛/MV/geometry.js` 取自 `assets/clawd/character.js`。不用图像生成模型。
