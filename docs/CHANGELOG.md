@@ -565,6 +565,6 @@
   - `嘉宾/storyboard.md` (+210 / -112)
   - `memory/plan.md`、`memory/progress.md`、`memory/verify.md`、`docs/CHANGELOG.md`
 
-- **Git 提交**：待提交
+- **Git 提交**：`bb17fb6c17157596be20665cf74ebccab7abfe39 docs: specify every Jiabin shot transition on the beat`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
