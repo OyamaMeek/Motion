@@ -549,3 +549,22 @@
 - **Git 提交**：`afda37ad3f3fe955c62f680adaf53e4e3a4d27f1 fix: correct Jiabin storyboard stills after visual review`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
+
+## [2026-11-02 22:28] 嘉宾相邻镜头衔接
+
+- **需求/问题描述**：
+  > 根据画风与歌曲节奏，从一镜到底、卡点切换、拼贴快切中推荐一种并说明理由，在 `嘉宾/storyboard.md` 中为每两个相邻镜头写明衔接方式。
+
+- **实际实现的功能与改动**：
+  - 方案：推荐②卡点切换，只取前景物体遮挡，不用甩镜；写明不选另外两种的依据。
+  - 衔接：51 条逐对写明起拍、方式、承接和相接帧方框（实物遮挡 19、撕开 2、同场延续 30）；去掉 L17→L18、L24→L25 的无遮挡切换；同步各镜 `transition_in`、`camera` 和 `reads`，L10 改为握着旧合照。
+  - 跟进：定格与衔接表不一致的地方列入“定格待跟进”，本次未改定格代码。
+  - 验证：`.agent/work/嘉宾转场校验.mjs` 写表前失败、写完通过；`校验嘉宾分镜.py` 错误 0；`shots.js` 重新生成后不变；`stage.test.mjs` 2 项通过。未渲染运动和接缝，未查看图像，节拍未听辨校准。
+
+- **涉及文件**：
+  - `嘉宾/storyboard.md` (+210 / -112)
+  - `memory/plan.md`、`memory/progress.md`、`memory/verify.md`、`docs/CHANGELOG.md`
+
+- **Git 提交**：待提交
+
+---
