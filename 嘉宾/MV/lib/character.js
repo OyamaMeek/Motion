@@ -1,0 +1,1 @@
+../../../assets/clawd/character.js

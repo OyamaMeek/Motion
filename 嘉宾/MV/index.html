@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<title>嘉宾 MV</title>
+<style>
+  @font-face { font-family: "Songti SC"; src: local("STSongti-SC-Bold"), local("Songti SC Bold"); font-weight: 700; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #c4a176; }
+  #stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: block; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-no-timeline data-start="0" data-duration="333.677" data-width="1920" data-height="1080" data-fps="30">
+  <canvas id="stage" width="1920" height="1080"></canvas>
+  <audio id="song" src="lib/song.m4a" data-start="0" data-duration="333.677" data-track-index="0" data-volume="1"></audio>
+</div>
+<script>
+  window.renderErrors = [];
+  window.addEventListener('error', e => renderErrors.push(e.error?.stack ?? `${e.message} ${e.filename}:${e.lineno}`));
+  window.addEventListener('unhandledrejection', e => renderErrors.push(String(e.reason)));
+</script>
+<script type="module" src="main.js"></script>
+</body>
+</html>

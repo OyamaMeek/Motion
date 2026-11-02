@@ -513,3 +513,21 @@
 - **Git 提交**：`67918822e18edf4bf42742eaf599a46f925f5ce2 docs: add the Jiabin MV storyboard`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
+
+## [2026-11-02 22:10] 嘉宾 MV 图像分镜
+
+- **需求/问题描述**：
+  > 确认文字分镜。按项目约定，下一步先交付图像分镜，确认后再做动画。
+
+- **实际实现的功能与改动**：
+  - 工程：新建 `嘉宾/MV/` HyperFrames 工程，52 个关键画面由 Canvas 2D 绘制，纸艺材质沿用样图，角色几何取自 `character.js`；分镜时间由脚本生成。
+  - 产出：52 张定格、图像分镜页和总览图。每镜全程静止，尚无运动和字幕。
+  - 验证：`stage.test.mjs` 2 项通过；`hyperframes check` 结果 ok，1 条警告（牛皮纸底碰到画面边缘）；52 张定格互不相同。未查看图片（用户未明确要求视觉检查），构图和遮挡没有视觉证据。
+
+- **涉及文件**：
+  - `嘉宾/MV/`：`index.html`、`main.js`、`kit.js`、`sets.js`、`poses.js`、`shots.js`、`gen-shots.mjs`、`gen-board.mjs`、`stage.test.mjs`、`hyperframes.json`、`README.md`、`lib/`（符号链接）、`boards/`
+  - `嘉宾/storyboard.md`、`.gitignore`、`memory/agents.md`、`plan.md`、`progress.md`、`verify.md`、`docs/CHANGELOG.md`
+
+- **Git 提交**：待提交
+
+---
