@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-Hans">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>嘉宾 · 纸艺开场样图</title>
+<style>
+  html,body { margin:0; background:#c4a176; overflow:hidden; }
+  canvas { display:block; width:100vw!important; height:auto!important; }
+</style>
+<body>
+<script>
+  window.renderErrors = [];
+  window.addEventListener('error', e => renderErrors.push(e.message));
+  window.addEventListener('unhandledrejection', e => renderErrors.push(String(e.reason)));
+</script>
+<script type="module">
+  import {createPaper} from './paper.js';
+  import {layerOffset, findLayer, COLORS} from './scene.js';
+
+  const art = createPaper();
+  art.render(null);
+  if (new URLSearchParams(location.search).has('play')) art.play();
+  Object.assign(window, {art, layerOffset, findLayer, COLORS, artReady: true});
+</script>
+</html>

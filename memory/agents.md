@@ -1,5 +1,10 @@
 # 当前任务环境
 
+## 2026-11-02：嘉宾纸艺开场样图
+
+- 主代理独立完成。绘制：Canvas 2D ES module；渲染：复用 `會呼吸的痛/開場樣圖/v2/chrome.mjs` 驱动本机 Chrome 无头模式；字体 Songti SC。不用图像生成模型。
+- 用户没有明确要求视觉验证，本轮没有查看图片，只读取画布像素做数值检查。
+
 ## 2026-11-02：纸艺与蜡笔完整 MV
 
 - 主代理独立完成。绘制：Canvas 2D ES module，蜡笔贴图用 p5.js 2.2.0、p5.brush 3.0.0；本机 Chrome 无头模式逐帧输出；ffmpeg（libx264、ebur128）编码与检查。歌词字体：纸艺 Yuanti TC，蜡笔 Hannotate TC。

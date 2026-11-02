@@ -72,7 +72,7 @@ export async function openChrome() {
     const exited = new Promise(ok => chrome.once('exit', ok));
     chrome.kill(); server.close(); ws.close();
     await exited;
-    await rm(profile, {recursive: true, force: true});
+    await rm(profile, {recursive: true, force: true, maxRetries: 10, retryDelay: 200});
   }
   return {evaluate, openStyle, close};
 }
