@@ -455,6 +455,6 @@
   - `.agent/visual/MV成片_紙藝蠟筆.md` 及四张抽帧总览
   - `memory/agents.md`、`plan.md`、`progress.md`、`verify.md`、`docs/CHANGELOG.md`
 
-- **Git 提交**：待提交。
+- **Git 提交**：`3380b603ac965284ea0fff30edaf2c2b5f70a0ba feat: render the paper and crayon MVs from the shared storyboard`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。MP4 只留本地。
 
 ---
