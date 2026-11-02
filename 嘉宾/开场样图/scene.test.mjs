@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {W, H, UPDATES_PER_SECOND, LAYERS, LABELS, layerOffset, layerBounds, pieceBounds, overlaps, findLayer} from './scene.js';
+import {W, H, UPDATES_PER_SECOND, LAYERS, LABELS, COLORS, FEET, layerOffset, layerBounds, pieceBounds, overlaps, findLayer} from './scene.js';
+import {clawdRects, CHARACTER_COLORS} from '../../會呼吸的痛/MV/geometry.js';
 
 const box = id => layerBounds(findLayer(id));
 
@@ -38,6 +39,27 @@ test('主要元素互不遮挡，人物与礼堂之间留有空白', () => {
   const main = ['figure', 'chapel', 'card', 'sun', 'branch'];
   for (const a of main) for (const b of main) if (a < b) assert.equal(overlaps(box(a), box(b)), false, `${a} 与 ${b}`);
   assert.ok(box('chapel').x0 - box('figure').x1 >= 150);
+});
+
+test('主角是 Clawd 背影，几何全部来自角色模块，没有另画手臂', () => {
+  const pieces = findLayer('figure').pieces, source = clawdRects({facing: 'back', expression: 'neutral', action: 'hold', frame: 0});
+  assert.equal(pieces.length, 1);
+  const [clawd] = pieces;
+  assert.equal(clawd.kind, 'clawd');
+  assert.equal(clawd.rects.length, source.length);
+  const u = clawd.unit;
+  clawd.rects.forEach((r, i) => {
+    assert.deepEqual([r.x, r.y, r.w, r.h], [clawd.x + source[i].x * u, clawd.y + source[i].y * u, source[i].w * u, source[i].h * u]);
+  });
+  assert.equal(clawd.y + 27 * u, FEET[1]);
+  assert.ok(!('hair' in COLORS) && !('coat' in COLORS) && !('skin' in COLORS));
+});
+
+test('Clawd 手中的票换成红色喜帖，其余部分保持角色配色', () => {
+  const {rects} = findLayer('figure').pieces[0];
+  assert.ok(rects.some(r => r.color === COLORS.red));
+  assert.ok(!rects.some(r => r.color === CHARACTER_COLORS.paper));
+  assert.ok(rects.some(r => r.color === CHARACTER_COLORS.body));
 });
 
 test('人物站在路上，且未被前景雪堆盖住', () => {

@@ -17,7 +17,7 @@ try {
     const still = document.createElement('canvas'); still.width = canvas.width; still.height = canvas.height;
     const baseline = still.getContext('2d', {willReadFrequently: true}); baseline.drawImage(canvas, 0, 0);
 
-    const stats = m.paletteStats(ctx), probes = m.colorProbes(ctx, findLayer, COLORS), edge = m.edgeProfile(ctx, invite), ink = m.inkInCard(ctx, place, COLORS.ink);
+    const stats = m.paletteStats(ctx), probes = m.colorProbes(ctx, findLayer, COLORS, FIGURE_PROBES), edge = m.edgeProfile(ctx, invite), ink = m.inkInCard(ctx, place, COLORS.ink);
     const fonts = {title: m.fontResolved('嘉宾', '"Songti SC"'), invite: m.fontResolved('囍', '"Songti SC"')};
 
     const shifts = [];

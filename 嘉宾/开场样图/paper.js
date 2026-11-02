@@ -130,6 +130,21 @@ export function createPaper() {
     path(); ctx.strokeStyle = p.color; ctx.lineWidth = p.width; ctx.stroke();
     ctx.restore();
   }
+  // 与纸艺 MV 相同：所有色块先合成一张带白边和投影的剪纸轮廓，再盖上角色配色。
+  function paintClawd(p) {
+    const shape = new Path2D();
+    for (const r of p.rects) shape.rect(r.x, r.y, r.w, r.h);
+    ctx.save();
+    ctx.shadowColor = 'rgba(58,42,24,.42)'; ctx.shadowBlur = 18; ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 8;
+    ctx.fillStyle = CORE; ctx.strokeStyle = CORE; ctx.lineJoin = 'round'; ctx.lineWidth = 9;
+    ctx.fill(shape); ctx.stroke(shape);
+    ctx.restore();
+    for (const r of p.rects) { ctx.fillStyle = r.color; ctx.fillRect(r.x, r.y, r.w, r.h); }
+    ctx.save();
+    ctx.clip(shape);
+    overlayFibre();
+    ctx.restore();
+  }
   function paintMark(p) {
     trace(p.pts);
     ctx.fillStyle = p.color; ctx.fill();
@@ -141,6 +156,7 @@ export function createPaper() {
     layer.pieces.forEach((p, i) => {
       if (p.kind === 'stripe') paintStripe(p);
       else if (p.kind === 'mark') paintMark(p);
+      else if (p.kind === 'clawd') paintClawd(p);
       else paintPiece(p, hashId(`${layer.id}:${i}`));
     });
     // 裁到实际内容（含投影和白边），减少每次更新的合成面积。

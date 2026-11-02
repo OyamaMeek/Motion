@@ -478,3 +478,21 @@
 - **Git 提交**：`047c330a4b81f3846f641ee55011eab24f1a165d feat: draw the paper collage opening sample for Jiabin`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
+
+## [2026-11-02 21:28] 嘉宾开场样图主角改用 Clawd
+
+- **需求/问题描述**：
+  > 人物用 Clawd。
+
+- **实际实现的功能与改动**：
+  - 角色：删除普通人物，改用 `assets/clawd/character.js` 的背面 `hold` 姿势，比例和手臂长度不变，放大 10 倍；手中道具只把车票配色换成喜帖红。
+  - 配套：投影和脚印按 Clawd 的宽度调整，色块取样改为 Clawd 身体和手中喜帖；`gotchas.md` 记录新歌曲也用 Clawd。
+  - 验证：新增 2 项角色测试，先因缺少导出失败，实现后 `scene.test.mjs` 共 12 项通过；`render.mjs` 全部数值检查通过，实测每秒更新 10 次。未查看图片（用户未明确要求视觉检查），构图效果没有视觉证据。
+
+- **涉及文件**：
+  - `嘉宾/开场样图/scene.js`、`paper.js`、`inspect.js`、`render.mjs`、`scene.test.mjs`、`index.html`、`README.md`、`验证结果.json`、`02-纸艺拼贴.png`
+  - `memory/agents.md`、`plan.md`、`progress.md`、`verify.md`、`gotchas.md`、`docs/CHANGELOG.md`
+
+- **Git 提交**：待提交
+
+---

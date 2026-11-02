@@ -19,17 +19,16 @@ function hsv([r, g, b]) {
 }
 
 // 中心点取实际几何，颜色误差上限 60：纸纤维正片叠底后会比色标略暗。
-export function colorProbes(ctx, findLayer, C) {
+export function colorProbes(ctx, findLayer, C, figure) {
   const {width, data} = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
   const center = (layer, name) => {
     const {pts} = findLayer(layer).pieces.find(p => p.name === name);
     return pts.reduce((s, p) => [s[0] + p[0] / pts.length, s[1] + p[1] / pts.length], [0, 0]).map(Math.round);
   };
-  const [hx, hy] = center('figure', 'hair'), [cx, cy] = center('figure', 'coat'), [hix, hiy] = center('figure', 'heldInvite');
   const [wx, wy] = center('chapel', 'window'), [rx, ry] = center('chapel', 'rose');
   const list = [
     ['牛皮纸外框', 12, 12, C.kraft], ['牛皮纸下框', 960, 1072, C.kraft], ['天空', 800, 120, C.sky], ['太阳', 1590, 232, C.sun],
-    ['头发', hx, hy, C.hair], ['外套（背缝一侧）', cx + 25, cy, C.coat], ['手中喜帖', hix, hiy, C.red],
+    ['Clawd 身体', ...figure.body, C.clawdBody], ['手中喜帖', ...figure.invite, C.red],
     ['礼堂窗', wx, wy, C.gold], ['玫瑰窗', rx, ry, C.gold], ['喜帖红底', 1450, 800, C.red], ['席卡留白', 1305, 960, C.cream],
     ['雪地空白', 1100, 900, C.ground],
   ];

@@ -15,11 +15,11 @@
 </script>
 <script type="module">
   import {createPaper} from './paper.js';
-  import {layerOffset, findLayer, COLORS} from './scene.js';
+  import {layerOffset, findLayer, COLORS, FIGURE_PROBES} from './scene.js';
 
   const art = createPaper();
   art.render(null);
   if (new URLSearchParams(location.search).has('play')) art.play();
-  Object.assign(window, {art, layerOffset, findLayer, COLORS, artReady: true});
+  Object.assign(window, {art, layerOffset, findLayer, COLORS, FIGURE_PROBES, artReady: true});
 </script>
 </html>

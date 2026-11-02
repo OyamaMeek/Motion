@@ -3,11 +3,11 @@
     "width": 1920,
     "height": 1080,
     "opaque": true,
-    "meanLuma": 185.8,
-    "darkPct": 0.772,
+    "meanLuma": 185.9,
+    "darkPct": 0.123,
     "purplePct": 0,
     "neonPct": 0,
-    "redPct": 4.981
+    "redPct": 5.157
   },
   "probes": [
     {
@@ -63,42 +63,29 @@
       "pass": true
     },
     {
-      "name": "头发",
-      "x": 735,
-      "y": 618,
-      "want": "#33281f",
+      "name": "Clawd 身体",
+      "x": 715,
+      "y": 778,
+      "want": "#da7758",
       "got": [
-        50,
-        39,
-        30
+        210,
+        114,
+        84
       ],
-      "distance": 2,
-      "pass": true
-    },
-    {
-      "name": "外套（背缝一侧）",
-      "x": 760,
-      "y": 700,
-      "want": "#2f3e52",
-      "got": [
-        46,
-        60,
-        79
-      ],
-      "distance": 4,
+      "distance": 10,
       "pass": true
     },
     {
       "name": "手中喜帖",
-      "x": 823,
-      "y": 776,
+      "x": 890,
+      "y": 858,
       "want": "#b8332a",
       "got": [
-        173,
+        177,
         49,
         40
       ],
-      "distance": 11,
+      "distance": 7,
       "pass": true
     },
     {
@@ -389,7 +376,7 @@
   ],
   "updatesPerSecond": {
     "perSecond": 10,
-    "renderMs": 76
+    "renderMs": 71
   },
   "grain": {
     "sky": 15.12,

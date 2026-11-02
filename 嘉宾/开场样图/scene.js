@@ -1,5 +1,6 @@
 import {jitter} from '../../會呼吸的痛/開場樣圖/v2/clip.js';
 import {rng} from '../../會呼吸的痛/開場樣圖/v2/scene.js';
+import {clawdRects, CHARACTER_COLORS} from '../../會呼吸的痛/MV/geometry.js';
 
 export const W = 1920, H = 1080;
 export const UPDATES_PER_SECOND = 10;
@@ -8,8 +9,8 @@ export const LABELS = {invite: '囍', title: '嘉宾'};
 export const COLORS = {
   kraft: '#c4a176', sky: '#bfd3d6', newsSky: '#eceadb', sun: '#f7e8bd', hillFar: '#c6d3cf', ground: '#eef0e6', bank: '#f7f3e8',
   pathTint: '#efe0c4', pine: '#6f8a7c', pineDark: '#5f7a6a', wall: '#f3e4c7', wallShade: '#ead8b8', roof: '#a24e3b', door: '#7c3b2c',
-  gold: '#f2c14e', red: '#b8332a', petal: '#f0b7a4', cream: '#f6efe0', coat: '#2f3e52', sleeve: '#3a4b62', trousers: '#4a4a4e',
-  shoe: '#3b2c24', hair: '#33281f', skin: '#e6b995', scarf: '#c99a3f', branch: '#5a4334', envelope: '#e9dcc0', ink: '#3a2f28',
+  gold: '#f2c14e', red: '#b8332a', petal: '#f0b7a4', cream: '#f6efe0', clawdBody: CHARACTER_COLORS.body,
+  branch: '#5a4334', envelope: '#e9dcc0', ink: '#3a2f28',
 };
 const C = COLORS;
 
@@ -57,7 +58,7 @@ const PINES = [[120, 640, 130], [205, 650, 170], [300, 645, 120], [960, 648, 150
 
 const footprints = Array.from({length: 7}, (_, i) => {
   const t = 0.77 + i * 0.033, [x, y] = pathCenter(t), [nx, ny] = pathNormal(t), side = i % 2 ? 20 : -20, s = 1 + (t - 0.77) * 2;
-  return mark(ellipse(x + nx * side * s, y + ny * side * s, 13 * s, 7 * s, 16), 'rgba(92,68,44,.34)');
+  return mark(ellipse(x + nx * side * 2 * s, y + ny * side * 2 * s, 13 * s, 7 * s, 16), 'rgba(92,68,44,.34)');
 });
 
 const FLOWER_COLORS = [C.cream, C.red, C.gold, C.petal];
@@ -91,27 +92,18 @@ function bunting(from, to, sag) {
   return [stripe([[to[0], to[1] - 4], [to[0], 650]], C.branch, 6, 2), stripe(line, C.ink, 2, 0), ...flags];
 }
 
-const FEET = pathCenter(0.7);
-const fig = pts => pts.map(([x, y]) => [FEET[0] + x, FEET[1] + y]);
-const figCircle = (x, y, r) => circle(FEET[0] + x, FEET[1] + y, r, 24);
-const figure = [
-  piece(fig(rect(-30, -90, 26, 78)), {color: C.trousers, border: 4, lift: 0.5}),
-  piece(fig(rect(4, -90, 26, 78)), {color: C.trousers, border: 4, lift: 0.5}),
-  piece(fig(rect(-36, -16, 34, 16)), {color: C.shoe, border: 3, lift: 0.3}),
-  piece(fig(rect(2, -16, 34, 16)), {color: C.shoe, border: 3, lift: 0.3}),
-  stripe(fig([[-50, -196], [-66, -110]]), C.sleeve, 26, 5),
-  stripe(fig([[50, -196], [66, -110]]), C.sleeve, 26, 5),
-  piece(fig([[-30, -212], [30, -212], [48, -200], [54, -180], [60, -82], [-60, -82], [-54, -180], [-48, -200]]), {color: C.coat, border: 6, lift: 1.3, name: 'coat'}),
-  stripe(fig([[0, -196], [0, -86]]), C.sleeve, 3, 0),
-  piece(figCircle(-33, -250, 7), {color: C.skin, border: 3, lift: 0.2}),
-  piece(figCircle(33, -250, 7), {color: C.skin, border: 3, lift: 0.2}),
-  piece(figCircle(0, -250, 33), {color: C.hair, border: 5, lift: 0.8, name: 'hair'}),
-  piece(fig(rect(-32, -228, 64, 28)), {color: C.scarf, border: 4, lift: 0.6}),
-  piece(fig(rect(-26, -204, 22, 66)), {color: C.scarf, border: 4, lift: 0.5}),
-  piece(figCircle(-67, -100, 11), {color: C.skin, border: 3, lift: 0.3}),
-  piece(rotated(FEET[0] + 88, FEET[1] - 92, 48, 34, -14).pts, {color: C.red, border: 4, lift: 0.7, name: 'heldInvite'}),
-  piece(figCircle(67, -100, 11), {color: C.skin, border: 3, lift: 0.3}),
-];
+export const FEET = pathCenter(0.7).map(Math.round);
+const CLAWD_UNIT = 10;
+const CLAWD_X = FEET[0] - 16 * CLAWD_UNIT, CLAWD_Y = FEET[1] - 27 * CLAWD_UNIT;
+// 角色模块的 hold 道具是车票，这里只换配色，让它成为喜帖。
+const clawdColor = r => (r.color === CHARACTER_COLORS.paper ? C.red : r.color === CHARACTER_COLORS.shade && r.x >= 30 ? C.gold : r.color);
+const figure = [{
+  kind: 'clawd', x: CLAWD_X, y: CLAWD_Y, unit: CLAWD_UNIT,
+  rects: clawdRects({facing: 'back', expression: 'neutral', action: 'hold', frame: 0}).map(r => ({
+    x: CLAWD_X + r.x * CLAWD_UNIT, y: CLAWD_Y + r.y * CLAWD_UNIT, w: r.w * CLAWD_UNIT, h: r.h * CLAWD_UNIT, color: clawdColor(r),
+  })),
+}];
+export const FIGURE_PROBES = {body: [CLAWD_X + 14 * CLAWD_UNIT, CLAWD_Y + 18 * CLAWD_UNIT], invite: [CLAWD_X + 32 * CLAWD_UNIT - 5, CLAWD_Y + 26 * CLAWD_UNIT]};
 
 const BRANCHES = [
   [[34, 172], [210, 150], [400, 190], [560, 170]],
@@ -149,7 +141,7 @@ export const LAYERS = [
   {id: 'footprints', pieces: footprints},
   {id: 'chapel', pieces: chapel},
   {id: 'bunting', pieces: [...bunting([1226, 372], [990, 520], 34), ...bunting([1284, 372], [1500, 505], 30)]},
-  {id: 'figureShadow', pieces: [mark([[FEET[0] - 34, FEET[1] - 4], [FEET[0] + 34, FEET[1] - 2], [FEET[0] - 240, FEET[1] + 70], [FEET[0] - 330, FEET[1] + 42]], 'rgba(60,70,84,.24)')]},
+  {id: 'figureShadow', pieces: [mark([[FEET[0] - 85, FEET[1] - 6], [FEET[0] + 95, FEET[1] - 2], [FEET[0] - 200, FEET[1] + 72], [FEET[0] - 370, FEET[1] + 40]], 'rgba(60,70,84,.24)')]},
   {id: 'figure', pieces: figure},
   {id: 'bank', pieces: [piece([[30, 1056], [30, 960], [170, 925], [360, 960], [560, 1000], [900, 1020], [1180, 1030], [1500, 1015], [1890, 985], [1890, 1056]], {color: C.bank, edge: 'torn', lift: 1.6})]},
   {id: 'clipping', pieces: [piece(rotated(1560, 890, 560, 310, -3).pts, {tex: 'news', color: '#efe6cf', edge: 'torn', lift: 1.1})]},
@@ -163,7 +155,8 @@ export const findLayer = id => {
 };
 
 export function pieceBounds(p) {
-  const pts = p.kind === 'stripe' ? p.line : p.pts, pad = p.kind === 'stripe' ? (p.width + p.border) / 2 : 0;
+  const pts = p.kind === 'clawd' ? p.rects.flatMap(r => [[r.x, r.y], [r.x + r.w, r.y + r.h]]) : p.kind === 'stripe' ? p.line : p.pts;
+  const pad = p.kind === 'stripe' ? (p.width + p.border) / 2 : 0;
   const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]);
   return {x0: Math.min(...xs) - pad, y0: Math.min(...ys) - pad, x1: Math.max(...xs) + pad, y1: Math.max(...ys) + pad};
 }
