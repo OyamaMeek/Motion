@@ -10,28 +10,39 @@ const heldInvite = (k, a, w = 120) => S.invitation(k, a.grip[0] + w * 0.32, a.gr
 const heldPhone = (k, a, s = 0.62) => S.phone(k, a.grip[0] + 40 * s, a.grip[1] - 30 * s, s);
 const FROST_ME = [1150, 820, 14];
 
-function hookHands(k, y, name = 'hook') {
-  k.cut(ellipse(960, y, 44, 30, 18), C.orange, {border: 5, lift: 0.8, name});
-  k.line([[934, y - 8], [960, y + 10], [986, y - 8]], C.door, 7);
+function hookHands(k, y, name = 'hook', x = 960) {
+  k.cut(ellipse(x, y, 44, 30, 18), C.orange, {border: 5, lift: 0.8, name});
+  k.line([[x - 26, y - 8], [x, y + 10], [x + 26, y - 8]], C.door, 7);
 }
-// 主角后面没有客人，前排也在他的正前方留出空位，所以最后一排的他始终看得到。
-function hallRows(k, {clap = false, me: meOpts = {}} = {}) {
-  S.hall(k, {door: true});
-  S.guests(k, 470, 6.4, [300, 480, 660, 840, 1230], {clap, seed: 3});
-  const a = me(k, 1035, 470, 6.4, meOpts);
+// 走廊的世界座标 = 画面座标 + 相机偏移。L11 偏移 1320，L12–L14 偏移 2670。
+const CORRIDOR = 2670;
+const tiles = k => k.cut([[810, 820], [1110, 820], [1160, 1050], [760, 1050]].map(([x, y]) => [x + CORRIDOR, y]), C.bank, {lift: 0.1, border: 2, name: 'gapTiles'});
+const longSill = k => k.cut(rect(1040, 880, 1400, 60), C.path, {lift: 1.5, border: 5, name: 'sill'});
+function tally(k, third = false) {
+  [1350, 1395].forEach(x => k.line([[x, 560], [x - 8, 690]], C.roomDim, 13, 4, 'tally'));
+  if (third) k.line([[1442, 560], [1432, 690]], C.ink, 15, 5, 'tally');
+}
+const outerSill = k => {
+  k.cut(rect(320, 800, 1280, 56), C.wood, {lift: 1.2, border: 5, name: 'sill'});
+  S.sillThings(k, {x: -220});
+  snowy(k, 20, 11, {x0: 60, y0: 60, x1: 1860, y1: 760});
+};
+// 礼堂只有这一个世界，近景都是同一批物件加相机。主角后面没有客人，前排也在他的正前方留出空位。
+// 相机越过前排后 front 为 false，row 为 false 时左右没有邻座。
+function hallRows(k, {clap = false, me: meOpts = {}, foot = 470, front = true, row = true, card = true, glass = true, rosette = true} = {}) {
+  S.hall(k, {door: true, bell: true});
+  if (row) S.guests(k, 470, 6.4, [300, 480, 660, 840, 1230], {clap, seed: 3});
+  const a = me(k, 1035, foot, 6.4, meOpts);
+  if (rosette) S.rosette(k, a);
   S.seatTable(k, 770, 462, 1100, 'lastRow', 30);
-  S.guests(k, 670, 8.6, [190, 460, 730, 1320, 1580, 1780], {clap, seed: 5});
-  S.seatTable(k, 980, 660, 1760, 'rowB', 34);
-  S.guests(k, 880, 11, [170, 500, 830, 1250, 1580], {clap, seed: 7});
-  S.seatTable(k, 900, 870, 1640, 'rowC', 40);
-  return a;
-}
-// 最后一排的近景：同一张桌子、同一个位置。
-function lastRow(k, {x = 960, u = 18, foot = 900, opts = {}, door = true, bell = false, neighbours = true, tableY = 800} = {}) {
-  S.hall(k, {door, bell});
-  if (neighbours) S.guests(k, foot, u, x > 700 ? [240] : [1500], {seed: 11});
-  const a = me(k, x, foot, u, opts);
-  S.seatTable(k, 960, tableY, 1820);
+  if (card) S.placeCard(k, 1035, 478, 130);
+  if (glass) S.glass(k, 1170, 462, 0.71);
+  if (front) {
+    S.guests(k, 670, 8.6, [190, 460, 730, 1320, 1580, 1780], {clap, seed: 5});
+    S.seatTable(k, 980, 660, 1760, 'rowB', 34);
+    S.guests(k, 880, 11, [170, 500, 830, 1250, 1580], {clap, seed: 7});
+    S.seatTable(k, 900, 870, 1640, 'rowC', 40);
+  }
   return a;
 }
 function outside(k, opts = {}) {
@@ -49,50 +60,50 @@ export const POSES = {
     S.confetti(k, 12, 2027, {x0: 980, y0: 400, x1: 1530, y1: 640});
   }},
   P02: {keys: ['me', 'photo', 'dustMug'], draw(k) {
-    S.windowOutside(k, () => { me(k, FROST_ME[0], FROST_ME[1], FROST_ME[2]); S.frost(k, [1150, 650, 250, 190]); });
-    k.cut(rect(320, 800, 1280, 56), C.wood, {lift: 1.2, border: 5, name: 'sill'});
-    S.sillThings(k, {x: -220});
-    snowy(k, 20, 11, {x0: 60, y0: 60, x1: 1860, y1: 760});
+    S.windowOutside(k, () => { me(k, FROST_ME[0], FROST_ME[1], FROST_ME[2]); S.frost(k, [1150, 650, 250, 190]); tally(k); });
+    outerSill(k);
   }},
   L01: {keys: ['me', 'tally'], draw(k) {
-    k.camera(1200, 540, 1.28);
-    S.windowOutside(k, () => {
-      me(k, FROST_ME[0], FROST_ME[1], FROST_ME[2]);
-      S.frost(k, [1150, 650, 250, 190], 8);
-      [1350, 1395].forEach(x => k.line([[x, 560], [x - 8, 690]], C.roomDim, 13, 4, 'tally'));
-      k.line([[1442, 560], [1432, 690]], C.ink, 15, 5, 'tally');
-    });
+    S.windowOutside(k, () => { me(k, FROST_ME[0], FROST_ME[1], FROST_ME[2]); S.frost(k, [1150, 650, 250, 190]); tally(k, true); }, [1200, 540, 1.28]);
+    outerSill(k);
   }},
   L02: {keys: ['me', 'photo', 'calendarPage', 'calendar'], draw(k) {
     S.roomInside(k);
     const a = me(k, 720, 860, 17, {expression: 'sad', action: 'hold'});
     k.cut(rotated(a.grip[0] + 90, a.grip[1] - 70, 150, 170, 24), C.cream, {lift: 1.4, border: 4, name: 'calendarPage'});
-    k.cut(rect(1040, 880, 740, 60), C.path, {lift: 1.5, border: 5, name: 'sill'});
+    longSill(k);
     S.oldPhoto(k, 1300, 790, 240, -4);
+    S.phone(k, 1796, 686, 2, {lit: false, deg: 7});
   }},
   L03: {keys: ['phone', 'phoneSign', 'photo', 'me'], draw(k) {
-    S.roomInside(k, {calendar: false});
-    me(k, 240, 790, 11);
+    k.camera(1620, 670, 1.25);
+    S.roomInside(k);
+    me(k, 992, 860, 17);
     k.vellum(0.42);
-    k.cut(rect(120, 800, 1680, 90), C.wood, {lift: 1.5, border: 6, name: 'sill'});
-    S.oldPhoto(k, 560, 690, 300, -5);
-    S.phone(k, 1180, 560, 2.5, {deg: 7});
+    longSill(k);
+    S.oldPhoto(k, 1300, 790, 240, -4);
+    S.phone(k, 1796, 686, 2, {deg: 7});
+    k.camera(960, 540, 1);
     [[920, 380, 880, 480], [1440, 410, 1486, 510], [920, 690, 880, 760], [1440, 680, 1486, 740]].forEach(([a, b, c, d]) => k.line([[a, b], [c, d]], C.red, 8, 3));
   }},
   L04: {keys: ['me', 'phone', 'roomWindow'], draw(k) {
     S.roomInside(k);
     const a = me(k, 860, 900, 19, {action: 'hold'});
+    longSill(k);
+    S.oldPhoto(k, 1300, 790, 240, -4);
     heldPhone(k, a, 1.15);
   }},
   L05: {keys: ['me', 'bubble'], draw(k) {
     k.torn(rect(30, 26, 1860, 1028), C.room, {tex: 'news', lift: 0.3});
     k.cut(rect(130, 80, 1660, 800), C.sky, {lift: 0.6, border: 12, name: 'bigWindow'});
+    k.torn([[136, 576], [800, 528], [1784, 592], [1784, 874], [136, 874]], C.snow, {lift: 0.2});
+    S.flakes(k, 22, 91, {x0: 226, y0: 144, x1: 1693, y1: 816, size: 28});
     k.line([[960, 86], [960, 874]], C.wood, 16, 4);
-    k.line([[136, 470], [1784, 470]], C.wood, 16, 4);
+    k.line([[136, 480], [1784, 480]], C.wood, 16, 4);
     const r = rng(41), spots = [[310, 200], [560, 170], [830, 150], [1090, 150], [1360, 170], [1610, 210], [260, 420], [500, 390], [1420, 390], [1680, 420], [300, 660], [530, 610], [1400, 610], [1660, 660], [760, 310], [1170, 310]];
     spots.forEach(([x, y], i) => S.bubble(k, x, y, 170 + r() * 90, [C.red, C.gold, C.cream][i % 3], {tail: i % 2 ? 1 : -1}));
-    const a = me(k, 900, 950, 17, {expression: 'sad', action: 'hold'});
-    heldPhone(k, a, 1);
+    const a = me(k, 860, 900, 19, {expression: 'sad', action: 'hold'});
+    heldPhone(k, a, 1.15);
   }},
   L06: {keys: ['bride', 'groom', 'dress', 'scissors'], draw(k) {
     k.torn(rect(30, 26, 1860, 620), C.wallShade, {tex: 'news', lift: 0.3});
@@ -109,15 +120,16 @@ export const POSES = {
   }},
   L07: {keys: ['me', 'invite'], draw(k) {
     S.roomInside(k, {calendar: false, windowBack: false});
-    k.cut(rect(680, 110, 560, 790), C.door, {lift: 0.8, border: 8, name: 'doorBack'});
-    k.cut(circle(1180, 540, 18, 12), C.gold, {border: 3});
     const a = me(k, 960, 930, 20, {action: 'hold'});
-    heldInvite(k, a, 230);
+    heldInvite(k, a, 11.5 * 20);
+    // 相机站在门口，两扇开着的门板在前景，T09 从这里关上。
+    k.cut([[30, 26], [250, 70], [250, 1010], [30, 1054]], C.door, {lift: 1.6, border: 6, name: 'doorFront'});
+    k.cut([[1890, 26], [1670, 70], [1670, 1010], [1890, 1054]], C.door, {lift: 1.6, border: 6, name: 'doorFront'});
   }},
   L08: {keys: ['me', 'doorLeaf'], draw(k) {
     S.doorOutside(k);
     const a = me(k, 960, 915, 17, {expression: 'sad', action: 'hold'});
-    heldInvite(k, a, 100);
+    heldInvite(k, a, 11.5 * 17);
     const r = rng(9);
     for (let i = 0; i < 26; i++) { const x = 90 + r() * 1740, y = 80 + r() * 800; k.line([[x, y], [x + 70, y - 22]], C.white, 3); }
     snowy(k, 62, 8, {size: 15});
@@ -125,53 +137,63 @@ export const POSES = {
   L09: {keys: ['me', 'arch', 'bunting', 'invite'], draw(k) {
     S.approachRoad(k);
     const a = me(k, 960, 930, 14, {action: 'hold'});
-    heldInvite(k, a, 110);
+    heldInvite(k, a, 11.5 * 14);
     snowy(k, 26, 4);
+    // 更近一道花门的立柱，T11 由它扫过全屏。
+    for (let j = 0; j < 10; j++) k.cut(circle(1860 + (j % 2) * 34, 40 + j * 112, j % 3 ? 62 : 80, 14), [C.cream, C.red, C.gold, C.petal][j % 4], {border: 4, lift: 1.6, name: 'archPost'});
   }},
   L10: {keys: ['me', 'rosette', 'rosetteWord', 'poster'], draw(k) {
     S.foyer(k);
     S.signTable(k, 420, 800, 680);
     S.invitation(k, 360, 760, 150, -8, 'invite');
     k.clawd(1420, 1010, 22, {role: 'staff', expression: 'happy', tint: S.guestTint(0)});
-    const a = me(k, 900, 1010, 22, {expression: 'sad'});
+    const a = me(k, 900, 1010, 22, {expression: 'sad', action: 'hold'});
     S.rosette(k, a, {big: true});
+    S.oldPhoto(k, a.grip[0] + 24, a.grip[1] - 36, 110, -5, {name: 'heldPhoto'});
   }},
   L11: {keys: ['me', 'giftBox', 'photoCorner'], draw(k) {
+    k.camera(2280, 540, 1);
     S.foyer(k, {poster: false});
-    me(k, 800, 910, 18, {expression: 'sad', action: 'hold'});
-    S.giftBox(k, 1190, 930, 1.05, {photoCorner: true});
-    const a = {chest: [800, 910 - 8.5 * 18], u: 18};
+    const a = me(k, 2120, 910, 18, {expression: 'sad', action: 'hold'});
+    S.giftBox(k, 2510, 930, 1.05, {photoCorner: true});
     S.rosette(k, a);
   }},
   L12: {keys: ['me', 'cake', 'redLine', 'toyBride', 'toyGroom'], draw(k) {
+    k.camera(960 + CORRIDOR, 540, 1);
     S.foyer(k, {poster: false});
-    S.signTable(k, 1340, 800, 900);
-    S.cake(k, 1340, 800, 1.7);
-    const a = me(k, 500, 930, 18, {expression: 'sad', action: 'hold'});
+    S.signTable(k, 1340 + CORRIDOR, 800, 900);
+    S.cake(k, 1340 + CORRIDOR, 800, 1.7);
+    const a = me(k, 500 + CORRIDOR, 930, 18, {expression: 'sad', action: 'hold'});
     S.rosette(k, a);
     const y = 800 - 340 - 9 * 5.44;
-    S.redLine(k, [a.grip, [1000, 560], [1234, y], [1446, y]]);
+    S.redLine(k, [a.grip, [1000 + CORRIDOR, 560], [1234 + CORRIDOR, y], [1446 + CORRIDOR, y]]);
   }},
   L13: {keys: ['me', 'bride', 'gapTiles'], draw(k) {
+    k.camera(960 + CORRIDOR, 540, 1);
     S.foyer(k, {poster: false});
-    k.cut([[810, 820], [1110, 820], [1160, 1050], [760, 1050]], C.bank, {lift: 0.1, border: 2, name: 'gapTiles'});
-    const a = me(k, 470, 900, 15, {expression: 'shy'});
+    tiles(k);
+    const a = me(k, 470 + CORRIDOR, 900, 15, {expression: 'shy'});
     S.rosette(k, a);
-    S.bride(k, 1450, 900, 15, {expression: 'neutral'});
+    S.bride(k, 1450 + CORRIDOR, 900, 15, {expression: 'neutral'});
   }},
   L14: {keys: ['me', 'bride', 'hook'], draw(k) {
+    k.camera(960 + CORRIDOR, 540, 1);
     S.foyer(k, {poster: false});
-    const a = me(k, 726, 930, 18, {expression: 'happy'});
+    tiles(k);
+    const a = me(k, 726 + CORRIDOR, 930, 18, {expression: 'happy'});
     S.rosette(k, a);
-    S.bride(k, 1194, 930, 18);
-    hookHands(k, 930 - 9.5 * 18);
+    S.bride(k, 1194 + CORRIDOR, 930, 18);
+    hookHands(k, 930 - 9.5 * 18, 'hook', 960 + CORRIDOR);
   }},
   L15: {keys: ['me', 'bride', 'groom'], draw(k) {
+    k.camera(1362 + CORRIDOR, 486, 15 / 18);
     S.foyer(k, {poster: false});
-    const a = me(k, 430, 910, 15);
+    tiles(k);
+    const a = me(k, 726 + CORRIDOR, 930, 18);
     S.rosette(k, a);
-    S.bride(k, 1010, 910, 15);
-    S.groom(k, 1500, 910, 15);
+    const b = S.bride(k, 4092, 930, 18);
+    k.cut(rotated(b.right[0] + 20, b.right[1] + 8, 120, 72, -6), C.red, {lift: 1, border: 4, name: 'envelope'});
+    S.groom(k, 4680, 930, 18);
   }},
   L16: {keys: ['giftBox', 'envelope', 'bride', 'me'], draw(k) {
     S.foyer(k, {poster: false});
@@ -195,16 +217,16 @@ export const POSES = {
   I02: {keys: ['me', 'placeCard', 'exitDoor'], draw(k) {
     k.camera(1000, 390, 1.5);
     hallRows(k);
-    S.placeCard(k, 1035, 478, 130);
   }},
   L17: {keys: ['me', 'bell', 'hallWindow'], draw(k) {
-    const a = lastRow(k, {x: 960, u: 15, foot: 950, opts: {}, bell: true, door: false, tableY: 860, neighbours: true});
-    S.rosette(k, a);
+    k.camera(1035, 295.07, 15 / 6.4);
+    hallRows(k, {front: false});
   }},
   L18: {keys: ['bride', 'groom', 'altar', 'carpet'], draw(k) {
     S.stage(k);
     S.bride(k, 1240, 840, 13, {expression: 'shy'});
-    S.groom(k, 640, 905, 13, {facing: 'right', action: 'walk', frame: 1});
+    const a = S.groom(k, 640, 905, 13, {facing: 'right', action: 'walk', frame: 1});
+    k.cut(rect(a.right[0] + 2, a.right[1] - 18, 58, 44), C.red, {lift: 1, border: 4, name: 'ringBox'});
   }},
   L19: {keys: ['bride', 'groom', 'altar', 'ringBox'], draw(k) {
     k.camera(1160, 560, 1.18);
@@ -215,6 +237,7 @@ export const POSES = {
     k.mark(ellipse(a.right[0] + 31, a.right[1] - 22, 14, 14, 16), C.gold, 'ringBox');
   }},
   L20: {keys: ['ring'], draw(k) {
+    // 白底是推近后充满画面的头纱。
     k.torn(rect(30, 26, 1860, 1028), C.white, {lift: 0.3});
     S.flakes(k, 18, 66, {color: C.petal, size: 34});
     k.camera(922, 502, 16);
@@ -237,15 +260,17 @@ export const POSES = {
     k.cut(circle(870, 490, 13, 12), C.red, {border: 3, lift: 0.4, name: 'redEnd'});
   }},
   L23: {keys: ['me', 'glass'], draw(k) {
-    S.hall(k, {door: true});
-    const a = me(k, 960, 930, 20, {action: 'hold'});
-    S.glass(k, a.grip[0] + 14, a.grip[1] + 14, 1.6);
-    S.rosette(k, a);
+    k.camera(1035, 345.2, 3.125);
+    const a = hallRows(k, {front: false, glass: false, me: {action: 'hold'}});
+    S.glass(k, a.grip[0] + 4.5, a.grip[1] + 4.5, 0.512);
   }},
-  L24: {keys: ['me', 'exitDoor', 'exitSign', 'seatTable'], draw(k) {
-    // 桌沿抬到手臂高度，手臂长度不变，两手自然压在桌面上。
-    const a = lastRow(k, {x: 760, u: 16, foot: 850, opts: {expression: 'sad'}, neighbours: true, tableY: 708});
-    S.rosette(k, {chest: [a.chest[0], a.chest[1] - 40], u: 16});
+  L24: {keys: ['me', 'exitDoor', 'exitSign'], draw(k) {
+    // 他把自己按低，手臂正好到桌沿高度，手臂长度不变，两手自然压在桌面上。
+    k.camera(1115, 402, 2.5);
+    const a = hallRows(k, {front: false, foot: 526, rosette: false, me: {expression: 'sad'}});
+    S.rosette(k, {chest: [a.chest[0], a.chest[1] - 16], u: a.u});
+    k.camera(960, 540, 1);
+    S.flakes(k, 9, 124, {x0: 1250, y0: 120, x1: 1860, y1: 760, color: C.petal, size: 26, name: 'petal'});
   }},
   L25: {keys: ['bride', 'me', 'peel'], draw(k) {
     k.torn(rect(30, 26, 1860, 1028), C.hall, {tex: 'news', lift: 0.3});
@@ -258,25 +283,31 @@ export const POSES = {
     k.cut([[1120, 30], [1040, 300], [1160, 340]], C.white, {lift: 1.5, border: 4, name: 'peel'});
   }},
   L26: {keys: ['placeCard', 'placeCardWord', 'me'], draw(k) {
-    S.hall(k, {door: true});
+    // 背景是 L27 的同一面墙，相机向右横移 540 像素后接上。
+    k.camera(935.4, 349.1, 2.8125);
+    S.hall(k, {door: true, bell: true});
+    k.camera(960, 540, 1);
     me(k, 1240, 800, 13, {expression: 'sad'});
     k.vellum(0.3, '#ecd5a4');
     k.cut(rect(40, 730, 1840, 320), C.cream, {lift: 1.3, border: 6, name: 'seatTable'});
     S.placeCard(k, 700, 720, 660, -2);
+    S.glass(k, 1620, 742, 2);
   }},
   L27: {keys: ['me', 'tickets', 'glass'], draw(k) {
-    const a = lastRow(k, {x: 700, u: 18, foot: 880, opts: {action: 'hold'}, tableY: 790, neighbours: false});
-    S.rosette(k, a);
-    S.ticketStubs(k, 1060, 825, 2);
-    S.glass(k, 1120, 830, 2);
+    k.camera(1127.4, 349.1, 2.8125);
+    hallRows(k, {front: false, row: false, card: false, me: {action: 'hold'}});
+    S.ticketStubs(k, 1150, 466, 0.71);
+    k.camera(960, 540, 1);
+    S.placeCard(k, 160, 720, 660, -2, 'nearCard');
   }},
   L28: {keys: ['me', 'redLine'], draw(k) {
-    k.camera(860, 620, 1.14);
-    S.hall(k, {door: true});
-    const a = me(k, 720, 890, 20, {expression: 'sad', action: 'hold', deg: -7});
-    S.rosette(k, a);
-    S.redLine(k, [[1880, 960], [1450, 870], a.grip], 12);
-    S.seatTable(k, 960, 960, 1820);
+    const z = 3.5625, cx = 1079.8, cy = 353.4, world = (x, y) => [cx + (x - 960) / z, cy + (y - 540) / z];
+    k.camera(cx, cy, z);
+    const a = hallRows(k, {front: false, row: false, card: false, foot: 439.8, me: {expression: 'sad', action: 'hold', deg: -7}});
+    S.ticketStubs(k, 1150, 466, 0.71);
+    S.redLine(k, [world(1880, 960), world(1450, 870), a.grip], 12 / z);
+    k.camera(960, 540, 1);
+    S.placeCard(k, 116, 753, 836, -2, 'nearCard');
   }},
   L29: {keys: ['me', 'ripped'], draw(k) {
     S.pastSnow(k, {drain: true});
@@ -312,11 +343,13 @@ export const POSES = {
   L33: {keys: ['me', 'curtain', 'spotlight', 'stageFrame'], draw(k) {
     S.paperStage(k, 1);
     S.spotlight(k, 960);
+    k.line([[915.5, 140], [915.5, 797.5]], C.gold, 6, 3, 'rope');
     const a = me(k, 960, 830, 13, {expression: 'sad', tint: COLD});
     S.rosette(k, a);
   }},
   L34: {keys: ['me', 'curtain', 'rope'], draw(k) {
     S.paperStage(k, 0.5);
+    S.spotlight(k, 740);
     const a = me(k, 740, 830, 13, {expression: 'sad', action: 'hold', tint: COLD});
     S.rosette(k, a);
     k.line([[a.grip[0], 140], a.grip], C.gold, 6, 3, 'rope');
@@ -332,7 +365,6 @@ export const POSES = {
   }},
   L36: {keys: ['rosette', 'ribbonLong', 'road', 'me'], draw(k) {
     outside(k);
-    k.torn([[1160, 640], [1320, 640], [1880, 1050], [1420, 1050]], C.path, {tex: 'kraft', lift: 0.4, name: 'road'});
     const a = me(k, 720, 980, 22, {tint: COLD});
     k.line([[a.chest[0] + 121, a.chest[1] + 60], [1010, 760], [1210, 790], [1400, 770], [1560, 820]], C.red, 16, 5, 'ribbonLong');
     S.rosette(k, a);

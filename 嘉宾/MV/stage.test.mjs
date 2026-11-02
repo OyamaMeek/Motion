@@ -52,3 +52,30 @@ test('每个定格的关键物件都在画面内，主角朝向符合分镜', as
     await chrome.close();
   }
 });
+
+// 衔接表要求这些物件在切点之前已经在画面或世界里，否则会凭空出现或消失。
+const CARRIED = {
+  P02: ['tally'], L01: ['sill', 'dustMug'], L02: ['phone'], L04: ['photo', 'sill'], L07: ['doorFront'], L09: ['archPost'], L10: ['heldPhoto'],
+  L14: ['gapTiles'], L15: ['gapTiles', 'envelope'], I02: ['glass', 'hallWindow'], L17: ['exitDoor', 'placeCard'], L18: ['ringBox'],
+  L21: ['glass', 'hallWindow'], L22: ['glass', 'hallWindow'], L23: ['lastRow', 'placeCard'], L24: ['glass', 'petal'], L26: ['glass'],
+  L27: ['nearCard'], L28: ['glass', 'tickets', 'nearCard'], L33: ['rope'], L34: ['spotlight'], L35: ['road'], L37: ['road'],
+};
+
+test('定格符合衔接表', async () => {
+  const chrome = await openChrome();
+  try {
+    await chrome.openStyle('paper', here);
+    const {shots} = await chrome.evaluate('window.stage.inspectAll()');
+    const at = Object.fromEntries(shots.map(s => [s.id, s.marks]));
+    for (const [id, names] of Object.entries(CARRIED)) for (const name of names) assert.ok(at[id][name], `${id} 缺少 ${name}`);
+    assert.equal(at.L07.doorBack, undefined, 'L07 身后不应再有门');
+    const width = (id, name) => at[id][name].x1 - at[id][name].x0;
+    for (const [id, u] of [['L07', 20], ['L08', 17], ['L09', 14]]) assert.ok(Math.abs(width(id, 'invite') / u - 11.5) < 1.2, `${id} 喜帖比例 ${width(id, 'invite') / u}`);
+    assert.ok(Math.abs(at.L05.me.y1 - 900) < 1, `L05 脚底 ${at.L05.me.y1}`);
+    assert.ok(Math.abs(at.L03.me.y1 - 777.5) < 1, `L03 脚底 ${at.L03.me.y1}`);
+    const aspect = box => (box.x1 - box.x0) / (box.y1 - box.y0);
+    assert.ok(Math.abs(aspect(at.L04.roomWindow) - aspect(at.L05.bigWindow)) < 0.1, 'L04 与 L05 的窗宽高比不同');
+  } finally {
+    await chrome.close();
+  }
+});

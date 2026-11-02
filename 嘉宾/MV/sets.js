@@ -3,11 +3,11 @@ import {C, W, H, rect, circle, ellipse, arch, rotated, rng} from './kit.js';
 const E = {torn: true};
 const FRAME = {x0: 30, y0: 26, x1: 1890, y1: 1054};
 
-export function flakes(k, count, seed, {x0 = 70, y0 = 60, x1 = 1850, y1 = 940, color = C.cream, size = 10} = {}) {
+export function flakes(k, count, seed, {x0 = 70, y0 = 60, x1 = 1850, y1 = 940, color = C.cream, size = 10, name = null} = {}) {
   const r = rng(seed);
   for (let i = 0; i < count; i++) {
     const x = x0 + r() * (x1 - x0), y = y0 + r() * (y1 - y0), s = size * (0.45 + r() * 0.55);
-    k.cut(ellipse(x, y, s, s * (0.65 + r() * 0.35), 9), typeof color === 'function' ? color(r()) : color, {border: 2, lift: 0.3});
+    k.cut(ellipse(x, y, s, s * (0.65 + r() * 0.35), 9), typeof color === 'function' ? color(r()) : color, {border: 2, lift: 0.3, name});
   }
 }
 export const confetti = (k, count, seed, area) => flakes(k, count, seed, {...area, size: 11, color: v => (v < 0.55 ? C.red : C.gold)});
@@ -181,12 +181,12 @@ export function sillThings(k, {photo = true, y = 800, x = 0} = {}) {
   mug(k, 1060 + x, y, 1, C.pine);
   mug(k, 1210 + x, y, 1, C.oldDark, {dust: true});
 }
-// 屋外隔窗：相机在屋外，Clawd 在窗里面向镜头。
-export function windowOutside(k, draw) {
-  k.torn([[30, 26], [1890, 26], [1890, 1054], [30, 1054]], C.woodDark, {lift: 0.3});
-  for (let x = 110; x < 1880; x += 170) k.line([[x, 30], [x + 4, 1050]], C.branch, 4);
-  k.cut(rect(420, 150, 1080, 660), C.roomDim, {lift: 0.2, border: 2});
-  k.cut(rect(420, 560, 1080, 250), C.room, {lift: 0.1, border: 1});
+// 屋外隔窗：相机在屋外，Clawd 在窗里面向镜头。窗内是屋内同一张纸，它不随相机缩放，穿窗时不用换背景。
+export function windowOutside(k, draw, cam = [W / 2, H / 2, 1]) {
+  roomInside(k);
+  k.camera(...cam);
+  [rect(30, 26, 1860, 130), rect(30, 804, 1860, 250), rect(30, 140, 396, 680), rect(1494, 140, 396, 680)].forEach(wall => k.torn(wall, C.woodDark, {lift: 0.3}));
+  for (let x = 110; x < 1880; x += 170) if (x < 420 || x > 1500) k.line([[x, 30], [x + 4, 1050]], C.branch, 4);
   draw();
   k.line([[960, 150], [960, 810]], C.wood, 14, 4);
   k.line([[420, 480], [1500, 480]], C.wood, 14, 4);
@@ -200,15 +200,16 @@ export function frost(k, hole, seed = 5) {
     k.mark(ellipse(x, y, rx, ry, 14), 'rgba(238,246,247,.34)');
   }
 }
-// 屋内：相机在窗台一侧看 Clawd，身后是墙和日历。
+// 屋内：相机在窗台一侧看 Clawd，身后是墙和日历。墙和地板向右下延伸，L03 推近窗台时不露底纸。
 export function roomInside(k, {calendar = true, windowBack = true} = {}) {
-  k.torn([[30, 26], [1890, 26], [1890, 1054], [30, 1054]], C.room, {tex: 'news', lift: 0.3});
-  k.cut(rect(30, 830, 1860, 224), C.wood, {lift: 0.6, border: 3});
+  k.torn([[30, 26], [2460, 26], [2460, 1130], [30, 1130]], C.room, {tex: 'news', lift: 0.3});
+  k.cut(rect(30, 830, 2430, 300), C.wood, {lift: 0.6, border: 3});
   if (windowBack) {
-    k.cut(rect(1160, 170, 520, 420), C.sky, {lift: 0.4, border: 10, name: 'roomWindow'});
-    k.torn([[1165, 470], [1400, 445], [1676, 480], [1676, 586], [1165, 586]], C.snow, {lift: 0.2});
-    flakes(k, 22, 91, {x0: 1190, y0: 190, x1: 1650, y1: 570, size: 9});
-    k.line([[1420, 170], [1420, 590]], C.wood, 10, 3);
+    k.cut(rect(1160, 170, 520, 250), C.sky, {lift: 0.4, border: 10, name: 'roomWindow'});
+    k.torn([[1165, 340], [1400, 325], [1676, 345], [1676, 416], [1165, 416]], C.snow, {lift: 0.2});
+    flakes(k, 22, 91, {x0: 1190, y0: 190, x1: 1650, y1: 400, size: 9});
+    k.line([[1420, 170], [1420, 420]], C.wood, 10, 3);
+    k.line([[1160, 295], [1680, 295]], C.wood, 10, 3);
   }
   if (calendar) {
     k.cut(rect(250, 170, 300, 340), C.cream, {lift: 0.9, border: 5, name: 'calendar'});
@@ -255,11 +256,12 @@ export function floralArch(k, cx, foot, w, h, name = 'arch') {
 }
 
 // ---------- 礼堂签到区 ----------
+// 一条长走廊，物件有固定的世界座标，L11–L15 靠相机横移经过。上下留出余量，L15 拉宽时不露底纸。
 export function foyer(k, {poster = true} = {}) {
-  k.torn([[30, 26], [1890, 26], [1890, 1054], [30, 1054]], C.hall, {tex: 'news', lift: 0.3});
-  for (let x = 240; x < 1880; x += 420) k.cut(rect(x, 26, 44, 800), C.wall, {lift: 0.5, border: 3});
-  k.cut(rect(30, 820, 1860, 234), C.wallShade, {lift: 0.5, border: 3});
-  for (let x = 60; x < 1880; x += 240) k.line([[x, 822], [x - 70, 1052]], C.oldDark, 4);
+  k.torn(rect(30, -320, 6000, 1640), C.hall, {tex: 'news', lift: 0.3});
+  for (let x = 240; x < 6000; x += 420) k.cut(rect(x, -320, 44, 1146), C.wall, {lift: 0.5, border: 3});
+  k.cut(rect(30, 820, 6000, 500), C.wallShade, {lift: 0.5, border: 3});
+  for (let x = 60; x < 6000; x += 240) k.line([[x, 822], [x - 150, 1318]], C.oldDark, 4);
   if (poster) {
     k.cut(rect(640, 90, 640, 480), C.gold, {lift: 1.2, border: 8, name: 'poster'});
     k.cut(rect(668, 118, 584, 424), C.cream, {lift: 0, border: 2});
@@ -302,17 +304,19 @@ export function hall(k, {rows = true, door = false, bell = false, clap = false, 
   k.cut(rect(30, 26, 1860, 120), C.wallShade, {lift: 0.5, border: 3});
   for (const x of [230, 650, 1270, 1690]) k.cut(rect(x - 60, 150, 120, 150), C.sky, {lift: 0.5, border: 8});
   if (bell) {
-    k.cut(rect(740, 100, 440, 430), C.sky, {lift: 0.5, border: 10, name: 'hallWindow'});
-    k.torn([[750, 450], [1170, 435], [1170, 520], [750, 520]], C.snow, {lift: 0.1});
-    k.cut(rect(895, 240, 130, 240), C.wallShade, {border: 4});
-    k.cut([[870, 244], [960, 130], [1050, 244]], C.roof, {border: 4});
-    k.cut(arch(915, 1005, 262, 372), C.door, {border: 2, lift: 0.2});
-    k.cut(arch(932, 988, 285, 358), C.gold, {border: 2, lift: 0.3, name: 'bell'});
-    [78, 118].forEach(radius => k.line(Array.from({length: 25}, (_, i) => [960 + Math.cos(i / 24 * 6.283) * radius, 322 + Math.sin(i / 24 * 6.283) * radius]), C.gold, 4));
+    // 高窗按 L17 的画面位置换算成世界座标，I02 拉远时也在同一处。
+    const s = 0.4267, at = pts => pts.map(([x, y]) => [1035 + (x - 960) * s, 295.07 + (y - 540) * s]);
+    k.cut(at(rect(740, 100, 440, 430)), C.sky, {lift: 0.5, border: 4, name: 'hallWindow'});
+    k.torn(at([[750, 450], [1170, 435], [1170, 520], [750, 520]]), C.snow, {lift: 0.1});
+    k.cut(at(rect(895, 240, 130, 240)), C.wallShade, {border: 2});
+    k.cut(at([[870, 244], [960, 130], [1050, 244]]), C.roof, {border: 2});
+    k.cut(at(arch(915, 1005, 262, 372)), C.door, {border: 1, lift: 0.2});
+    k.cut(at(arch(932, 988, 285, 358)), C.gold, {border: 1, lift: 0.3, name: 'bell'});
+    [78, 118].forEach(radius => k.line(at(Array.from({length: 25}, (_, i) => [960 + Math.cos(i / 24 * 6.283) * radius, 322 + Math.sin(i / 24 * 6.283) * radius])), C.gold, 2));
   }
   if (door) {
-    k.cut(rect(1340, 130, 240, 270), C.door, {lift: 0.8, border: 7, name: 'exitDoor'});
-    k.cut(rect(1390, 88, 140, 40), C.green, {lift: 0.4, border: 3, name: 'exitSign'});
+    k.cut(rect(1340, 240, 240, 270), C.door, {lift: 0.8, border: 7, name: 'exitDoor'});
+    k.cut(rect(1390, 198, 140, 40), C.green, {lift: 0.4, border: 3, name: 'exitSign'});
   }
 }
 // 一排客人用低饱和纸色，全片只有主角和新人是橙色。
@@ -374,6 +378,7 @@ export function outsideWindow(k, {sky = C.skyDim, cloud = false} = {}) {
     [[320, 150, 360, 110], [1560, 170, 370, 120]].forEach(([x, y, a, b]) => k.torn(ellipse(x, y, a, b, 18), C.skyDim, {lift: 0.4}));
   }
   k.torn([[30, 640], [640, 610], [1300, 640], [1890, 620], [1890, 1054], [30, 1054]], C.snow, {lift: 1, name: 'outsideSnow'});
+  k.torn([[1160, 640], [1320, 640], [1880, 1050], [1420, 1050]], C.path, {tex: 'kraft', lift: 0.4, name: 'road'});
 }
 // 玻璃上映出的礼堂是一块暖色面板，新人站在面板的地面上，不会看起来飘在天上。
 export function reflection(k, x, foot, u, {hug = false} = {}) {
