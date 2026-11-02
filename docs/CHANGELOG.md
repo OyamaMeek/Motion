@@ -619,6 +619,6 @@
   - `嘉宾/MV/gen-sheet.mjs`（新增）、`boards/storyboard.png`（新增）、`export-stills.sh`、`stage.test.mjs`、`README.md`
   - `memory/progress.md`、`memory/verify.md`、`docs/CHANGELOG.md`
 
-- **Git 提交**：待提交
+- **Git 提交**：`337e94eb8f890d5f42129f1c2450056932680efa feat: add the Jiabin keyframe storyboard sheet`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
