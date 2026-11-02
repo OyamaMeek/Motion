@@ -585,6 +585,6 @@
   - `嘉宾/MV/boards/`：37 张定格、总览
   - `memory/progress.md`、`memory/verify.md`、`docs/CHANGELOG.md`
 
-- **Git 提交**：待提交
+- **Git 提交**：`3af22be01c241acfca05e12d0cffdfd813f1a2bf feat: redraw Jiabin stills to match the transition table`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
