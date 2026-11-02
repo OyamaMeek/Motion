@@ -1,4 +1,4 @@
-import {clawdRects, toScreen, CHARACTER_COLORS} from './geometry.js';
+import {posedRects, toScreen} from './geometry.js';
 import {P} from './film.js';
 
 const W = 320, H = 180, U = 6;
@@ -97,14 +97,7 @@ export function createPixel() {
     }
     if (item.kind === 'clawd') {
       const unit = (item.unit ?? 1) * cam.z, [ox, oy] = toScreen(cam, item.x, item.y);
-      const lift = (item.breath ?? 0) * 0.045, eyes = CHARACTER_COLORS.eyes;
-      // 呼吸：腿不动，躯干以腰线为基准上下伸缩。
-      for (const rect of clawdRects(item)) {
-        let {y, h} = rect;
-        if (lift && y < 21) { y -= lift * (21 - y); h = h * (1 + lift); }
-        if (item.blink && rect.color === eyes && rect.y < 16) { if (rect.y > 13 || rect.y + rect.h <= 13) continue; y = 13; h = 1; }
-        fillRect(ox + rect.x * unit, oy + y * unit, rect.w * unit, h * unit, c32(rect.color), item.density);
-      }
+      for (const rect of posedRects(item)) fillRect(ox + rect.x * unit, oy + rect.y * unit, rect.w * unit, rect.h * unit, c32(rect.color), item.density);
       return;
     }
     if (item.kind === 'text') {

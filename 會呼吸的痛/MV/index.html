@@ -13,24 +13,30 @@
   window.addEventListener('error', e => renderErrors.push(e.message));
   window.addEventListener('unhandledrejection', e => renderErrors.push(String(e.reason)));
 </script>
+<script src="../../.agent/work/art-libs/p5-2.2.0.min.js"></script>
+<script src="../../.agent/work/art-libs/p5.brush-3.0.0.js"></script>
 <script type="module">
   import {frameAt} from './film.js';
   import {createPixel} from './pixel.js';
+  import {createPaper} from './paper.js';
+  import {createCrayon} from './crayon.js';
   import {SHOTS, FPS} from './shots.js';
   import {lyricTimeline, lyricAtFrame} from './lyrics.js';
 
+  const requested = new URLSearchParams(location.search).get('style');
+  const style = FPS[requested] ? requested : 'pixel', fps = FPS[style];
   const [lrc, measured] = await Promise.all([
     fetch('../會呼吸的痛.lrc').then(r => r.text()),
     fetch('./人聲測量.json').then(r => r.json()),
   ]);
-  const timeline = lyricTimeline(lrc, measured, FPS.pixel);
-  const art = createPixel();
+  const timeline = lyricTimeline(lrc, measured, fps);
+  const art = style === 'crayon' ? await new Promise(createCrayon) : style === 'paper' ? createPaper() : createPixel();
   window.art = art;
   window.shotList = SHOTS;
   window.lyricTimelineData = timeline;
   window.renderAt = t => art.render(frameAt(t));
-  // 成片按帧号取时间：背景和歌词在同一张画布上依次绘制。
-  window.renderFilmFrame = i => art.render(frameAt(i / FPS.pixel), lyricAtFrame(timeline, i));
+  // 成片按帧号取时间：背景和歌词在同一张画布上依次绘制；帧号同时决定纸层抖动和蜡笔版本。
+  window.renderFilmFrame = i => art.render(frameAt(i / fps), lyricAtFrame(timeline, i), i);
   await document.fonts.ready;
   window.artReady = true;
 </script>

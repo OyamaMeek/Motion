@@ -2,7 +2,13 @@
 
 依据 [會呼吸的痛storyboard.md](../會呼吸的痛storyboard.md) 的 41 个镜头，每镜一张 1920×1080 关键画面，用代码绘制，未使用图像生成模型。总览见 [分鏡/storyboard.png](分鏡/storyboard.png)，每格下方标注镜号、起止时间、关键帧时刻和歌词；单镜画面是 `分鏡/P01.png` 到 `分鏡/L37.png`。
 
-成片为像素画风，1920×1080、12 fps，完整覆盖 04:33.043，输出到本地的 `輸出/會呼吸的痛_MV.mp4`（不进入 Git）。`分鏡/` 中的 41 张图是用户确认的草图，成片沿用其构图和时间，并补上材质、光影与动画。
+成片共三版，都是 1920×1080，完整覆盖 04:33.043，只保存在本地的 `輸出/`（不进入 Git）。`分鏡/` 中的 41 张图是用户确认的草图，三版都沿用其构图和时间，并补上材质、光影与动画。
+
+| 画风 | 文件 | 帧率 | 更新规则 |
+| --- | --- | --- | --- |
+| 像素 | `會呼吸的痛_MV.mp4` | 12 fps | 320×180 原生画面放大 6 倍，每帧最多 32 色 |
+| 纸艺 | `會呼吸的痛_MV_紙藝.mp4` | 10 fps | 每次更新，各纸层每轴随机抖动 1–2 像素；歌词是不抖动的贴纸 |
+| 蜡笔 | `會呼吸的痛_MV_蠟筆.mp4` | 8 fps | 背景同一组笔画三版，每两次更新换一版；角色每次在两组笔画间切换 |
 
 ## 结构
 
@@ -12,6 +18,10 @@
 | `film.js` | 把任意时刻换算成绘制清单：场景、相机、角色和物件 |
 | `geometry.js` | 从 `assets/clawd/character.js` 取得 Clawd 的几何 |
 | `pixel.js` | 把绘制清单画到 320×180，放大 6 倍；最后在同一画布上画固定的歌词层 |
+| `sheet.js` | 纸艺与蜡笔共用：同一清单的遍历、相机换算、撕边、天空色带、换景实物、抖动分层 |
+| `paper.js` | 纸艺绘制：剪纸白边、撕纸毛边、投影、纤维、牛皮纸和旧报纸贴图；歌词是贴纸 |
+| `crayon.js` | 蜡笔绘制：启动时用 p5.brush 的 wax 笔刷烘焙 12 张排线贴图，逐帧在 Canvas 2D 上按贴图露出纸色；歌词用手写字体 |
+| `outputs.js` | 三版的输出文件名和歌词颜色 |
 | `lyrics.js` | 读取 LRC，换算每句的出现与消失帧 |
 | `vocal_measure.py` | 从原曲测量人声音高的起止（`人聲測量.json`）和每帧响度（`energy.js`） |
 | `render-film.mjs` | 用本机 Chrome 逐帧绘制，经 ffmpeg 输出 MP4；音轨直接复制原曲 |
@@ -21,15 +31,17 @@
 背景、角色和道具在同一张清单里，由同一相机绘制；窗外城市和前景路灯按各自的纵深比例跟随相机，形成视差。歌词最后绘制，不经过相机，位置固定在画面下方。Clawd 的手只用 `character.js` 自带的长度，不另画手臂；测试会拦下任何额外的手臂，也逐处比对衔接前后的相机与角色方框。
 
 ```bash
-node --test 會呼吸的痛/MV/shots.test.mjs 會呼吸的痛/MV/film.test.mjs 會呼吸的痛/MV/lyrics.test.mjs 會呼吸的痛/MV/art.test.mjs
+node --test 會呼吸的痛/MV/shots.test.mjs 會呼吸的痛/MV/film.test.mjs 會呼吸的痛/MV/lyrics.test.mjs 會呼吸的痛/MV/art.test.mjs 會呼吸的痛/MV/sheet.test.mjs
+```
+
+渲染与检查的画风参数为 `pixel`、`paper`、`crayon`，省略时是 `pixel`。蜡笔依赖 Git 忽略的 `.agent/work/art-libs/`，下载方法见[开场样图说明](../開場樣圖/README.md#重现)。
+
+```bash
+node 會呼吸的痛/MV/render-film.mjs paper
 ```
 
 ```bash
-node 會呼吸的痛/MV/render-film.mjs
-```
-
-```bash
-node 會呼吸的痛/MV/verify-export.mjs
+node 會呼吸的痛/MV/verify-export.mjs paper
 ```
 
 ## 成片在草图之上补充的内容

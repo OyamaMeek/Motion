@@ -436,3 +436,25 @@
 - **Git 提交**：`f35ea98aa9b88cfbf5b2ab033cb9c5f67acb0fa8 docs: analyze Red Scarf lyrics themes and measured rhythm`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
+
+## [2026-11-02 13:40] 纸艺与蜡笔完整 MV
+
+- **需求/问题描述**：
+  > 另外两种画风的视频也按前面的流程生成。
+
+- **实际实现的功能与改动**：
+  - 共用结构：`sheet.js` 遍历与像素版相同的绘制清单和相机，提供撕边、天空色带、换景实物和抖动分层；`posedRects` 移入 `geometry.js`，三版共用。
+  - 纸艺：`paper.js` 用剪纸白边、撕纸毛边、投影、纤维、牛皮纸和旧报纸贴图绘制，每次更新各层抖动 1–2 像素；歌词是固定的贴纸。输出 10 fps、2731 帧、113.9 MB。
+  - 蜡笔：`crayon.js` 用 p5.brush 的 wax 笔刷烘焙 12 张排线贴图，逐帧合成并按试片规则切换版本；歌词用手写字体。输出 8 fps、2185 帧、626 MB。
+  - 脚本：`render-film.mjs`、`verify-export.mjs` 增加画风参数；歌词检测阈值改为按字数计算，新增长空档不应检测到歌词的检查。
+  - 验证：`sheet.test.mjs` 先失败，实现后全部 37 项通过；两版导出检查通过，歌词时间误差最大 0.05、0.06 秒，响度 -9.8 LUFS 与原曲相同，解码后 PCM 哈希相同；抽帧已检查。未听辨、未在播放器中连续观看。
+
+- **涉及文件**：
+  - `會呼吸的痛/MV/sheet.js` (+184)、`paper.js` (+242)、`crayon.js` (+248)、`outputs.js` (+6)、`sheet.test.mjs` (+112)
+  - `會呼吸的痛/MV/geometry.js`、`pixel.js`、`index.html`、`render-film.mjs`、`verify-export.mjs`、`README.md`
+  - `.agent/visual/MV成片_紙藝蠟筆.md` 及四张抽帧总览
+  - `memory/agents.md`、`plan.md`、`progress.md`、`verify.md`、`docs/CHANGELOG.md`
+
+- **Git 提交**：待提交。
+
+---
