@@ -588,3 +588,20 @@
 - **Git 提交**：`3af22be01c241acfca05e12d0cffdfd813f1a2bf feat: redraw Jiabin stills to match the transition table`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
+
+## [2026-11-02 22:54] 嘉宾定格视觉检查
+
+- **需求/问题描述**：
+  > 查看定格。
+
+- **实际实现的功能与改动**：
+  - 修复：L24 席卡盖脸，改为被碰歪滑开；L33 幕绳落在头顶，移到他左边，L34 的他改到 (554.5, 830, 13)；L04 手机盖住合照；P02、L01 墙的接缝和漏出的房间纸；L28 红线没到画面边缘。
+  - 验证：查看 33 张定格和总览，修复后复查 7 张；新增的遮挡断言先失败后通过，`stage.test.mjs` 3 项通过；转场校验通过；52 张定格互不相同。运动和接缝未渲染。
+
+- **涉及文件**：
+  - `嘉宾/MV/kit.js`、`sets.js`、`poses.js`、`stage.test.mjs`、`嘉宾/storyboard.md` (+37 / -19)、`嘉宾/MV/boards/`
+  - `.agent/visual/嘉宾定格按衔接表.md`、`memory/progress.md`、`memory/verify.md`、`docs/CHANGELOG.md`
+
+- **Git 提交**：待提交
+
+---

@@ -75,6 +75,12 @@ test('定格符合衔接表', async () => {
     assert.ok(Math.abs(at.L03.me.y1 - 777.5) < 1, `L03 脚底 ${at.L03.me.y1}`);
     const aspect = box => (box.x1 - box.x0) / (box.y1 - box.y0);
     assert.ok(Math.abs(aspect(at.L04.roomWindow) - aspect(at.L05.bigWindow)) < 0.1, 'L04 与 L05 的窗宽高比不同');
+    // 视觉检查发现的遮挡：席卡盖脸、幕绳像吊在头上、手机盖住合照。
+    const apart = (a, b) => a.x1 <= b.x0 || b.x1 <= a.x0 || a.y1 <= b.y0 || b.y1 <= a.y0;
+    assert.ok(at.L24.placeCard.x1 < 560, `L24 席卡盖住主角：${at.L24.placeCard.x1}`);
+    assert.ok(apart(at.L33.rope, at.L33.me), 'L33 幕绳穿过主角');
+    assert.ok(apart(at.L04.phone, at.L04.photo), 'L04 手机盖住合照');
+    assert.ok(at.L28.redLine.x1 >= 1920, 'L28 红线没有到画面右缘');
   } finally {
     await chrome.close();
   }

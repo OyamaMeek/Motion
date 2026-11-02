@@ -183,10 +183,14 @@ export function sillThings(k, {photo = true, y = 800, x = 0} = {}) {
 }
 // 屋外隔窗：相机在屋外，Clawd 在窗里面向镜头。窗内是屋内同一张纸，它不随相机缩放，穿窗时不用换背景。
 export function windowOutside(k, draw, cam = [W / 2, H / 2, 1]) {
-  roomInside(k);
   k.camera(...cam);
-  [rect(30, 26, 1860, 130), rect(30, 804, 1860, 250), rect(30, 140, 396, 680), rect(1494, 140, 396, 680)].forEach(wall => k.torn(wall, C.woodDark, {lift: 0.3}));
-  for (let x = 110; x < 1880; x += 170) if (x < 420 || x > 1500) k.line([[x, 30], [x + 4, 1050]], C.branch, 4);
+  k.torn([[30, 26], [1890, 26], [1890, 1054], [30, 1054]], C.woodDark, {lift: 0.3});
+  for (let x = 110; x < 1880; x += 170) k.line([[x, 30], [x + 4, 1050]], C.branch, 4);
+  k.clipped(rect(420, 150, 1080, 660), () => {
+    k.camera(W / 2, H / 2, 1);
+    roomInside(k, {bleed: true});
+  });
+  k.camera(...cam);
   draw();
   k.line([[960, 150], [960, 810]], C.wood, 14, 4);
   k.line([[420, 480], [1500, 480]], C.wood, 14, 4);
@@ -201,9 +205,10 @@ export function frost(k, hole, seed = 5) {
   }
 }
 // 屋内：相机在窗台一侧看 Clawd，身后是墙和日历。墙和地板向右下延伸，L03 推近窗台时不露底纸。
-export function roomInside(k, {calendar = true, windowBack = true} = {}) {
-  k.torn([[30, 26], [2460, 26], [2460, 1130], [30, 1130]], C.room, {tex: 'news', lift: 0.3});
-  k.cut(rect(30, 830, 2430, 300), C.wood, {lift: 0.6, border: 3});
+export function roomInside(k, {calendar = true, windowBack = true, bleed = false} = {}) {
+  const left = bleed ? -300 : 30, top = bleed ? -300 : 26;
+  k.torn([[left, top], [2460, top], [2460, 1130], [left, 1130]], C.room, {tex: 'news', lift: 0.3});
+  k.cut(rect(left, 830, 2460 - left, 300), C.wood, {lift: 0.6, border: 3});
   if (windowBack) {
     k.cut(rect(1160, 170, 520, 250), C.sky, {lift: 0.4, border: 10, name: 'roomWindow'});
     k.torn([[1165, 340], [1400, 325], [1676, 345], [1676, 416], [1165, 416]], C.snow, {lift: 0.2});

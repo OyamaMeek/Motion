@@ -187,6 +187,13 @@ export function createKit(canvas) {
       applyCam();
     },
     camera(cx, cy, z) { cam = {cx, cy, z}; applyCam(); },
+    // 只在 pts 范围内绘制；pts 按当前相机换算。draw 里可以换相机，结束后由调用方设回。
+    clipped(pts, draw) {
+      out.save();
+      trace(pts); out.clip();
+      draw();
+      out.restore();
+    },
     torn: (pts, color, opts = {}) => piece(pts, color, {torn: true, ...opts}),
     cut: (pts, color, opts = {}) => piece(pts, color, opts),
     line(pts, color, width, border = 0, name = null) {

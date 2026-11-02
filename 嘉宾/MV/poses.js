@@ -29,13 +29,13 @@ const outerSill = k => {
 };
 // 礼堂只有这一个世界，近景都是同一批物件加相机。主角后面没有客人，前排也在他的正前方留出空位。
 // 相机越过前排后 front 为 false，row 为 false 时左右没有邻座。
-function hallRows(k, {clap = false, me: meOpts = {}, foot = 470, front = true, row = true, card = true, glass = true, rosette = true} = {}) {
+function hallRows(k, {clap = false, me: meOpts = {}, foot = 470, front = true, row = true, card = [1035, 478, 130, 0], glass = true, rosette = true} = {}) {
   S.hall(k, {door: true, bell: true});
   if (row) S.guests(k, 470, 6.4, [300, 480, 660, 840, 1230], {clap, seed: 3});
   const a = me(k, 1035, foot, 6.4, meOpts);
   if (rosette) S.rosette(k, a);
   S.seatTable(k, 770, 462, 1100, 'lastRow', 30);
-  if (card) S.placeCard(k, 1035, 478, 130);
+  if (card) S.placeCard(k, ...card);
   if (glass) S.glass(k, 1170, 462, 0.71);
   if (front) {
     S.guests(k, 670, 8.6, [190, 460, 730, 1320, 1580, 1780], {clap, seed: 5});
@@ -72,7 +72,7 @@ export const POSES = {
     const a = me(k, 720, 860, 17, {expression: 'sad', action: 'hold'});
     k.cut(rotated(a.grip[0] + 90, a.grip[1] - 70, 150, 170, 24), C.cream, {lift: 1.4, border: 4, name: 'calendarPage'});
     longSill(k);
-    S.oldPhoto(k, 1300, 790, 240, -4);
+    S.oldPhoto(k, 1370, 790, 240, -4);
     S.phone(k, 1796, 686, 2, {lit: false, deg: 7});
   }},
   L03: {keys: ['phone', 'phoneSign', 'photo', 'me'], draw(k) {
@@ -81,7 +81,7 @@ export const POSES = {
     me(k, 992, 860, 17);
     k.vellum(0.42);
     longSill(k);
-    S.oldPhoto(k, 1300, 790, 240, -4);
+    S.oldPhoto(k, 1370, 790, 240, -4);
     S.phone(k, 1796, 686, 2, {deg: 7});
     k.camera(960, 540, 1);
     [[920, 380, 880, 480], [1440, 410, 1486, 510], [920, 690, 880, 760], [1440, 680, 1486, 740]].forEach(([a, b, c, d]) => k.line([[a, b], [c, d]], C.red, 8, 3));
@@ -90,7 +90,7 @@ export const POSES = {
     S.roomInside(k);
     const a = me(k, 860, 900, 19, {action: 'hold'});
     longSill(k);
-    S.oldPhoto(k, 1300, 790, 240, -4);
+    S.oldPhoto(k, 1370, 790, 240, -4);
     heldPhone(k, a, 1.15);
   }},
   L05: {keys: ['me', 'bubble'], draw(k) {
@@ -265,9 +265,9 @@ export const POSES = {
     S.glass(k, a.grip[0] + 4.5, a.grip[1] + 4.5, 0.512);
   }},
   L24: {keys: ['me', 'exitDoor', 'exitSign'], draw(k) {
-    // 他把自己按低，手臂正好到桌沿高度，手臂长度不变，两手自然压在桌面上。
+    // 他把自己按低，手臂正好到桌沿高度，手臂长度不变，两手自然压在桌面上。按桌时席卡被碰歪滑开，L26 才有得扶。
     k.camera(1115, 402, 2.5);
-    const a = hallRows(k, {front: false, foot: 526, rosette: false, me: {expression: 'sad'}});
+    const a = hallRows(k, {front: false, foot: 526, rosette: false, card: [880, 478, 130, -9], me: {expression: 'sad'}});
     S.rosette(k, {chest: [a.chest[0], a.chest[1] - 16], u: a.u});
     k.camera(960, 540, 1);
     S.flakes(k, 9, 124, {x0: 1250, y0: 120, x1: 1860, y1: 760, color: C.petal, size: 26, name: 'petal'});
@@ -305,7 +305,7 @@ export const POSES = {
     k.camera(cx, cy, z);
     const a = hallRows(k, {front: false, row: false, card: false, foot: 439.8, me: {expression: 'sad', action: 'hold', deg: -7}});
     S.ticketStubs(k, 1150, 466, 0.71);
-    S.redLine(k, [world(1880, 960), world(1450, 870), a.grip], 12 / z);
+    S.redLine(k, [world(1990, 985), world(1450, 870), a.grip], 12 / z);
     k.camera(960, 540, 1);
     S.placeCard(k, 116, 753, 836, -2, 'nearCard');
   }},
@@ -343,14 +343,14 @@ export const POSES = {
   L33: {keys: ['me', 'curtain', 'spotlight', 'stageFrame'], draw(k) {
     S.paperStage(k, 1);
     S.spotlight(k, 960);
-    k.line([[915.5, 140], [915.5, 797.5]], C.gold, 6, 3, 'rope');
+    k.line([[730, 140], [730, 797.5]], C.gold, 6, 3, 'rope');
     const a = me(k, 960, 830, 13, {expression: 'sad', tint: COLD});
     S.rosette(k, a);
   }},
   L34: {keys: ['me', 'curtain', 'rope'], draw(k) {
     S.paperStage(k, 0.5);
-    S.spotlight(k, 740);
-    const a = me(k, 740, 830, 13, {expression: 'sad', action: 'hold', tint: COLD});
+    S.spotlight(k, 555);
+    const a = me(k, 554.5, 830, 13, {expression: 'sad', action: 'hold', tint: COLD});
     S.rosette(k, a);
     k.line([[a.grip[0], 140], a.grip], C.gold, 6, 3, 'rope');
   }},
