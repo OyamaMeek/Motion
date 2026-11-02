@@ -12,4 +12,5 @@ done
 rm -f boards/stills/contact-sheet-*.jpg
 ffmpeg -v error -y -framerate 1 -start_number 0 -i boards/stills/frame-%02d.jpg -vf "scale=480:-2,tile=8x7:padding=6:color=0xf4f1ea" -frames:v 1 -q:v 3 boards/总览.jpg
 node --no-warnings gen-board.mjs
+node --no-warnings gen-sheet.mjs
 ls boards/stills | wc -l

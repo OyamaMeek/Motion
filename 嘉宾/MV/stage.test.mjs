@@ -7,6 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {parseStoryboard} from './gen-shots.mjs';
 import {SHOTS, DURATION} from './shots.js';
 import {openChrome} from '../../會呼吸的痛/開場樣圖/v2/chrome.mjs';
+import {buildSheet} from './gen-sheet.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SUBTITLE_TOP = 950;
@@ -48,6 +49,23 @@ test('每个定格的关键物件都在画面内，主角朝向符合分镜', as
     });
     assert.deepEqual(report.shots.filter(s => s.me === 'back').map(s => s.id), ['P01']);
     assert.equal(new Set(report.shots.map(s => s.hash)).size, 52, '有重复画面');
+  } finally {
+    await chrome.close();
+  }
+});
+
+test('分镜总览图包含全部 52 镜，标注不超出格子', async () => {
+  const chrome = await openChrome();
+  try {
+    await chrome.openStyle('paper', here);
+    const sheet = await buildSheet(chrome, readFileSync(path.join(here, '../storyboard.md'), 'utf8'));
+    assert.equal(sheet.cells, 52);
+    assert.equal(new Set(sheet.hashes).size, 52, '有重复的格子');
+    assert.ok(sheet.widestLabel <= sheet.cellWidth, `标注宽 ${sheet.widestLabel}`);
+    assert.deepEqual(sheet.labels[1], ['02 P02 窗台上的两个人', '00:10.612–00:20.944 ｜ 关键帧 00:18.500', 'T01 实物遮挡']);
+    assert.equal(sheet.labels[0][2], '片头');
+    assert.deepEqual([sheet.width, sheet.height], [3984, 2786]);
+    assert.ok(sheet.png.startsWith('data:image/png;base64,'));
   } finally {
     await chrome.close();
   }

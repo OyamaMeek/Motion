@@ -605,3 +605,20 @@
 - **Git 提交**：`e2521ce10e7854d3f55818636fe1186aed06f2a1 fix: correct Jiabin stills after second visual review`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
+
+## [2026-11-02 23:33] 嘉宾分镜总览图
+
+- **需求/问题描述**：
+  > 分镜已确认。暂不渲染成片，为每个镜头绘制一张关键帧草图，拼接为一张分镜总览图 storyboard.png 供检查，确认后再制作完整视频。
+
+- **实际实现的功能与改动**：
+  - 总览图：新增 `gen-sheet.mjs`，用定格的 Canvas 重绘 52 个关键帧，8 列 7 行，3984×2786；每格标注镜号、镜名、起止时间、关键帧时刻和入场衔接，不放歌词正文。`export-stills.sh` 同时生成它。
+  - 验证：`stage.test.mjs` 新增一项，缺少脚本时失败，实现后通过，共 4 项；转场校验通过。未查看成图；没有渲染视频。
+
+- **涉及文件**：
+  - `嘉宾/MV/gen-sheet.mjs`（新增）、`boards/storyboard.png`（新增）、`export-stills.sh`、`stage.test.mjs`、`README.md`
+  - `memory/progress.md`、`memory/verify.md`、`docs/CHANGELOG.md`
+
+- **Git 提交**：待提交
+
+---
