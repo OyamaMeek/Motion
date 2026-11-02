@@ -11,24 +11,25 @@ const heldPhone = (k, a, s = 0.62) => S.phone(k, a.grip[0] + 40 * s, a.grip[1] -
 const FROST_ME = [1150, 820, 14];
 
 function hookHands(k, y, name = 'hook') {
-  k.line(Array.from({length: 13}, (_, i) => [960 + Math.cos(i / 12 * 6.283) * 28, y + Math.sin(i / 12 * 6.283) * 18]), C.white, 7, 3, name);
-  k.cut(circle(960, y, 16, 12), C.orange, {border: 3, lift: 0.6, name});
+  k.cut(ellipse(960, y, 44, 30, 18), C.orange, {border: 5, lift: 0.8, name});
+  k.line([[934, y - 8], [960, y + 10], [986, y - 8]], C.door, 7);
 }
+// 主角后面没有客人，前排也在他的正前方留出空位，所以最后一排的他始终看得到。
 function hallRows(k, {clap = false, me: meOpts = {}} = {}) {
   S.hall(k, {door: true});
-  S.guests(k, 450, 5.6, [420, 620, 820, 1240, 1440], {clap, seed: 3});
-  const a = me(k, 1030, 450, 5.6, meOpts);
-  S.seatTable(k, 920, 450, 1320, 'lastRow');
-  S.guests(k, 620, 8, [330, 590, 850, 1110, 1370, 1630], {clap, seed: 5});
-  S.seatTable(k, 980, 620, 1560, 'rowB');
-  S.guests(k, 830, 11, [230, 590, 950, 1310, 1670], {clap, seed: 7});
-  S.seatTable(k, 950, 830, 1720, 'rowC');
+  S.guests(k, 470, 6.4, [300, 480, 660, 840, 1230], {clap, seed: 3});
+  const a = me(k, 1035, 470, 6.4, meOpts);
+  S.seatTable(k, 770, 462, 1100, 'lastRow', 30);
+  S.guests(k, 670, 8.6, [190, 460, 730, 1320, 1580, 1780], {clap, seed: 5});
+  S.seatTable(k, 980, 660, 1760, 'rowB', 34);
+  S.guests(k, 880, 11, [170, 500, 830, 1250, 1580], {clap, seed: 7});
+  S.seatTable(k, 900, 870, 1640, 'rowC', 40);
   return a;
 }
 // 最后一排的近景：同一张桌子、同一个位置。
 function lastRow(k, {x = 960, u = 18, foot = 900, opts = {}, door = true, bell = false, neighbours = true, tableY = 800} = {}) {
   S.hall(k, {door, bell});
-  if (neighbours) S.guests(k, foot, u, x < 700 ? [1500] : [240], {seed: 11});
+  if (neighbours) S.guests(k, foot, u, x > 700 ? [240] : [1500], {seed: 11});
   const a = me(k, x, foot, u, opts);
   S.seatTable(k, 960, tableY, 1820);
   return a;
@@ -66,12 +67,12 @@ export const POSES = {
     S.roomInside(k);
     const a = me(k, 720, 860, 17, {expression: 'sad', action: 'hold'});
     k.cut(rotated(a.grip[0] + 90, a.grip[1] - 70, 150, 170, 24), C.cream, {lift: 1.4, border: 4, name: 'calendarPage'});
-    k.cut(rect(1080, 880, 680, 44), C.wood, {lift: 1.3, border: 4, name: 'sill'});
-    S.oldPhoto(k, 1300, 800, 220, -4);
+    k.cut(rect(1040, 880, 740, 60), C.path, {lift: 1.5, border: 5, name: 'sill'});
+    S.oldPhoto(k, 1300, 790, 240, -4);
   }},
   L03: {keys: ['phone', 'phoneSign', 'photo', 'me'], draw(k) {
     S.roomInside(k, {calendar: false});
-    me(k, 560, 720, 11);
+    me(k, 240, 790, 11);
     k.vellum(0.42);
     k.cut(rect(120, 800, 1680, 90), C.wood, {lift: 1.5, border: 6, name: 'sill'});
     S.oldPhoto(k, 560, 690, 300, -5);
@@ -80,30 +81,31 @@ export const POSES = {
   }},
   L04: {keys: ['me', 'phone', 'roomWindow'], draw(k) {
     S.roomInside(k);
-    const a = me(k, 960, 900, 19, {action: 'hold'});
-    heldPhone(k, a, 0.72);
+    const a = me(k, 860, 900, 19, {action: 'hold'});
+    heldPhone(k, a, 1.15);
   }},
   L05: {keys: ['me', 'bubble'], draw(k) {
     k.torn(rect(30, 26, 1860, 1028), C.room, {tex: 'news', lift: 0.3});
     k.cut(rect(130, 80, 1660, 800), C.sky, {lift: 0.6, border: 12, name: 'bigWindow'});
+    k.line([[960, 86], [960, 874]], C.wood, 16, 4);
+    k.line([[136, 470], [1784, 470]], C.wood, 16, 4);
     const r = rng(41), spots = [[310, 200], [560, 170], [830, 150], [1090, 150], [1360, 170], [1610, 210], [260, 420], [500, 390], [1420, 390], [1680, 420], [300, 660], [530, 610], [1400, 610], [1660, 660], [760, 310], [1170, 310]];
     spots.forEach(([x, y], i) => S.bubble(k, x, y, 170 + r() * 90, [C.red, C.gold, C.cream][i % 3], {tail: i % 2 ? 1 : -1}));
-    const a = me(k, 960, 950, 17, {expression: 'sad', action: 'hold'});
-    heldPhone(k, a, 0.62);
+    const a = me(k, 900, 950, 17, {expression: 'sad', action: 'hold'});
+    heldPhone(k, a, 1);
   }},
   L06: {keys: ['bride', 'groom', 'dress', 'scissors'], draw(k) {
-    k.torn(rect(30, 26, 1860, 520), C.wallShade, {tex: 'news', lift: 0.3});
-    S.bride(k, 520, 540, 11, {expression: 'shy'});
-    S.groom(k, 1400, 540, 11);
-    k.cut(rect(60, 460, 1800, 590), C.envelope, {lift: 1.1, border: 6, name: 'table'});
-    k.cut(rotated(960, 730, 880, 500, -2), C.white, {lift: 0.8, border: 5, name: 'dressPaper'});
-    const dress = [[870, 530], [1050, 530], [1090, 660], [1200, 920], [720, 920], [830, 660]];
-    k.cut(dress, C.cream, {lift: 0.5, border: 5, name: 'dress'});
-    for (let i = 0; i < 12; i++) k.line([[1210 + i * 2, 908 - i * 23], [1214 + i * 2, 896 - i * 23]], C.ink, 3);
-    k.line([[1290, 620], [1130, 720]], C.ink, 14, 4, 'scissors');
-    k.line([[1290, 760], [1130, 690]], C.ink, 14, 4, 'scissors');
-    k.cut(circle(1330, 600, 34, 16), C.gold, {border: 4, name: 'scissors'});
-    k.cut(circle(1330, 780, 34, 16), C.gold, {border: 4, name: 'scissors'});
+    k.torn(rect(30, 26, 1860, 620), C.wallShade, {tex: 'news', lift: 0.3});
+    S.bride(k, 330, 590, 16, {expression: 'shy'});
+    S.groom(k, 1600, 590, 16);
+    k.cut(rect(60, 540, 1800, 510), C.envelope, {lift: 1.1, border: 6, name: 'table'});
+    k.cut(rotated(960, 690, 980, 650, -1), C.oldDark, {lift: 0.8, border: 5, name: 'dressPaper'});
+    k.cut([[900, 400], [1020, 400], [1060, 470], [1010, 590], [1150, 930], [770, 930], [910, 590], [860, 470]], C.bank, {lift: 1.1, border: 5, name: 'dress'});
+    for (let i = 0; i < 6; i++) k.line([[1158 - i * 8, 910 - i * 20], [1152 - i * 8, 896 - i * 20]], C.ink, 4);
+    k.line([[1360, 690], [1140, 835]], C.ink, 15, 4, 'scissors');
+    k.line([[1385, 850], [1120, 790]], C.ink, 15, 4, 'scissors');
+    k.cut(circle(1395, 665, 36, 16), C.gold, {border: 4, name: 'scissors'});
+    k.cut(circle(1425, 860, 36, 16), C.gold, {border: 4, name: 'scissors'});
   }},
   L07: {keys: ['me', 'invite'], draw(k) {
     S.roomInside(k, {calendar: false, windowBack: false});
@@ -130,8 +132,8 @@ export const POSES = {
     S.foyer(k);
     S.signTable(k, 420, 800, 680);
     S.invitation(k, 360, 760, 150, -8, 'invite');
-    const a = me(k, 960, 1010, 22, {expression: 'sad'});
-    k.clawd(1390, 1010, 22, {role: 'staff', expression: 'happy'});
+    k.clawd(1420, 1010, 22, {role: 'staff', expression: 'happy', tint: S.guestTint(0)});
+    const a = me(k, 900, 1010, 22, {expression: 'sad'});
     S.rosette(k, a, {big: true});
   }},
   L11: {keys: ['me', 'giftBox', 'photoCorner'], draw(k) {
@@ -143,11 +145,12 @@ export const POSES = {
   }},
   L12: {keys: ['me', 'cake', 'redLine', 'toyBride', 'toyGroom'], draw(k) {
     S.foyer(k, {poster: false});
-    S.signTable(k, 1190, 840, 980);
-    S.cake(k, 1190, 840, 1.45);
-    const a = me(k, 520, 930, 18, {expression: 'sad', action: 'hold'});
+    S.signTable(k, 1340, 800, 900);
+    S.cake(k, 1340, 800, 1.7);
+    const a = me(k, 500, 930, 18, {expression: 'sad', action: 'hold'});
     S.rosette(k, a);
-    S.redLine(k, [a.grip, [980, 640], [1100, 480], [1280, 480]]);
+    const y = 800 - 340 - 9 * 5.44;
+    S.redLine(k, [a.grip, [1000, 560], [1234, y], [1446, y]]);
   }},
   L13: {keys: ['me', 'bride', 'gapTiles'], draw(k) {
     S.foyer(k, {poster: false});
@@ -172,7 +175,7 @@ export const POSES = {
   }},
   L16: {keys: ['giftBox', 'envelope', 'bride', 'me'], draw(k) {
     S.foyer(k, {poster: false});
-    me(k, 300, 770, 11, {expression: 'sad'});
+    me(k, 230, 900, 11, {expression: 'sad'});
     k.vellum(0.42, '#ecd5a4');
     S.signTable(k, 960, 860, 1180);
     S.bride(k, 1490, 950, 15, {expression: 'neutral'});
@@ -184,18 +187,18 @@ export const POSES = {
       k.mark(ellipse(690 + i * 7, y, 10 + i, 5 + i * 0.5), 'rgba(150,110,70,.34)', 'prints');
       k.mark(ellipse(1230 - i * 7, y, 10 + i, 5 + i * 0.5), 'rgba(150,110,70,.34)', 'prints');
     });
+    snowy(k, 22, 13, {size: 9});
     me(k, 726, 880, 18, {expression: 'happy'});
     S.bride(k, 1194, 880, 18, {gown: false});
     hookHands(k, 880 - 9.5 * 18);
-    snowy(k, 22, 13, {size: 9});
   }},
-  I02: {keys: ['me', 'placeCard', 'exitDoor', 'guest'], draw(k) {
-    k.camera(1080, 410, 1.42);
+  I02: {keys: ['me', 'placeCard', 'exitDoor'], draw(k) {
+    k.camera(1000, 390, 1.5);
     hallRows(k);
-    S.placeCard(k, 1030, 482, 120);
+    S.placeCard(k, 1035, 478, 130);
   }},
   L17: {keys: ['me', 'bell', 'hallWindow'], draw(k) {
-    const a = lastRow(k, {x: 960, u: 16, foot: 880, opts: {}, bell: true, door: false, tableY: 830, neighbours: true});
+    const a = lastRow(k, {x: 960, u: 15, foot: 950, opts: {}, bell: true, door: false, tableY: 860, neighbours: true});
     S.rosette(k, a);
   }},
   L18: {keys: ['bride', 'groom', 'altar', 'carpet'], draw(k) {
@@ -203,21 +206,22 @@ export const POSES = {
     S.bride(k, 1240, 840, 13, {expression: 'shy'});
     S.groom(k, 640, 905, 13, {facing: 'right', action: 'walk', frame: 1});
   }},
-  L19: {keys: ['bride', 'groom', 'altar'], draw(k) {
+  L19: {keys: ['bride', 'groom', 'altar', 'ringBox'], draw(k) {
     k.camera(1160, 560, 1.18);
     S.stage(k);
-    S.bride(k, 1270, 840, 13, {expression: 'shy'});
-    S.groom(k, 1010, 880, 13, {facing: 'right', deg: 12});
+    S.bride(k, 1290, 840, 13, {expression: 'shy'});
+    const a = S.groom(k, 990, 890, 13, {facing: 'right', deg: 7});
+    k.cut(rect(a.right[0] + 2, a.right[1] - 18, 58, 44), C.red, {lift: 1, border: 4, name: 'ringBox'});
+    k.mark(ellipse(a.right[0] + 31, a.right[1] - 22, 14, 14, 16), C.gold, 'ringBox');
   }},
   L20: {keys: ['ring'], draw(k) {
     k.torn(rect(30, 26, 1860, 1028), C.white, {lift: 0.3});
     S.flakes(k, 18, 66, {color: C.petal, size: 34});
-    const a = S.bride(k, 960, 540, 4, {gown: false});
-    const hx = a.left[0] + 0.6 * a.u, hy = a.left[1] + a.u;
-    k.camera(hx + 20, hy, 16);
-    k.mark(ellipse(hx + 1, hy, 3.4, 5.4, 22), C.gold, 'ring');
-    k.mark(ellipse(hx + 1, hy, 2.2, 4.1, 22), C.orange);
-    k.cut([[hx + 1, hy - 9.6], [hx + 3.6, hy - 6.8], [hx + 1, hy - 4.4], [hx - 1.6, hy - 6.8]], C.cream, {border: 0.4, lift: 0.1, name: 'ring'});
+    k.camera(922, 502, 16);
+    S.bride(k, 960, 540, 4, {gown: false});
+    k.mark(ellipse(911, 502, 3, 9, 22), C.gold, 'ring');
+    k.mark(ellipse(911.4, 502, 1.2, 6.8, 22), C.orange);
+    k.cut([[911, 485], [914, 490], [911, 494], [908, 490]], C.cream, {border: 0.4, lift: 0.1, name: 'ring'});
   }},
   L21: {keys: ['me', 'guest'], draw(k) {
     k.camera(960, 520, 1.1);
@@ -227,10 +231,10 @@ export const POSES = {
   L22: {keys: ['me', 'redLine'], draw(k) {
     k.camera(960, 450, 1.14);
     hallRows(k, {me: {expression: 'sad'}});
-    S.redLine(k, [[960, 1050], [950, 905]], 10);
-    S.redLine(k, [[160, 880], [1800, 880]], 8);
-    S.redLine(k, [[950, 880], [950, 672], [300, 668], [1720, 668]], 8);
-    S.redLine(k, [[720, 668], [760, 500]], 8);
+    S.redLine(k, [[1040, 1050], [1040, 905], [90, 905], [1700, 905]], 9);
+    S.redLine(k, [[1040, 905], [1040, 690], [90, 690], [1830, 690]], 8);
+    S.redLine(k, [[560, 690], [560, 490], [230, 490], [870, 490]], 7);
+    k.cut(circle(870, 490, 13, 12), C.red, {border: 3, lift: 0.4, name: 'redEnd'});
   }},
   L23: {keys: ['me', 'glass'], draw(k) {
     S.hall(k, {door: true});
@@ -238,13 +242,13 @@ export const POSES = {
     S.glass(k, a.grip[0] + 14, a.grip[1] + 14, 1.6);
     S.rosette(k, a);
   }},
-  L24: {keys: ['me', 'exitDoor', 'exitSign', 'seatTable', 'pressHands'], draw(k) {
-    const a = lastRow(k, {x: 760, u: 16, foot: 850, opts: {expression: 'sad'}, neighbours: true, tableY: 770});
-    S.rosette(k, a);
-    [a.left, a.right].forEach(([x]) => k.cut(rect(x - 20, 748, 40, 26), C.orange, {border: 3, lift: 0.5, name: 'pressHands'}));
+  L24: {keys: ['me', 'exitDoor', 'exitSign', 'seatTable'], draw(k) {
+    // 桌沿抬到手臂高度，手臂长度不变，两手自然压在桌面上。
+    const a = lastRow(k, {x: 760, u: 16, foot: 850, opts: {expression: 'sad'}, neighbours: true, tableY: 708});
+    S.rosette(k, {chest: [a.chest[0], a.chest[1] - 40], u: 16});
   }},
   L25: {keys: ['bride', 'me', 'peel'], draw(k) {
-    S.stage(k);
+    k.torn(rect(30, 26, 1860, 1028), C.hall, {tex: 'news', lift: 0.3});
     S.flakes(k, 36, 25, {color: C.petal, size: 30});
     S.bride(k, 760, 1060, 28);
     k.torn(rect(1120, 30, 770, 1020), '#fff4dc', {lift: 1.4, name: 'peel'});
@@ -330,7 +334,7 @@ export const POSES = {
     outside(k);
     k.torn([[1160, 640], [1320, 640], [1880, 1050], [1420, 1050]], C.path, {tex: 'kraft', lift: 0.4, name: 'road'});
     const a = me(k, 720, 980, 22, {tint: COLD});
-    k.line([[a.chest[0] + 88, a.chest[1] + 40], [1010, 760], [1210, 790], [1400, 770], [1560, 820]], C.red, 16, 5, 'ribbonLong');
+    k.line([[a.chest[0] + 121, a.chest[1] + 60], [1010, 760], [1210, 790], [1400, 770], [1560, 820]], C.red, 16, 5, 'ribbonLong');
     S.rosette(k, a);
     S.windowFrame(k);
   }},
@@ -344,8 +348,8 @@ export const POSES = {
   }},
   L38: {keys: ['me', 'rosetteWord', 'bride', 'groom'], draw(k) {
     outside(k);
-    S.reflection(k, 1410, 640, 12, {hug: true});
-    S.confetti(k, 26, 38, {x0: 1040, y0: 90, x1: 1830, y1: 640});
+    S.reflection(k, 1400, 640, 12, {hug: true});
+    S.confetti(k, 26, 38, {x0: 1090, y0: 200, x1: 1710, y1: 340});
     k.vellum(0.16, '#f4d48b');
     const a = me(k, 620, 1080, 26, {expression: 'sad', tint: COLD});
     S.rosette(k, a, {big: true});
@@ -400,16 +404,16 @@ export const POSES = {
   L45: {keys: ['me', 'bride', 'groom', 'veilTuck'], draw(k) {
     S.steps(k);
     S.groom(k, 1020, 700, 11);
-    const b = S.bride(k, 1330, 700, 11);
-    k.cut([[1150, 500], [b.head[0] - 20, 500], [1220, 590]], C.white, {lift: 0.7, border: 4, alpha: 0.85, name: 'veilTuck'});
+    S.bride(k, 1330, 700, 11);
+    k.cut([[1240, 500], [1320, 492], [1160, 600]], C.cream, {lift: 0.9, border: 4, name: 'veilTuck'});
     me(k, 500, 1010, 23, {expression: 'shy', action: 'walk', frame: 1});
   }},
   L46: {keys: ['me', 'bride', 'groom', 'hookFar'], draw(k) {
     S.steps(k);
-    S.groom(k, 1140, 680, 7);
-    S.bride(k, 1320, 680, 7);
-    k.cut(circle(1230, 680 - 9.5 * 7, 10, 10), C.gold, {border: 2, lift: 0.4, name: 'hookFar'});
-    me(k, 470, 1060, 28, {action: 'walk', frame: 1});
+    S.groom(k, 1100, 690, 9);
+    S.bride(k, 1334, 690, 9);
+    k.cut(ellipse(1217, 690 - 9.5 * 9, 24, 17, 14), C.orange, {border: 4, lift: 0.6, name: 'hookFar'});
+    me(k, 470, 1040, 27, {action: 'walk', frame: 1});
   }},
   O01: {keys: ['me', 'chapel', 'bigInvite', 'placeCard'], draw(k) {
     S.road(k, {prints: [0.2, 0.26, 0.32, 0.38, 0.44, 0.5, 0.56, 0.62, 0.68, 0.74]});

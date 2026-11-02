@@ -18,16 +18,19 @@ export function goldFlower(k, a) {
   for (let i = 0; i < 5; i++) k.cut(circle(x + Math.cos(i * 1.257) * u * 1.3, y + Math.sin(i * 1.257) * u * 1.3, u * 1, 12), C.gold, {border: 2, lift: 0.3, name: 'flower'});
   k.cut(circle(x, y, u * 0.75, 10), C.cream, {border: 1, lift: 0.1});
 }
-export function veil(k, a) {
-  const u = a.u, [x, y] = a.head;
-  k.cut([[x - 9 * u, y + 1 * u], [x + 9 * u, y + 1 * u], [x + 15 * u, y + 20 * u], [x - 15 * u, y + 20 * u]], C.white, {alpha: 0.62, lift: 0.2, border: 2, name: 'veil'});
-}
-export function bride(k, cx, foot, u, opts = {}) {
+// 头纱在身后，裙子只盖腿，脸和手臂始终露出来。
+export function bride(k, cx, foot, u, {gown = true, ...opts} = {}) {
+  const top = foot - 21 * u;
+  if (gown) k.cut([[cx - 8 * u, top], [cx + 8 * u, top], [cx + 15 * u, foot - 1 * u], [cx - 15 * u, foot - 1 * u]], C.white, {alpha: 0.8, lift: 0.3, border: 2, name: 'veil'});
   const a = k.clawd(cx, foot, u, {role: 'bride', expression: 'happy', ...opts});
-  if (opts.gown !== false) veil(k, a);
+  if (gown) k.cut([[cx - 9.5 * u, foot - 6 * u], [cx + 9.5 * u, foot - 6 * u], [cx + 12.5 * u, foot], [cx - 12.5 * u, foot]], C.cream, {lift: 0.5, border: 3, name: 'skirt'});
   goldFlower(k, a);
   return a;
 }
+const GUEST_TINTS = [
+  {'#da7758': '#d8c4a3', '#ed9b75': '#e6d8bd', '#b85d47': '#bda98a', '#713f32': '#7c6c58'},
+  {'#da7758': '#bcc7b6', '#ed9b75': '#cfd8ca', '#b85d47': '#9dab99', '#713f32': '#65705f'},
+];
 export function groom(k, cx, foot, u, opts = {}) {
   const a = k.clawd(cx, foot, u, {role: 'groom', expression: 'happy', ...opts});
   const [x, y] = [a.chest[0], a.chest[1] + a.u];
@@ -37,11 +40,11 @@ export function groom(k, cx, foot, u, opts = {}) {
   return a;
 }
 export function rosette(k, a, {big = false} = {}) {
-  const u = a.u, [x, y] = [a.chest[0] + 4 * u, a.chest[1]];
-  k.cut([[x - 1.6 * u, y], [x + 1.6 * u, y], [x + 2.2 * u, y + 7 * u], [x, y + 5.6 * u], [x - 2.2 * u, y + 7 * u]], C.red, {border: 2, lift: 0.3, name: 'rosette'});
-  k.cut(circle(x, y, 3.1 * u, 16), C.red, {border: 3, lift: 0.5, name: 'rosette'});
-  k.cut(circle(x, y, 2.1 * u, 14), C.cream, {border: 1, lift: 0.1});
-  if (big) k.text('嘉宾', x, y, 1.45 * u, C.red, {name: 'rosetteWord'});
+  const u = a.u, [x, y] = [a.chest[0] + 5.5 * u, a.chest[1] + 1.5 * u];
+  k.cut([[x - 1.5 * u, y], [x + 1.5 * u, y], [x + 2 * u, y + 6 * u], [x, y + 4.8 * u], [x - 2 * u, y + 6 * u]], C.red, {border: 2, lift: 0.3, name: 'rosette'});
+  k.cut(circle(x, y, 2.7 * u, 16), C.red, {border: 3, lift: 0.5, name: 'rosette'});
+  k.cut(circle(x, y, 1.85 * u, 14), C.cream, {border: 1, lift: 0.1});
+  if (big) k.text('嘉宾', x, y, 1.3 * u, C.red, {name: 'rosetteWord'});
 }
 export function placeCard(k, x, y, w = 250, deg = 0, name = 'placeCard') {
   const h = w * 0.42;
@@ -167,10 +170,7 @@ export function roadForeground(k, {withInvite = true, wordCover = 0} = {}) {
     invitation(k, 1600, 750, 360, -4, 'bigInvite');
   }
   placeCard(k, 1400, 860, 250, 5);
-  if (wordCover > 0) {
-    const r = rng(77);
-    for (let i = 0; i < 26 * wordCover; i++) k.torn(ellipse(1280 + r() * 240, 830 + r() * 60, 34, 20, 12), C.bank, {lift: 0.2});
-  }
+  if (wordCover > 0) k.torn([[1250, 905], [1290, 835], [1370, 812], [1470, 818], [1545, 850], [1570, 910]], C.bank, {lift: 0.5, name: 'snowOnCard'});
 }
 
 // ---------- 小屋 ----------
@@ -178,8 +178,8 @@ function sill(k, y = 800) { k.cut(rect(320, y, 1280, 56), C.wood, {lift: 1.2, bo
 export function sillThings(k, {photo = true, y = 800, x = 0} = {}) {
   if (photo) oldPhoto(k, 620 + x, y - 92, 190, -5);
   ticketStubs(k, 840 + x, y - 22, 0.95, -6);
-  mug(k, 1060 + x, y, 1, C.path);
-  mug(k, 1210 + x, y, 1, C.wallShade, {dust: true});
+  mug(k, 1060 + x, y, 1, C.pine);
+  mug(k, 1210 + x, y, 1, C.oldDark, {dust: true});
 }
 // 屋外隔窗：相机在屋外，Clawd 在窗里面向镜头。
 export function windowOutside(k, draw) {
@@ -194,10 +194,10 @@ export function windowOutside(k, draw) {
 }
 export function frost(k, hole, seed = 5) {
   const r = rng(seed);
-  for (let i = 0; i < 110; i++) {
-    const x = 450 + r() * 1020, y = 180 + r() * 600;
+  for (let i = 0; i < 170; i++) {
+    const rx = 40 + r() * 40, ry = 30 + r() * 30, x = 425 + rx + r() * (1070 - 2 * rx), y = 155 + ry + r() * (650 - 2 * ry);
     if (Math.hypot((x - hole[0]) / hole[2], (y - hole[1]) / hole[3]) < 1) continue;
-    k.mark(ellipse(x, y, 70 + r() * 90, 40 + r() * 70, 14), 'rgba(238,246,247,.34)');
+    k.mark(ellipse(x, y, rx, ry, 14), 'rgba(238,246,247,.34)');
   }
 }
 // 屋内：相机在窗台一侧看 Clawd，身后是墙和日历。
@@ -302,30 +302,30 @@ export function hall(k, {rows = true, door = false, bell = false, clap = false, 
   k.cut(rect(30, 26, 1860, 120), C.wallShade, {lift: 0.5, border: 3});
   for (const x of [230, 650, 1270, 1690]) k.cut(rect(x - 60, 150, 120, 150), C.sky, {lift: 0.5, border: 8});
   if (bell) {
-    k.cut(rect(830, 130, 260, 270), C.sky, {lift: 0.5, border: 10, name: 'hallWindow'});
-    k.torn([[838, 330], [1082, 320], [1082, 392], [838, 392]], C.snow, {lift: 0.1});
-    k.cut(rect(925, 214, 70, 150), C.wallShade, {border: 4});
-    k.cut([[910, 216], [960, 150], [1010, 216]], C.roof, {border: 4});
-    k.cut(arch(936, 984, 226, 288), C.door, {border: 2, lift: 0.2});
-    k.cut(arch(945, 975, 240, 280), C.gold, {border: 2, lift: 0.3, name: 'bell'});
-    [34, 54].forEach(radius => k.line(Array.from({length: 17}, (_, i) => [960 + Math.cos(i / 16 * 6.283) * radius, 262 + Math.sin(i / 16 * 6.283) * radius]), C.gold, 3));
+    k.cut(rect(740, 100, 440, 430), C.sky, {lift: 0.5, border: 10, name: 'hallWindow'});
+    k.torn([[750, 450], [1170, 435], [1170, 520], [750, 520]], C.snow, {lift: 0.1});
+    k.cut(rect(895, 240, 130, 240), C.wallShade, {border: 4});
+    k.cut([[870, 244], [960, 130], [1050, 244]], C.roof, {border: 4});
+    k.cut(arch(915, 1005, 262, 372), C.door, {border: 2, lift: 0.2});
+    k.cut(arch(932, 988, 285, 358), C.gold, {border: 2, lift: 0.3, name: 'bell'});
+    [78, 118].forEach(radius => k.line(Array.from({length: 25}, (_, i) => [960 + Math.cos(i / 24 * 6.283) * radius, 322 + Math.sin(i / 24 * 6.283) * radius]), C.gold, 4));
   }
   if (door) {
     k.cut(rect(1340, 130, 240, 270), C.door, {lift: 0.8, border: 7, name: 'exitDoor'});
     k.cut(rect(1390, 88, 140, 40), C.green, {lift: 0.4, border: 3, name: 'exitSign'});
   }
 }
-// 一排客人。depth 越大越靠近相机；color 不变，只靠位置和大小表达远近。
-export function guests(k, y, u, xs, {stand = false, clap = false, seed = 1} = {}) {
+// 一排客人用低饱和纸色，全片只有主角和新人是橙色。
+export const guestTint = i => GUEST_TINTS[i % 2];
+export function guests(k, y, u, xs, {clap = false, seed = 1} = {}) {
   const r = rng(seed);
   xs.forEach((x, i) => {
-    const expr = r() < 0.7 ? 'happy' : 'neutral';
-    const a = k.clawd(x, y, u, {role: 'guest', expression: stand || clap ? 'happy' : expr, action: clap ? 'hug' : 'idle', frame: i % 4});
-    void a;
+    const expression = clap || r() < 0.7 ? 'happy' : 'neutral';
+    k.clawd(x, y, u, {role: 'guest', expression, action: clap ? 'hug' : 'idle', frame: i % 4, tint: guestTint(i + seed)});
   });
 }
-export function seatTable(k, x, y, w, name = 'seatTable') {
-  k.cut(rect(x - w / 2, y, w, 70), C.cream, {lift: 1.1, border: 5, name});
+export function seatTable(k, x, y, w, name = 'seatTable', h = 70) {
+  k.cut(rect(x - w / 2, y, w, h), C.cream, {lift: 1.1, border: 5, name});
 }
 export function glass(k, x, y, s = 1, name = 'glass') {
   k.cut([[x - 26 * s, y - 92 * s], [x + 26 * s, y - 92 * s], [x + 14 * s, y - 40 * s], [x - 14 * s, y - 40 * s]], C.warm, {lift: 0.5, border: 3 * s, name});
@@ -370,14 +370,15 @@ export function spotlight(k, x) {
 export function outsideWindow(k, {sky = C.skyDim, cloud = false} = {}) {
   k.torn([[30, 26], [1890, 26], [1890, 690], [30, 700]], sky, {lift: 0.3});
   if (cloud) {
-    k.cut([[760, 26], [1160, 26], [1040, 470], [840, 470]], C.sun, {lift: 0.1, border: 3, name: 'cloudLight'});
+    k.cut([[840, 26], [1080, 26], [1250, 690], [670, 690]], C.sun, {lift: 0.1, border: 2, alpha: 0.75, name: 'cloudLight'});
     [[320, 150, 360, 110], [1560, 170, 370, 120]].forEach(([x, y, a, b]) => k.torn(ellipse(x, y, a, b, 18), C.skyDim, {lift: 0.4}));
   }
   k.torn([[30, 640], [640, 610], [1300, 640], [1890, 620], [1890, 1054], [30, 1054]], C.snow, {lift: 1, name: 'outsideSnow'});
 }
+// 玻璃上映出的礼堂是一块暖色面板，新人站在面板的地面上，不会看起来飘在天上。
 export function reflection(k, x, foot, u, {hug = false} = {}) {
-  k.vellum(0);
-  const gap = hug ? 5 : 12;
+  k.cut(arch(x - 26 * u, x + 26 * u, foot - 38 * u, foot + 3 * u), C.warm, {alpha: 0.72, lift: 0.1, border: 2, name: 'reflectPanel'});
+  const gap = hug ? 11 : 13;
   bride(k, x + gap * u, foot, u, {action: hug ? 'hug' : 'idle'});
   groom(k, x - gap * u, foot, u, {action: hug ? 'hug' : 'idle'});
 }

@@ -531,3 +531,21 @@
 - **Git 提交**：`7e8cd86f485aa22de344e23fa03dfdc4fbe5529d feat: draw the Jiabin MV image storyboard`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
+
+## [2026-11-02 22:40] 嘉宾图像分镜视觉自查
+
+- **需求/问题描述**：
+  > 你先自查画面。
+
+- **实际实现的功能与改动**：
+  - 修复：新娘头纱盖脸、客人与主角同色、胸花盖住嘴、L20 戒指没有放大、座位过挤，以及 L02–L06、L10、L12、L16、L17、L19、L24、L25、L35、L38、L41、L45、L46、O02 的构图问题。
+  - 新增：`export-stills.sh` 一次导出定格、总览和分镜页。
+  - 验证：逐张查看 52 张定格；`stage.test.mjs` 2 项通过；`hyperframes check` 结果 ok，1 条警告（牛皮纸底碰到画面边缘）。遗留问题记录在 `.agent/visual/嘉宾图像分镜.md`，L19 的下跪读起来更接近鞠躬。
+
+- **涉及文件**：
+  - `嘉宾/MV/kit.js`、`sets.js`、`poses.js`、`export-stills.sh`、`boards/`
+  - `.agent/visual/嘉宾图像分镜.md`、`memory/agents.md`、`verify.md`、`gotchas.md`、`docs/CHANGELOG.md`
+
+- **Git 提交**：待提交
+
+---

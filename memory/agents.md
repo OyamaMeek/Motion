@@ -3,7 +3,7 @@
 ## 2026-11-02：嘉宾 MV 分镜
 
 - 主代理独立完成文字分镜；依据 HyperFrames v0.8.223 自带的 `types/music.md`、`story.md`、`storyboard.md`、`storyboard-format.md`。Python 标准库校验，未调用图像、截图或渲染工具。
-- 图像分镜阶段：Canvas 2D ES module，HyperFrames CLI 0.8.223 的 `check`、`snapshot`，ffmpeg 转 JPEG，Node `--test` 配本机 Chrome 无头模式；未使用图像生成模型，未查看图片。
+- 图像分镜阶段：Canvas 2D ES module，HyperFrames CLI 0.8.223 的 `check`、`snapshot`，ffmpeg 转 JPEG，Node `--test` 配本机 Chrome 无头模式；未使用图像生成模型。用户要求自查后，主代理逐张查看定格。
 
 ## 2026-11-02：嘉宾纸艺开场样图
 
