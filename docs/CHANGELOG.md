@@ -602,6 +602,6 @@
   - `嘉宾/MV/kit.js`、`sets.js`、`poses.js`、`stage.test.mjs`、`嘉宾/storyboard.md` (+37 / -19)、`嘉宾/MV/boards/`
   - `.agent/visual/嘉宾定格按衔接表.md`、`memory/progress.md`、`memory/verify.md`、`docs/CHANGELOG.md`
 
-- **Git 提交**：待提交
+- **Git 提交**：`e2521ce10e7854d3f55818636fe1186aed06f2a1 fix: correct Jiabin stills after second visual review`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
