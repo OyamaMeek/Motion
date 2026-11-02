@@ -510,6 +510,6 @@
   - `嘉宾/storyboard.md` (+1030)
   - `memory/agents.md`、`plan.md`、`progress.md`、`verify.md`、`docs/CHANGELOG.md`
 
-- **Git 提交**：待提交
+- **Git 提交**：`67918822e18edf4bf42742eaf599a46f925f5ce2 docs: add the Jiabin MV storyboard`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
