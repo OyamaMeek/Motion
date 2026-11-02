@@ -414,6 +414,6 @@
 - **涉及文件**：
   - `嘉宾/song.md`、`memory/progress.md`、`memory/verify.md`、`docs/CHANGELOG.md`
 
-- **Git 提交**：待提交。
+- **Git 提交**：`94fd5243b5f1332e2e0efe7a190ff431180c0dd5 docs: confirm Jiabin lyric wording`；实际哈希通过后续文档提交保存。
 
 ---
