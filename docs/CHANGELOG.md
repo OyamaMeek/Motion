@@ -638,6 +638,6 @@
   - `嘉宾/MV/`：`film.js`、`covers.js`、`lyrics.js`、`render-film.mjs`、`verify-export.mjs`、`vocal_measure.py`、`人声测量.json`、`film.test.mjs`、`lib/song.lrc`（新增）；`kit.js`、`sets.js`、`poses.js`、`main.js`、`README.md`
   - `嘉宾/storyboard.md`、`.agent/visual/嘉宾MV成片.md`、`memory/agents.md`、`memory/plan.md`、`memory/progress.md`、`memory/verify.md`、`docs/CHANGELOG.md`
 
-- **Git 提交**：待提交
+- **Git 提交**：`37b0a9524d839c0377f4bfd75cb91ef068c2d5a7 feat: render the full Jiabin paper-collage MV`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
