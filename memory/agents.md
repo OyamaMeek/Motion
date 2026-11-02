@@ -1,5 +1,12 @@
 # 当前任务环境
 
+## 2026-11-02：嘉宾音乐分析
+
+- 主代理测量当前 `嘉宾/嘉宾.m4a` 并编写 `嘉宾/song.md`；research 技能明确要求的研究子代理只检索网页与记录来源。
+- 复用 `.agent/venv` 的 librosa 0.11.0、ffmpeg/ffprobe；中间解码与校验放在已忽略的 `.agent/work/`。
+- 输入歌词只用 `嘉宾/嘉宾.lrc`，不修改；网络检索通过 WebSearch/Exa。没有 ASR 或人工听辨证据时，不报告逐字识别概率。
+- 本轮无图像、截图或视频制作；不改动其他歌曲未提交文件。
+
 ## 当前：完整 MV 成片
 
 - 主代理独立完成。绘制：Canvas 2D ES module，本机 Chrome 无头模式逐帧输出；编码与检查：ffmpeg（libx264、ebur128）；人声测量：`.agent/venv` 的 librosa 0.11.0 pyin。
