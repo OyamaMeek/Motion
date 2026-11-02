@@ -528,6 +528,6 @@
   - `嘉宾/MV/`：`index.html`、`main.js`、`kit.js`、`sets.js`、`poses.js`、`shots.js`、`gen-shots.mjs`、`gen-board.mjs`、`stage.test.mjs`、`hyperframes.json`、`README.md`、`lib/`（符号链接）、`boards/`
   - `嘉宾/storyboard.md`、`.gitignore`、`memory/agents.md`、`plan.md`、`progress.md`、`verify.md`、`docs/CHANGELOG.md`
 
-- **Git 提交**：待提交
+- **Git 提交**：`7e8cd86f485aa22de344e23fa03dfdc4fbe5529d feat: draw the Jiabin MV image storyboard`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
