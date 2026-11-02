@@ -3,14 +3,34 @@ import {C, W, H, rect, circle, ellipse, arch, rotated, rng} from './kit.js';
 const E = {torn: true};
 const FRAME = {x0: 30, y0: 26, x1: 1890, y1: 1054};
 
-export function flakes(k, count, seed, {x0 = 70, y0 = 60, x1 = 1850, y1 = 940, color = C.cream, size = 10, name = null} = {}) {
-  const r = rng(seed);
+// fall：按 k.clock 落下，落到区域下缘后从上缘再来，靠近两端时缩小，不会突然出现。dx、dy 是整批的位移。
+export function flakes(k, count, seed, {x0 = 70, y0 = 60, x1 = 1850, y1 = 940, color = C.cream, size = 10, name = null, fall = 0, wind = 0, dx = 0, dy = 0} = {}) {
+  const r = rng(seed), h = y1 - y0, w = x1 - x0;
   for (let i = 0; i < count; i++) {
-    const x = x0 + r() * (x1 - x0), y = y0 + r() * (y1 - y0), s = size * (0.45 + r() * 0.55);
-    k.cut(ellipse(x, y, s, s * (0.65 + r() * 0.35), 9), typeof color === 'function' ? color(r()) : color, {border: 2, lift: 0.3, name});
+    let x = x0 + r() * w, y = y0 + r() * h, s = size * (0.45 + r() * 0.55);
+    const flat = 0.65 + r() * 0.35, hue = typeof color === 'function' ? color(r()) : color, speed = 0.7 + (i % 5) * 0.15;
+    if (fall || wind) {
+      y = y0 + (((y - y0 + k.clock * fall * speed) % h) + h) % h;
+      x = x0 + (((x - x0 + k.clock * wind * speed + Math.sin(k.clock * 0.8 + i) * 14) % w) + w) % w;
+      s *= Math.min(1, (y - y0) / 24, (y1 - y) / 24);
+      if (s < 0.5) continue;
+    }
+    k.cut(ellipse(x + dx, y + dy, s, s * flat, 9), hue, {border: 2, lift: 0.3, name});
   }
 }
 export const confetti = (k, count, seed, area) => flakes(k, count, seed, {...area, size: 11, color: v => (v < 0.55 ? C.red : C.gold)});
+// 折线从起点长到全长的 e 倍：红线和绸带生长时使用。
+export const partial = (pts, e) => {
+  const lengths = pts.slice(1).map((p, i) => Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1])), total = lengths.reduce((a, b) => a + b, 0);
+  let left = total * Math.min(1, Math.max(0, e));
+  const out = [pts[0]];
+  for (let i = 0; i < lengths.length && left > 0; i++) {
+    const part = Math.min(1, left / lengths[i]);
+    out.push([pts[i][0] + (pts[i + 1][0] - pts[i][0]) * part, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * part]);
+    left -= lengths[i];
+  }
+  return out;
+};
 
 // ---------- 配饰：角色几何不变，配饰是贴在上面的纸片 ----------
 export function goldFlower(k, a) {
@@ -20,72 +40,92 @@ export function goldFlower(k, a) {
 }
 // 头纱在身后，裙子只盖腿，脸和手臂始终露出来。
 export function bride(k, cx, foot, u, {gown = true, ...opts} = {}) {
-  const top = foot - 21 * u;
-  if (gown) k.cut([[cx - 8 * u, top], [cx + 8 * u, top], [cx + 15 * u, foot - 1 * u], [cx - 15 * u, foot - 1 * u]], C.white, {alpha: 0.8, lift: 0.3, border: 2, name: 'veil'});
-  const a = k.clawd(cx, foot, u, {role: 'bride', expression: 'happy', ...opts});
-  if (gown) k.cut([[cx - 9.5 * u, foot - 6 * u], [cx + 9.5 * u, foot - 6 * u], [cx + 12.5 * u, foot], [cx - 12.5 * u, foot]], C.cream, {lift: 0.5, border: 3, name: 'skirt'});
-  goldFlower(k, a);
-  return a;
+  return k.layer(() => {
+    const top = foot - 21 * u;
+    if (gown) k.cut([[cx - 8 * u, top], [cx + 8 * u, top], [cx + 15 * u, foot - 1 * u], [cx - 15 * u, foot - 1 * u]], C.white, {alpha: 0.8, lift: 0.3, border: 2, name: 'veil'});
+    const a = k.clawd(cx, foot, u, {role: 'bride', expression: 'happy', ...opts});
+    if (gown) k.cut([[cx - 9.5 * u, foot - 6 * u], [cx + 9.5 * u, foot - 6 * u], [cx + 12.5 * u, foot], [cx - 12.5 * u, foot]], C.cream, {lift: 0.5, border: 3, name: 'skirt'});
+    goldFlower(k, a);
+    return a;
+  });
 }
 const GUEST_TINTS = [
   {'#da7758': '#d8c4a3', '#ed9b75': '#e6d8bd', '#b85d47': '#bda98a', '#713f32': '#7c6c58'},
   {'#da7758': '#bcc7b6', '#ed9b75': '#cfd8ca', '#b85d47': '#9dab99', '#713f32': '#65705f'},
 ];
 export function groom(k, cx, foot, u, opts = {}) {
-  const a = k.clawd(cx, foot, u, {role: 'groom', expression: 'happy', ...opts});
-  const [x, y] = [a.chest[0], a.chest[1] + a.u];
-  const s = a.u;
-  k.cut([[x - 3.4 * s, y - 1.6 * s], [x, y], [x - 3.4 * s, y + 1.6 * s]], C.tie, {border: 2, lift: 0.2, name: 'tie'});
-  k.cut([[x + 3.4 * s, y - 1.6 * s], [x, y], [x + 3.4 * s, y + 1.6 * s]], C.tie, {border: 2, lift: 0.2, name: 'tie'});
-  return a;
+  return k.layer(() => {
+    const a = k.clawd(cx, foot, u, {role: 'groom', expression: 'happy', ...opts});
+    const [x, y] = [a.chest[0], a.chest[1] + a.u];
+    const s = a.u;
+    k.cut([[x - 3.4 * s, y - 1.6 * s], [x, y], [x - 3.4 * s, y + 1.6 * s]], C.tie, {border: 2, lift: 0.2, name: 'tie'});
+    k.cut([[x + 3.4 * s, y - 1.6 * s], [x, y], [x + 3.4 * s, y + 1.6 * s]], C.tie, {border: 2, lift: 0.2, name: 'tie'});
+    return a;
+  });
 }
 export function rosette(k, a, {big = false} = {}) {
-  const u = a.u, [x, y] = [a.chest[0] + 5.5 * u, a.chest[1] + 1.5 * u];
-  k.cut([[x - 1.5 * u, y], [x + 1.5 * u, y], [x + 2 * u, y + 6 * u], [x, y + 4.8 * u], [x - 2 * u, y + 6 * u]], C.red, {border: 2, lift: 0.3, name: 'rosette'});
-  k.cut(circle(x, y, 2.7 * u, 16), C.red, {border: 3, lift: 0.5, name: 'rosette'});
-  k.cut(circle(x, y, 1.85 * u, 14), C.cream, {border: 1, lift: 0.1});
-  if (big) k.text('嘉宾', x, y, 1.3 * u, C.red, {name: 'rosetteWord'});
+  k.layer(() => {
+    const u = a.u, [x, y] = [a.chest[0] + 5.5 * u, a.chest[1] + 1.5 * u];
+    k.cut([[x - 1.5 * u, y], [x + 1.5 * u, y], [x + 2 * u, y + 6 * u], [x, y + 4.8 * u], [x - 2 * u, y + 6 * u]], C.red, {border: 2, lift: 0.3, name: 'rosette'});
+    k.cut(circle(x, y, 2.7 * u, 16), C.red, {border: 3, lift: 0.5, name: 'rosette'});
+    k.cut(circle(x, y, 1.85 * u, 14), C.cream, {border: 1, lift: 0.1});
+    if (big) k.text('嘉宾', x, y, 1.3 * u, C.red, {name: 'rosetteWord'});
+  });
 }
 export function placeCard(k, x, y, w = 250, deg = 0, name = 'placeCard') {
-  const h = w * 0.42;
-  k.cut(rotated(x, y, w, h, deg), C.cream, {lift: 1.5, border: 6, name});
-  k.text('嘉宾', x, y, w * 0.25, C.ink, {deg, spacing: w * 0.05, name: `${name}Word`});
+  k.layer(() => {
+    const h = w * 0.42;
+    k.cut(rotated(x, y, w, h, deg), C.cream, {lift: 1.5, border: 6, name});
+    k.text('嘉宾', x, y, w * 0.25, C.ink, {deg, spacing: w * 0.05, name: `${name}Word`});
+  });
 }
 export function invitation(k, x, y, w, deg = 0, name = 'invite') {
-  const h = w * 0.67;
-  k.cut(rotated(x, y, w, h, deg), C.red, {lift: 1.6, border: Math.max(3, w * 0.02), name});
-  k.cut(rotated(x, y, w * 0.86, h * 0.8, deg), C.red, {lift: 0, border: Math.max(1, w * 0.008)});
-  k.text('囍', x, y, w * 0.38, C.gold, {deg});
+  k.layer(() => {
+    const h = w * 0.67;
+    k.cut(rotated(x, y, w, h, deg), C.red, {lift: 1.6, border: Math.max(3, w * 0.02), name});
+    k.cut(rotated(x, y, w * 0.86, h * 0.8, deg), C.red, {lift: 0, border: Math.max(1, w * 0.008)});
+    k.text('囍', x, y, w * 0.38, C.gold, {deg});
+  });
 }
 export function oldPhoto(k, x, y, w, deg = 0, {name = 'photo', fade = false} = {}) {
-  const h = w * 0.78;
-  k.cut(rotated(x, y, w, h, deg), C.cream, {lift: 1, border: 3, name});
-  k.cut(rotated(x, y - h * 0.06, w * 0.86, h * 0.68, deg), fade ? C.old : C.sky, {lift: 0, border: 1});
-  const u = w / 52, foot = y + h * 0.26;
-  k.clawd(x - w * 0.16, foot, u, {role: 'photoMe', expression: 'happy'});
-  goldFlower(k, k.clawd(x + w * 0.16, foot, u, {role: 'photoYou', expression: 'happy'}));
+  k.layer(() => {
+    const h = w * 0.78;
+    k.cut(rotated(x, y, w, h, deg), C.cream, {lift: 1, border: 3, name});
+    k.cut(rotated(x, y - h * 0.06, w * 0.86, h * 0.68, deg), fade ? C.old : C.sky, {lift: 0, border: 1});
+    const u = w / 52, foot = y + h * 0.26;
+    k.clawd(x - w * 0.16, foot, u, {role: 'photoMe', expression: 'happy'});
+    goldFlower(k, k.clawd(x + w * 0.16, foot, u, {role: 'photoYou', expression: 'happy'}));
+  });
 }
 export function ticketStubs(k, x, y, s = 1, deg = -8, name = 'tickets') {
-  k.cut(rotated(x - 6 * s, y, 92 * s, 44 * s, deg - 7), C.path, {lift: 0.6, border: 3, name});
-  k.cut(rotated(x + 8 * s, y + 6 * s, 92 * s, 44 * s, deg + 5), C.envelope, {lift: 0.7, border: 3, name});
-  k.line([[x + 26 * s, y - 14 * s], [x + 30 * s, y + 24 * s]], C.oldDark, 2 * s);
+  k.layer(() => {
+    k.cut(rotated(x - 6 * s, y, 92 * s, 44 * s, deg - 7), C.path, {lift: 0.6, border: 3, name});
+    k.cut(rotated(x + 8 * s, y + 6 * s, 92 * s, 44 * s, deg + 5), C.envelope, {lift: 0.7, border: 3, name});
+    k.line([[x + 26 * s, y - 14 * s], [x + 30 * s, y + 24 * s]], C.oldDark, 2 * s);
+  });
 }
 export function mug(k, x, y, s, color, {dust = false} = {}) {
-  k.cut(rect(x - 34 * s, y - 62 * s, 68 * s, 62 * s), color, {lift: 0.8, border: 3, name: dust ? 'dustMug' : 'mug'});
-  k.line([[x + 34 * s, y - 46 * s], [x + 56 * s, y - 40 * s], [x + 54 * s, y - 16 * s], [x + 34 * s, y - 14 * s]], color, 8 * s, 3);
-  if (dust) k.mark(ellipse(x, y - 60 * s, 30 * s, 6 * s), 'rgba(120,110,95,.55)');
+  k.layer(() => {
+    k.cut(rect(x - 34 * s, y - 62 * s, 68 * s, 62 * s), color, {lift: 0.8, border: 3, name: dust ? 'dustMug' : 'mug'});
+    k.line([[x + 34 * s, y - 46 * s], [x + 56 * s, y - 40 * s], [x + 54 * s, y - 16 * s], [x + 34 * s, y - 14 * s]], color, 8 * s, 3);
+    if (dust) k.mark(ellipse(x, y - 60 * s, 30 * s, 6 * s), 'rgba(120,110,95,.55)');
+  });
 }
 export function phone(k, x, y, s, {lit = true, deg = 0} = {}) {
-  k.cut(rotated(x, y, 92 * s, 170 * s, deg), C.phone, {lift: 1, border: 4, name: 'phone'});
-  if (lit) {
-    k.cut(rotated(x, y, 76 * s, 146 * s, deg), C.cream, {lift: 0, border: 1});
-    k.text('囍', x, y, 58 * s, C.red, {deg, name: 'phoneSign'});
-  }
+  k.layer(() => {
+    k.cut(rotated(x, y, 92 * s, 170 * s, deg), C.phone, {lift: 1, border: 4, name: 'phone'});
+    if (lit) {
+      k.cut(rotated(x, y, 76 * s, 146 * s, deg), C.cream, {lift: 0, border: 1});
+      k.text('囍', x, y, 58 * s, C.red, {deg, name: 'phoneSign'});
+    }
+  });
 }
 export function bubble(k, x, y, w, color, {name = 'bubble', tail = -1} = {}) {
-  const h = w * 0.62;
-  k.cut([...ellipse(x, y, w / 2, h / 2, 24)], color, {lift: 0.8, border: 4, name});
-  k.cut([[x + tail * w * 0.15, y + h * 0.36], [x + tail * w * 0.34, y + h * 0.82], [x + tail * w * 0.02, y + h * 0.44]], color, {lift: 0.3, border: 3});
+  k.layer(() => {
+    const h = w * 0.62;
+    k.cut([...ellipse(x, y, w / 2, h / 2, 24)], color, {lift: 0.8, border: 4, name});
+    k.cut([[x + tail * w * 0.15, y + h * 0.36], [x + tail * w * 0.34, y + h * 0.82], [x + tail * w * 0.02, y + h * 0.44]], color, {lift: 0.3, border: 3});
+  });
 }
 export function redLine(k, pts, width = 8, name = 'redLine') { k.line(pts, C.red, width, 3, name); }
 
@@ -149,28 +189,35 @@ export function snowScape(k, {sky = C.sky, sun = true} = {}) {
     .forEach(([x, b, h], i) => pine(k, x, b, h, i % 2 ? C.pineDark : C.pine));
   k.torn([[30, 628], [400, 612], [800, 640], [1250, 628], [1600, 640], [1890, 618], [1890, 1054], [30, 1052]], C.snow, {lift: 1.2});
 }
-export function road(k, {prints = null, hallDecor = true} = {}) {
+// printCover：新雪依次盖住脚印，0 到 1。
+export function road(k, {prints = null, hallDecor = true, printCover = 0} = {}) {
   snowScape(k);
   k.torn(pathOutline(), C.path, {tex: 'kraft', lift: 0.5, name: 'road'});
-  if (prints) prints.forEach(t => {
+  if (prints) prints.forEach((t, n) => {
     const [x, y] = pathCenter(t), [nx, ny] = pathNormal(t), i = Math.round(t * 30), side = i % 2 ? 20 : -20, s = 1 + (t - 0.6) * 2;
-    k.mark(ellipse(x + nx * side * 2 * s, y + ny * side * 2 * s, 13 * s, 7 * s, 14), 'rgba(92,68,44,.34)', 'prints');
+    const px = x + nx * side * 2 * s, py = y + ny * side * 2 * s;
+    k.mark(ellipse(px, py, 13 * s, 7 * s, 14), 'rgba(92,68,44,.34)', 'prints');
+    const covered = Math.min(1, Math.max(0, printCover * (prints.length + 3) - n));
+    if (covered > 0) k.cut(ellipse(px, py, 16 * s * covered, 9 * s * covered, 12), C.snow, {border: 1, lift: 0.1});
   });
   chapel(k);
   if (hallDecor) { bunting(k, [1226, 372], [990, 520], 34); bunting(k, [1284, 372], [1500, 505], 30); }
 }
-// 样图前景：剪报、喜帖和席卡，是“同一张喜帖的两种尺度”。
-export function roadForeground(k, {withInvite = true, wordCover = 0} = {}) {
+// 样图前景：剪报、喜帖和席卡，是“同一张喜帖的两种尺度”。T01 把大喜帖掀走，bigInvite 为 false 时这张纸由衔接层接管。
+export function roadForeground(k, {withInvite = true, bigInvite = true, wordCover = 0} = {}) {
   k.torn([[30, 1056], [30, 960], [170, 925], [360, 960], [560, 1000], [900, 1020], [1180, 1030], [1500, 1015], [1890, 985], [1890, 1056]], C.bank, {lift: 1.6});
   [[[34, 172], [210, 150], [400, 190], [560, 170]], [[210, 150], [290, 90], [360, 62]], [[400, 190], [470, 262]], [[100, 162], [132, 240]]]
     .forEach((line, i) => k.line(line, C.branch, i ? 9 : 15, 5));
   if (withInvite) {
     k.torn(rotated(1560, 790, 520, 300, -3), '#efe6cf', {tex: 'news', lift: 1.1});
     k.cut(rotated(1625, 770, 370, 250, 5), C.envelope, {lift: 1.3});
-    invitation(k, 1600, 750, 360, -4, 'bigInvite');
+    if (bigInvite) invitation(k, 1600, 750, 360, -4, 'bigInvite');
   }
   placeCard(k, 1400, 860, 250, 5);
-  if (wordCover > 0) k.torn([[1250, 905], [1290, 835], [1370, 812], [1470, 818], [1545, 850], [1570, 910]], C.bank, {lift: 0.5, name: 'snowOnCard'});
+  if (wordCover > 0) {
+    const base = 905;
+    k.torn([[1250, 905], [1290, 835], [1370, 812], [1470, 818], [1545, 850], [1570, 910]].map(([x, y]) => [x, base - (base - y) * wordCover]), C.bank, {lift: 0.5, name: 'snowOnCard'});
+  }
 }
 
 // ---------- 小屋 ----------
@@ -196,6 +243,18 @@ export function windowOutside(k, draw, cam = [W / 2, H / 2, 1]) {
   k.line([[420, 480], [1500, 480]], C.wood, 14, 4);
   [[[420, 150], [1500, 150]], [[420, 810], [1500, 810]], [[420, 150], [420, 810]], [[1500, 150], [1500, 810]]].forEach(l => k.line(l, C.wood, 30, 6));
 }
+// T03 穿窗：窗内的房间已在下面画好，这里只画窗框这一层，中间留出窗洞。drawBefore 画窗玻璃上的霜和划痕。
+export function windowOverlay(k, cam, drawOnGlass) {
+  k.camera(...cam);
+  k.clippedOut(rect(420, 150, 1080, 660), () => {
+    k.torn([[30, 26], [1890, 26], [1890, 1054], [30, 1054]], C.woodDark, {lift: 0.3});
+    for (let x = 110; x < 1880; x += 170) k.line([[x, 30], [x + 4, 1050]], C.branch, 4);
+  });
+  drawOnGlass();
+  k.line([[960, 150], [960, 810]], C.wood, 14, 4);
+  k.line([[420, 480], [1500, 480]], C.wood, 14, 4);
+  [[[420, 150], [1500, 150]], [[420, 810], [1500, 810]], [[420, 150], [420, 810]], [[1500, 150], [1500, 810]]].forEach(l => k.line(l, C.wood, 30, 6));
+}
 export function frost(k, hole, seed = 5) {
   const r = rng(seed);
   for (let i = 0; i < 170; i++) {
@@ -212,7 +271,7 @@ export function roomInside(k, {calendar = true, windowBack = true, bleed = false
   if (windowBack) {
     k.cut(rect(1160, 170, 520, 250), C.sky, {lift: 0.4, border: 10, name: 'roomWindow'});
     k.torn([[1165, 340], [1400, 325], [1676, 345], [1676, 416], [1165, 416]], C.snow, {lift: 0.2});
-    flakes(k, 22, 91, {x0: 1190, y0: 190, x1: 1650, y1: 400, size: 9});
+    flakes(k, 22, 91, {x0: 1190, y0: 190, x1: 1650, y1: 400, size: 9, fall: 16});
     k.line([[1420, 170], [1420, 420]], C.wood, 10, 3);
     k.line([[1160, 295], [1680, 295]], C.wood, 10, 3);
   }
@@ -235,17 +294,24 @@ export function doorOutside(k, snowy = true) {
 }
 
 // ---------- 雪路上的走近布置 ----------
-export function approachRoad(k) {
+// 相机后退时布置从镜头两侧经过：bunting、arch 是这两层相对消失点 (960, 640) 的放大倍数，1 是定格位置。
+const scaleAbout = (k, s) => k.camera(960, 640 - 100 / s, s);
+export function approachRoad(k, {base = [960, 540, 1], bunting: buntingScale = 1, arch: archScale = 1} = {}) {
+  k.camera(...base);
   snowScape(k, {sun: false});
   k.torn([[760, 640], [1160, 640], [1640, 1056], [280, 1056]], C.path, {tex: 'kraft', lift: 0.5, name: 'road'});
-  [[150, 600], [1770, 600]].forEach(([x, y]) => k.line([[x, y], [x, 900]], C.branch, 14, 4));
-  const point = t => [150 + t * 1620, 330 + Math.sin(t * Math.PI) * 110];
-  k.line(Array.from({length: 25}, (_, i) => point(i / 24)), C.ink, 3);
-  for (let i = 0; i < 26; i++) {
-    const [x, y] = point((i + 0.5) / 26);
-    k.cut([[x - 24, y], [x + 24, y], [x, y + 56]], [C.red, C.gold, C.cream][i % 3], {border: 3, lift: 0.5, name: 'bunting'});
+  if (buntingScale < 4) {
+    scaleAbout(k, buntingScale);
+    [[150, 600], [1770, 600]].forEach(([x, y]) => k.line([[x, y], [x, 900]], C.branch, 14, 4));
+    const point = t => [150 + t * 1620, 330 + Math.sin(t * Math.PI) * 110];
+    k.line(Array.from({length: 25}, (_, i) => point(i / 24)), C.ink, 3);
+    for (let i = 0; i < 26; i++) {
+      const [x, y] = point((i + 0.5) / 26);
+      k.cut([[x - 24, y], [x + 24, y], [x, y + 56]], [C.red, C.gold, C.cream][i % 3], {border: 3, lift: 0.5, name: 'bunting'});
+    }
   }
-  floralArch(k, 960, 880, 660, 620);
+  if (archScale < 4) { scaleAbout(k, archScale); floralArch(k, 960, 880, 660, 620); }
+  k.camera(...base);
 }
 export function floralArch(k, cx, foot, w, h, name = 'arch') {
   const colors = [C.cream, C.red, C.gold, C.petal];
@@ -279,32 +345,40 @@ export function signTable(k, x = 960, y = 760, w = 900) {
   k.cut(rect(x - w / 2, y, w, 240), C.red, {lift: 1.2, border: 7, name: 'table'});
   k.cut(rect(x - w / 2, y, w, 26), C.gold, {lift: 0.1, border: 1});
 }
-export function giftBox(k, x, base, s = 1, {photoCorner = false, envelope = false} = {}) {
-  k.cut(rect(x - 150 * s, base - 200 * s, 300 * s, 200 * s), C.red, {lift: 1.1, border: 6 * s, name: 'giftBox'});
-  k.text('囍', x, base - 92 * s, 104 * s, C.gold);
-  k.cut(rect(x - 96 * s, base - 200 * s, 192 * s, 22 * s), C.door, {lift: 0, border: 1, name: 'slot'});
-  if (photoCorner) {
-    k.cut(rotated(x + 4 * s, base - 222 * s, 150 * s, 92 * s, -3), C.cream, {lift: 0.6, border: 3, name: 'photoCorner'});
-    k.cut(rotated(x + 4 * s, base - 228 * s, 126 * s, 66 * s, -3), C.sky, {lift: 0, border: 1});
-    k.clawd(x - 28 * s, base - 200 * s, 1.5 * s, {role: 'photoMe', expression: 'happy'});
-    goldFlower(k, k.clawd(x + 34 * s, base - 200 * s, 1.5 * s, {role: 'photoYou', expression: 'happy'}));
-    k.cut(rect(x - 100 * s, base - 192 * s, 200 * s, 60 * s), C.red, {lift: 0.2, border: 1});
+export function giftBox(k, x, base, s = 1, {photoCorner = false} = {}) {
+  k.layer(() => {
+    k.cut(rect(x - 150 * s, base - 200 * s, 300 * s, 200 * s), C.red, {lift: 1.1, border: 6 * s, name: 'giftBox'});
     k.text('囍', x, base - 92 * s, 104 * s, C.gold);
-  }
-  if (envelope) {
-    k.cut(rotated(x + 4 * s, base - 208 * s, 210 * s, 116 * s, -2), C.red, {lift: 1, border: 5 * s, name: 'envelope'});
-    k.cut([[x - 96 * s, base - 262 * s], [x + 104 * s, base - 262 * s], [x + 4 * s, base - 212 * s]], '#9f2a22', {lift: 0.1, border: 2});
-    k.text('囍', x + 4 * s, base - 186 * s, 50 * s, C.gold);
-  }
+    k.cut(rect(x - 96 * s, base - 200 * s, 192 * s, 22 * s), C.door, {lift: 0, border: 1, name: 'slot'});
+    if (photoCorner) {
+      k.cut(rotated(x + 4 * s, base - 222 * s, 150 * s, 92 * s, -3), C.cream, {lift: 0.6, border: 3, name: 'photoCorner'});
+      k.cut(rotated(x + 4 * s, base - 228 * s, 126 * s, 66 * s, -3), C.sky, {lift: 0, border: 1});
+      k.clawd(x - 28 * s, base - 200 * s, 1.5 * s, {role: 'photoMe', expression: 'happy'});
+      goldFlower(k, k.clawd(x + 34 * s, base - 200 * s, 1.5 * s, {role: 'photoYou', expression: 'happy'}));
+      k.cut(rect(x - 100 * s, base - 192 * s, 200 * s, 60 * s), C.red, {lift: 0.2, border: 1});
+      k.text('囍', x, base - 92 * s, 104 * s, C.gold);
+    }
+  });
+}
+// 红包的中心在 (x, y)，定格时放在礼金箱口，s 与箱子相同。
+export function redEnvelope(k, x, y, s = 1, deg = -2) {
+  k.layer(() => {
+    k.cut(rotated(x, y, 210 * s, 116 * s, deg), C.red, {lift: 1, border: 5 * s, name: 'envelope'});
+    k.cut([[x - 100 * s, y - 54 * s], [x + 100 * s, y - 54 * s], [x, y - 4 * s]], '#9f2a22', {lift: 0.1, border: 2});
+    k.text('囍', x, y + 22 * s, 50 * s, C.gold);
+  });
 }
 export function cake(k, x, base, s = 1) {
-  k.cut(rect(x - 170 * s, base - 110 * s, 340 * s, 110 * s), C.cream, {lift: 1, border: 5, name: 'cake'});
-  k.cut(rect(x - 120 * s, base - 200 * s, 240 * s, 90 * s), C.bank, {lift: 1, border: 5, name: 'cake'});
-  [-1, 1].forEach(side => k.clawd(x + side * 62 * s, base - 200 * s, 3.2 * s, {role: side < 0 ? 'toyGroom' : 'toyBride', expression: 'happy'}));
+  k.layer(() => {
+    k.cut(rect(x - 170 * s, base - 110 * s, 340 * s, 110 * s), C.cream, {lift: 1, border: 5, name: 'cake'});
+    k.cut(rect(x - 120 * s, base - 200 * s, 240 * s, 90 * s), C.bank, {lift: 1, border: 5, name: 'cake'});
+    [-1, 1].forEach(side => k.clawd(x + side * 62 * s, base - 200 * s, 3.2 * s, {role: side < 0 ? 'toyGroom' : 'toyBride', expression: 'happy'}));
+  });
 }
 
 // ---------- 礼堂嘉宾席（从舞台方向看） ----------
-export function hall(k, {rows = true, door = false, bell = false, clap = false, stand = false} = {}) {
+// swing 是钟的摆动（画面像素），rings 是从钟扩散的纸环半径（L17 画面像素）。
+export function hall(k, {door = false, bell = false, swing = 0, rings = []} = {}) {
   k.torn([[30, 26], [1890, 26], [1890, 1054], [30, 1054]], C.hall, {tex: 'news', lift: 0.3});
   k.cut(rect(30, 26, 1860, 120), C.wallShade, {lift: 0.5, border: 3});
   for (const x of [230, 650, 1270, 1690]) k.cut(rect(x - 60, 150, 120, 150), C.sky, {lift: 0.5, border: 8});
@@ -316,8 +390,8 @@ export function hall(k, {rows = true, door = false, bell = false, clap = false, 
     k.cut(at(rect(895, 240, 130, 240)), C.wallShade, {border: 2});
     k.cut(at([[870, 244], [960, 130], [1050, 244]]), C.roof, {border: 2});
     k.cut(at(arch(915, 1005, 262, 372)), C.door, {border: 1, lift: 0.2});
-    k.cut(at(arch(932, 988, 285, 358)), C.gold, {border: 1, lift: 0.3, name: 'bell'});
-    [78, 118].forEach(radius => k.line(at(Array.from({length: 25}, (_, i) => [960 + Math.cos(i / 24 * 6.283) * radius, 322 + Math.sin(i / 24 * 6.283) * radius])), C.gold, 2));
+    k.cut(at(arch(932 + swing, 988 + swing, 285, 358)), C.gold, {border: 1, lift: 0.3, name: 'bell'});
+    [78, 118, ...rings].forEach(radius => k.line(at(Array.from({length: 25}, (_, i) => [960 + Math.cos(i / 24 * 6.283) * radius, 322 + Math.sin(i / 24 * 6.283) * radius])), C.gold, 2));
   }
   if (door) {
     k.cut(rect(1340, 240, 240, 270), C.door, {lift: 0.8, border: 7, name: 'exitDoor'});
@@ -326,28 +400,31 @@ export function hall(k, {rows = true, door = false, bell = false, clap = false, 
 }
 // 一排客人用低饱和纸色，全片只有主角和新人是橙色。
 export const guestTint = i => GUEST_TINTS[i % 2];
-export function guests(k, y, u, xs, {clap = false, seed = 1} = {}) {
+export function guests(k, y, u, xs, {clap = false, seed = 1, frame = 0, dy = 0} = {}) {
   const r = rng(seed);
   xs.forEach((x, i) => {
     const expression = clap || r() < 0.7 ? 'happy' : 'neutral';
-    k.clawd(x, y, u, {role: 'guest', expression, action: clap ? 'hug' : 'idle', frame: i % 4, tint: guestTint(i + seed)});
+    k.clawd(x, y + dy, u, {role: 'guest', expression, action: clap ? 'hug' : 'idle', frame: (i + frame) % 4, tint: guestTint(i + seed)});
   });
 }
 export function seatTable(k, x, y, w, name = 'seatTable', h = 70) {
   k.cut(rect(x - w / 2, y, w, h), C.cream, {lift: 1.1, border: 5, name});
 }
 export function glass(k, x, y, s = 1, name = 'glass') {
-  k.cut([[x - 26 * s, y - 92 * s], [x + 26 * s, y - 92 * s], [x + 14 * s, y - 40 * s], [x - 14 * s, y - 40 * s]], C.warm, {lift: 0.5, border: 3 * s, name});
-  k.line([[x, y - 40 * s], [x, y - 8 * s]], C.white, 5 * s, 2);
-  k.line([[x - 20 * s, y - 6 * s], [x + 20 * s, y - 6 * s]], C.white, 6 * s, 2);
+  k.layer(() => {
+    k.cut([[x - 26 * s, y - 92 * s], [x + 26 * s, y - 92 * s], [x + 14 * s, y - 40 * s], [x - 14 * s, y - 40 * s]], C.warm, {lift: 0.5, border: 3 * s, name});
+    k.line([[x, y - 40 * s], [x, y - 8 * s]], C.white, 5 * s, 2);
+    k.line([[x - 20 * s, y - 6 * s], [x + 20 * s, y - 6 * s]], C.white, 6 * s, 2);
+  });
 }
 
 // ---------- 舞台 ----------
 export function stage(k) {
-  k.torn([[30, 26], [1890, 26], [1890, 1054], [30, 1054]], C.hall, {tex: 'news', lift: 0.3});
-  for (const x of [190, 520, 1400, 1730]) k.cut(rect(x - 50, 26, 100, 780), C.wall, {lift: 0.6, border: 3});
-  k.cut(rect(30, 780, 1860, 274), C.wallShade, {lift: 0.6, border: 3});
-  k.cut([[30, 840], [1890, 780], [1890, 870], [30, 980]], C.carpet, {lift: 0.6, border: 4, name: 'carpet'});
+  // 舞台向右多留一段，L19、L20 推近时不露底纸。
+  k.torn([[30, 26], [2400, 26], [2400, 1140], [30, 1140]], C.hall, {tex: 'news', lift: 0.3});
+  for (const x of [190, 520, 1400, 1730, 2060]) k.cut(rect(x - 50, 26, 100, 780), C.wall, {lift: 0.6, border: 3});
+  k.cut(rect(30, 780, 2370, 360), C.wallShade, {lift: 0.6, border: 3});
+  k.cut([[30, 840], [2400, 763], [2400, 835], [30, 980]], C.carpet, {lift: 0.6, border: 4, name: 'carpet'});
   floralArch(k, 1240, 840, 620, 720, 'altar');
 }
 
@@ -361,26 +438,35 @@ export function pastSnow(k, {drain = false} = {}) {
 }
 
 // ---------- 纸舞台 ----------
-export function paperStage(k, open = 1) {
+// enter 从 0 到 1：T36 相机后拉时，幕布和台口由四边进入；floor 画在台面之上、幕布之下。
+export function paperStage(k, open = 1, {enter = 1, floor = null} = {}) {
+  const out = (1 - enter) * 360, drop = (1 - enter) * 300;
   k.cut(rect(170, 90, 1580, 880), C.wood, {lift: 1.4, border: 8, name: 'stageFrame'});
   k.torn([[230, 140], [1690, 140], [1690, 720], [230, 720]], C.sky, {lift: 0.2});
   k.torn([[230, 620], [900, 600], [1690, 625], [1690, 850], [230, 850]], C.snow, {lift: 0.4});
-  flakes(k, 26, 41, {x0: 260, y0: 170, x1: 1660, y1: 640});
+  flakes(k, 26, 41, {x0: 260, y0: 170, x1: 1660, y1: 640, fall: 18});
+  floor?.();
   const inner = 230 + (1 - open) * 730, right = 1690 - (1 - open) * 730;
-  k.torn([[230, 140], [inner + 90 * open, 140], [inner - 30, 830], [230, 850]], C.red, {lift: 1.5, name: 'curtain'});
-  k.torn([[1690, 140], [right - 90 * open, 140], [right + 30, 830], [1690, 850]], C.red, {lift: 1.5, name: 'curtain'});
-  k.cut(rect(170, 850, 1580, 120), C.woodDark, {lift: 1.1, border: 6});
+  k.torn([[230 - out, 140], [inner + 90 * open - out, 140], [inner - 30 - out, 830], [230 - out, 850]], C.red, {lift: 1.5, name: 'curtain'});
+  k.torn([[1690 + out, 140], [right - 90 * open + out, 140], [right + 30 + out, 830], [1690 + out, 850]], C.red, {lift: 1.5, name: 'curtain'});
+  k.cut(rect(170, 850 + drop, 1580, 120), C.woodDark, {lift: 1.1, border: 6});
 }
 export function spotlight(k, x) {
   k.mark([[x - 90, 90], [x + 90, 90], [x + 280, 840], [x - 280, 840]], 'rgba(255,240,180,.34)', 'spotlight');
 }
 
 // ---------- 从礼堂内隔窗向外 ----------
-export function outsideWindow(k, {sky = C.skyDim, cloud = false} = {}) {
+// clouds：灰云从中间向两侧拉开的程度，1 时只剩两朵云。
+export function outsideWindow(k, {sky = C.skyDim, cloud = false, clouds = 1} = {}) {
   k.torn([[30, 26], [1890, 26], [1890, 690], [30, 700]], sky, {lift: 0.3});
   if (cloud) {
     k.cut([[840, 26], [1080, 26], [1250, 690], [670, 690]], C.sun, {lift: 0.1, border: 2, alpha: 0.75, name: 'cloudLight'});
     [[320, 150, 360, 110], [1560, 170, 370, 120]].forEach(([x, y, a, b]) => k.torn(ellipse(x, y, a, b, 18), C.skyDim, {lift: 0.4}));
+    if (clouds < 1) {
+      const leftEdge = 980 - clouds * 1000, rightEdge = 940 + clouds * 1000;
+      k.torn([[-200, 26], [leftEdge, 26], [leftEdge - 20, 700], [-200, 700]], C.skyDim, {lift: 0.5});
+      k.torn([[rightEdge, 26], [2120, 26], [2120, 700], [rightEdge + 20, 700]], C.skyDim, {lift: 0.5});
+    }
   }
   k.torn([[30, 640], [640, 610], [1300, 640], [1890, 620], [1890, 1054], [30, 1054]], C.snow, {lift: 1, name: 'outsideSnow'});
   k.torn([[1160, 640], [1320, 640], [1880, 1050], [1420, 1050]], C.path, {tex: 'kraft', lift: 0.4, name: 'road'});

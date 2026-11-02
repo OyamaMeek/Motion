@@ -73,7 +73,8 @@ const isTicket = r => r.y >= 24 && ((r.x === 28 && r.w === 8) || (r.x === 29 && 
 function texture(paint, w, h) {
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
-  paint(c.getContext('2d'), w, h);
+  // 所有画布都走软件绘制：多个无头 Chrome 同时渲染时，软件模拟的 GPU 进程会互相拖住。
+  paint(c.getContext('2d', {willReadFrequently: true}), w, h);
   return c;
 }
 
@@ -124,7 +125,28 @@ export function createKit(canvas) {
   }, 1080, 720);
   const TEX = {news, kraft};
 
-  let cam = {cx: W / 2, cy: H / 2, z: 1}, serial = 0, marks = {}, me = null, seedBase = 0;
+  let cam = {cx: W / 2, cy: H / 2, z: 1}, marks = {}, me = null, meAnchor = null, tick = null, layerOffset = null, layerCount = 0;
+  // 纸片每 tick 换一次偏移，各轴 1–2 屏幕像素；tick 为 null 时不抖动（定格和测试）。
+  const offsetFor = key => {
+    if (tick === null) return [0, 0];
+    const v = rng(Math.imul(key ^ (tick * 2654435761), 16777619));
+    const axis = () => (v() < 0.5 ? -1 : 1) * (1 + v());
+    return [axis(), axis()];
+  };
+  const seedOf = (pts, color) => {
+    let h = 2166136261 ^ pts.length;
+    for (const [x, y] of pts.slice(0, 4)) { h = Math.imul(h ^ Math.round(x), 16777619); h = Math.imul(h ^ Math.round(y), 16777619); }
+    for (const c of String(color)) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+    return h >>> 0;
+  };
+  const nudge = key => {
+    const [dx, dy] = layerOffset ?? offsetFor(key);
+    return [dx / cam.z, dy / cam.z];
+  };
+  const shift = (pts, [dx, dy]) => (dx || dy ? pts.map(([x, y]) => [x + dx, y + dy]) : pts);
+  const snapshotCanvas = document.createElement('canvas');
+  snapshotCanvas.width = W; snapshotCanvas.height = H;
+  const snapshotCtx = snapshotCanvas.getContext('2d', {willReadFrequently: true});
   const applyCam = () => out.setTransform(cam.z, 0, 0, cam.z, W / 2 - cam.cx * cam.z, H / 2 - cam.cy * cam.z);
   const screen = (x, y) => [(x - cam.cx) * cam.z + W / 2, (y - cam.cy) * cam.z + H / 2];
   const remember = (name, pts) => {
@@ -148,10 +170,11 @@ export function createKit(canvas) {
   };
 
   function piece(pts, color, {torn = false, tex = null, lift = 1, border = 6, name = null, alpha = 1} = {}) {
-    serial += 1;
-    const seed = seedBase + serial * 131;
-    const edge = torn ? roughen(pts, 7, 7, seed) : roughen(pts, 34, 0.8, seed);
-    const inner = torn ? roughen(pts, 7, 3.5, seed + 17) : edge;
+    // 种子只看几何和颜色：相机移动或前面多画一张纸，静止物件的撕边都不变。
+    const seed = seedOf(pts, color);
+    const offset = nudge(seed);
+    const edge = shift(torn ? roughen(pts, 7, 7, seed) : roughen(pts, 34, 0.8, seed), offset);
+    const inner = torn ? shift(roughen(pts, 7, 3.5, seed + 17), offset) : edge;
     out.save();
     out.globalAlpha = alpha;
     shadow(lift);
@@ -179,14 +202,27 @@ export function createKit(canvas) {
 
   const kit = {
     C,
-    begin(seed) {
+    begin(nextTick = null) {
       out.setTransform(1, 0, 0, 1, 0, 0);
       out.globalAlpha = 1;
       out.drawImage(kraft, 0, 0);
-      cam = {cx: W / 2, cy: H / 2, z: 1}; serial = 0; marks = {}; me = null; seedBase = seed;
+      cam = {cx: W / 2, cy: H / 2, z: 1}; marks = {}; me = null; meAnchor = null; tick = nextTick; layerOffset = null; layerCount = 0; kit.clock = 0;
       applyCam();
     },
+    clock: 0,
+    // 停止抖动：之后的纸片都用同一组偏移，L04 和 O02 片尾使用。
+    freeze() { tick = tick === null ? null : 0; },
     camera(cx, cy, z) { cam = {cx, cy, z}; applyCam(); },
+    cameraState: () => [cam.cx, cam.cy, cam.z],
+    toScreen: pts => pts.map(p => screen(p[0], p[1])),
+    note: remember,
+    // 同一 layer 里的纸片一起抖动：卡片和卡片上的字不会互相错开。
+    layer(draw) {
+      if (layerOffset) return draw();
+      layerCount += 1;
+      layerOffset = offsetFor(layerCount * 7877);
+      try { return draw(); } finally { layerOffset = null; }
+    },
     // 只在 pts 范围内绘制；pts 按当前相机换算。draw 里可以换相机，结束后由调用方设回。
     clipped(pts, draw) {
       out.save();
@@ -194,9 +230,57 @@ export function createKit(canvas) {
       draw();
       out.restore();
     },
+    // 只在 pts 范围以外绘制：窗框层中间留出窗洞。
+    clippedOut(pts, draw) {
+      out.save();
+      out.beginPath();
+      out.save(); out.setTransform(1, 0, 0, 1, 0, 0); out.rect(0, 0, W, H); out.restore();
+      pts.forEach(([x, y], i) => (i ? out.lineTo(x, y) : out.moveTo(x, y)));
+      out.closePath();
+      out.clip('evenodd');
+      draw();
+      out.restore();
+    },
+    // 整张拍下当前画布，撕开类的衔接把旧画面当成一张纸贴回去。
+    snapshot() { snapshotCtx.globalCompositeOperation = 'copy'; snapshotCtx.drawImage(out.canvas, 0, 0); },
+    paste({clip = null, dx = 0, dy = 0, deg = 0, pivot = [W / 2, H / 2], lift = 0} = {}) {
+      out.save();
+      out.setTransform(1, 0, 0, 1, 0, 0);
+      if (clip) { trace(clip); out.clip(); }
+      out.translate(pivot[0] + dx, pivot[1] + dy); out.rotate(deg * Math.PI / 180); out.translate(-pivot[0], -pivot[1]);
+      if (lift) shadow(lift);
+      out.drawImage(snapshotCanvas, 0, 0);
+      out.restore();
+    },
+    // 上层纸页向中线合起：把快照的左右两半压窄。
+    pasteHalves(width) {
+      out.save();
+      out.setTransform(1, 0, 0, 1, 0, 0);
+      out.drawImage(snapshotCanvas, 0, 0, W / 2, H, W / 2 - width, 0, width, H);
+      out.drawImage(snapshotCanvas, W / 2, 0, W / 2, H, W / 2, 0, width, H);
+      out.restore();
+    },
+    ring(cx, cy, outerR, innerR, color, {lift = 1.5, border = 6} = {}) {
+      const path = () => {
+        out.beginPath();
+        out.arc(cx, cy, outerR, 0, Math.PI * 2);
+        if (innerR > 0) { out.moveTo(cx + innerR, cy); out.arc(cx, cy, innerR, 0, Math.PI * 2, true); }
+      };
+      out.save();
+      shadow(lift);
+      path(); out.fillStyle = C.white; out.fill('evenodd');
+      out.lineWidth = border; out.strokeStyle = C.white; out.stroke();
+      out.restore();
+      out.save();
+      path(); out.clip('evenodd');
+      out.fillStyle = color; out.fillRect(-W, -H, W * 3, H * 3);
+      overlayFibre();
+      out.restore();
+    },
     torn: (pts, color, opts = {}) => piece(pts, color, {torn: true, ...opts}),
     cut: (pts, color, opts = {}) => piece(pts, color, opts),
-    line(pts, color, width, border = 0, name = null) {
+    line(rawPts, color, width, border = 0, name = null) {
+      const pts = shift(rawPts, nudge(seedOf(rawPts, color)));
       const path = () => { out.beginPath(); pts.forEach(([x, y], i) => (i ? out.lineTo(x, y) : out.moveTo(x, y))); };
       out.save();
       out.lineJoin = 'round'; out.lineCap = 'round';
@@ -207,12 +291,13 @@ export function createKit(canvas) {
       }
       path(); out.strokeStyle = color; out.lineWidth = width; out.stroke();
       out.restore();
-      remember(name, pts);
+      remember(name, rawPts);
     },
-    mark(pts, color, name = null) { trace(pts); out.fillStyle = color; out.fill(); remember(name, pts); },
+    mark(pts, color, name = null) { trace(shift(pts, nudge(seedOf(pts, color)))); out.fillStyle = color; out.fill(); remember(name, pts); },
     text(str, x, y, size, color, {deg = 0, name = null, spacing = 0} = {}) {
+      const [dx, dy] = nudge(seedOf([[x, y]], color));
       out.save();
-      out.translate(x, y); out.rotate(deg * Math.PI / 180);
+      out.translate(x + dx, y + dy); out.rotate(deg * Math.PI / 180);
       out.fillStyle = color; out.textAlign = 'center'; out.textBaseline = 'middle';
       out.font = `700 ${size}px "Songti SC"`;
       out.letterSpacing = `${spacing}px`;
@@ -222,15 +307,16 @@ export function createKit(canvas) {
       remember(name, [[x - half, y - size / 2], [x + half, y + size / 2]]);
     },
     // 半透明硫酸纸，用来把背景压下去；纸艺没有景深，靠这层表现虚化。
-    vellum(alpha, color = '#eef0e6') {
+    vellum(alpha, color = '#eef0e6', x0 = 0, x1 = W) {
       out.save();
       out.setTransform(1, 0, 0, 1, 0, 0);
-      out.fillStyle = color; out.globalAlpha = alpha; out.fillRect(0, 0, W, H);
+      out.fillStyle = color; out.globalAlpha = alpha; out.fillRect(x0, 0, x1 - x0, H);
       out.restore();
     },
     // (cx, footY) 是角色脚底中点，u 是每个设计像素的尺寸。返回手部握点等锚点。
     clawd(cx, footY, u, {facing = 'front', expression = 'neutral', action = 'idle', frame = 0, role = 'guest', name = null, tint = null, deg = 0} = {}) {
-      const x0 = cx - 16 * u, y0 = footY - 27 * u;
+      const [dx, dy] = nudge(seedOf([[cx, footY]], role));
+      const x0 = cx - 16 * u + dx, y0 = footY - 27 * u + dy;
       const rects = clawdRects(facing, expression, action, frame).filter(q => !isTicket(q));
       const shape = new Path2D();
       const box = q => [x0 + q.x * u, y0 + q.y * u, q.w * u, q.h * u];
@@ -250,14 +336,22 @@ export function createKit(canvas) {
       out.restore();
       const points = rects.flatMap(q => { const [a, b, w, h] = box(q); return [[a, b], [a + w, b + h]]; });
       remember(name ?? role, points);
-      if (role === 'me') { me = facing; remember('me', points); }
+      if (role === 'me') { me = facing; remember('me', points); meAnchor = [...screen(cx, footY), u * cam.z]; }
       const side = facing === 'left' || facing === 'right', sign = facing === 'left' ? -1 : 1;
       return {
         grip: [x0 + 29.5 * u, y0 + 24.5 * u], left: [x0 + (side ? 16 : 3) * u, y0 + 17 * u], right: [x0 + (side ? 16 + 12 * sign : 29) * u, y0 + 17 * u],
         chest: [cx, y0 + 18.5 * u], head: [cx, y0 + 7 * u], eye: [cx, y0 + 13 * u], foot: [cx, footY], u,
       };
     },
-    state: () => ({marks, me}),
+    state: () => ({marks, me, meAnchor}),
+    offsetRange() {
+      const saved = tick;
+      tick = 12345;
+      let low = Infinity, high = 0;
+      for (let key = 1; key < 400; key++) for (const v of offsetFor(key * 97)) { low = Math.min(low, Math.abs(v)); high = Math.max(high, Math.abs(v)); }
+      tick = saved;
+      return [low, high];
+    },
   };
   return kit;
 }

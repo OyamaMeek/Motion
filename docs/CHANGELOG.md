@@ -622,3 +622,22 @@
 - **Git 提交**：`337e94eb8f890d5f42129f1c2450056932680efa feat: add the Jiabin keyframe storyboard sheet`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
+
+## [2026-11-03 01:41] 嘉宾完整 MV
+
+- **需求/问题描述**：
+  > 草图已确认，制作完整 MV。每个镜头的背景、角色、道具在同一画布统一绘制，随镜头推拉同步运动；歌词读 `嘉宾.lrc`，在最上层、画面下方，不随镜头运动；配 `嘉宾.m4a`，按分镜的画幅与帧率导出 MP4。用 ffmpeg 抽帧核对歌词与演唱，测量 LUFS。
+
+- **实际实现的功能与改动**：
+  - 动画：52 镜全部带时钟，19 处实物遮挡、2 处撕开、30 处同场延续按衔接表实现；纸片每秒更新 10 次，L04 和 O02 片尾停止抖动。
+  - 导出：`嘉宾/MV/輸出/嘉宾_MV.mp4`，1920×1080、30 fps、10011 帧、339.2 MB，只留本地；音轨直接复制原曲。
+  - 测试：`film.test.mjs` 先因缺少模块失败，最终 4 项通过；`stage.test.mjs` 4 项通过；`hyperframes check` 通过。
+  - 验证：46 句歌词出现时间误差最大 0.017 秒；45 句与人声估计相差不超过 0.6 秒，L24 测不到人声起点；原曲与导出都是 -10.9 LUFS，差值 0，解码后 PCM 相同。没有听辨或 ASR，没有在播放器中连续观看。
+
+- **涉及文件**：
+  - `嘉宾/MV/`：`film.js`、`covers.js`、`lyrics.js`、`render-film.mjs`、`verify-export.mjs`、`vocal_measure.py`、`人声测量.json`、`film.test.mjs`、`lib/song.lrc`（新增）；`kit.js`、`sets.js`、`poses.js`、`main.js`、`README.md`
+  - `嘉宾/storyboard.md`、`.agent/visual/嘉宾MV成片.md`、`memory/agents.md`、`memory/plan.md`、`memory/progress.md`、`memory/verify.md`、`docs/CHANGELOG.md`
+
+- **Git 提交**：待提交
+
+---
