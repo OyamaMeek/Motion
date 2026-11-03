@@ -1,5 +1,9 @@
 # 当前任务环境
 
+## 2026-11-03：苏轼参考视频风格分析
+
+- 主代理独立完成。抽帧与解码：ffmpeg/ffprobe（本机 ffmpeg 没有 drawtext，联系表不带时间标注）；节拍：`.agent/venv` 的 librosa 0.11.0；切点、配色：numpy、scikit-learn K-means。用户要求逐张分析抽帧，主代理查看了全部抽帧和补看的细看图。
+
 ## 2026-11-03：算法时代的清醒短片
 
 - 主代理独立完成。绘制：Canvas 2D ES module，复用 `會呼吸的痛/開場樣圖/v2/chrome.mjs` 驱动 3 个本机无头 Chrome；配乐：Node 合成 PCM 写 WAV；编码与检查：ffmpeg（libx264、AAC、ebur128）。字体 Didot、Songti SC。
