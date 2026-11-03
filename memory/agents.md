@@ -1,5 +1,11 @@
 # 当前任务环境
 
+## 2026-11-04：蒋葆增短片《八个字，一生的回答》
+
+- 主代理独立完成。资料：WebSearch 检索；原文用 Node `fetch` 下载后抽文本（`.agent/work/蒋葆增/fetch.mjs`），杭电官网“校史沿革”页 Node 连接超时，改用应用内浏览器读取正文；《工程研究》论文 PDF 用 `uv run --with pypdf` 抽文字层。证书过期的电子科大页面没有绕过证书读取，改用新浪转载页。
+- 绘制：Canvas 2D ES module，复用 `會呼吸的痛/開場樣圖/v2/chrome.mjs` 驱动 6 个无头 Chrome；配乐：Node 合成 PCM 写 WAV；编码与检查：ffmpeg（libx264、AAC、ebur128）。字体 Songti SC Black/Bold/Regular、Menlo、DIN Condensed。
+- 用户要求逐页抽帧检查，视觉记录在 `.agent/visual/蒋葆增短片.md`。
+
 ## 2026-11-03：苏轼参考视频风格分析
 
 - 主代理独立完成。抽帧与解码：ffmpeg/ffprobe（本机 ffmpeg 没有 drawtext，联系表不带时间标注）；节拍：`.agent/venv` 的 librosa 0.11.0；切点、配色：numpy、scikit-learn K-means。用户要求逐张分析抽帧，主代理查看了全部抽帧和补看的细看图。
