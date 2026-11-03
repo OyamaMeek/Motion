@@ -703,6 +703,6 @@
   - `.agent/visual/蒋葆增短片.md` (+67)、`.agent/visual/蒋葆增短片/` 51 张抽帧、`蒋葆增短片_逐页.jpg`、`蒋葆增短片_翻页.jpg`
   - `.gitignore` (+1)、`memory/agents.md` (+6)、`memory/plan.md` (+6)、`memory/progress.md` (+8)、`memory/verify.md` (+8)、`docs/CHANGELOG.md`
 
-- **Git 提交**：待提交
+- **Git 提交**：`83e6bf5 feat: render the 90-second Jiang Baozeng short with verified sources`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
