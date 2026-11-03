@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<title>算法时代的清醒</title>
+<style>
+  @font-face { font-family: "Songti SC"; src: local("STSongti-SC-Bold"), local("Songti SC Bold"); font-weight: 700; }
+  @font-face { font-family: "Songti SC"; src: local("STSongti-SC-Regular"), local("Songti SC Regular"); font-weight: 400; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #f4efe4; }
+  #stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: block; }
+</style>
+</head>
+<body>
+<canvas id="stage" width="1920" height="1080"></canvas>
+<script>
+  window.renderErrors = [];
+  window.addEventListener('error', e => renderErrors.push(e.error?.stack ?? `${e.message} ${e.filename}:${e.lineno}`));
+  window.addEventListener('unhandledrejection', e => renderErrors.push(String(e.reason)));
+</script>
+<script type="module" src="main.js"></script>
+</body>
+</html>
