@@ -748,6 +748,23 @@
   - `蒋葆增的家国情怀/八个字，一生的回答-选题方案.md` (+8 / -7)
   - `memory/agents.md`、`gotchas.md`、`plan.md`、`progress.md`、`verify.md`、`docs/CHANGELOG.md`
 
-- **Git 提交**：`4d7d613 feat: rework the Jiang Baozeng short with an ink-drop opening, a twist, and perspective scenes`；推送被 GitHub 拒绝：尚未推送的 `26b9b70` 含 `261031/會呼吸的痛_MV.mp4`（230.45 MB），超过 100 MB 单文件上限，三个提交都还在本地。
+- **Git 提交**：`63edafe feat: rework the Jiang Baozeng short with an ink-drop opening, a twist, and perspective scenes`（原为 `4d7d613`，移除大文件时重建，内容不变）；已推送 origin/main。
+
+---
+
+## [2026-11-04 21:40] 从未推送的提交中移除超限的 MV 文件
+
+- **需求/问题描述**：
+  > 推送被 GitHub 拒绝：未推送的 `26b9b70` 含 `261031/會呼吸的痛_MV.mp4`（230.45 MB），超过 100 MB 单文件上限。用户选择把它从提交中去掉。
+
+- **实际实现的功能与改动**：
+  - [改写本地历史]：先建备份分支 `backup/before-strip-mv`（指向原 `054d1e0`）；用 `.agent/work/蒋葆增/strip-large.sh` 以 Git 底层命令逐个重建 origin/main 之后的 4 个提交，只从树中去掉这个文件，作者、提交者、时间与说明不变；工作区与用户未提交的修改没有动。新哈希：`26b9b70`→`b4a7534`、`c15c6b3`→`f5825e2`、`4d7d613`→`63edafe`、`054d1e0`→`4d666c8`。
+  - [保留文件]：MP4 仍在本地 `261031/`，改为未跟踪，并加入 `.gitignore`。
+  - [测试/验证]：逐个比较新旧提交，每对只差这一个文件，说明与作者时间相同；新提交链中没有超过 50 MB 的文件；普通 `git push` 成功（`2b99074..9771cef`）。
+
+- **涉及文件**：
+  - `.gitignore` (+1)、`docs/CHANGELOG.md`、`memory/progress.md`、`memory/gotchas.md`
+
+- **Git 提交**：`9771cef chore: ignore the oversized 會呼吸的痛 MV export`；本条记录通过后续文档提交保存。
 
 ---
