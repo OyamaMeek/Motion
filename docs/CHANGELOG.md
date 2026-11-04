@@ -724,6 +724,6 @@
   - `.agent/visual/蒋葆增短片.md` (+35 / -43)、`.agent/visual/蒋葆增短片/` 51 张抽帧与 7 张总览；删除旧总览 `蒋葆增短片_逐页.jpg`、`蒋葆增短片_翻页.jpg`
   - `memory/gotchas.md` (+3)、`memory/plan.md` (+1 / -1)、`memory/progress.md` (+4 / -1)、`memory/verify.md` (+5 / -3)、`memory/agents.md` (+1)、`docs/CHANGELOG.md`
 
-- **Git 提交**：待提交
+- **Git 提交**：`b124221 feat: rework the Jiang Baozeng short in the mostly-dark Su Shi style`；普通推送 origin/main 成功，本哈希通过后续文档提交保存。
 
 ---
