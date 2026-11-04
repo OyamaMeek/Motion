@@ -16,7 +16,6 @@ test('90 秒、120 BPM、180 拍，每页在拍点落定', () => {
     assert.equal(frameState(page.land).index, i);
     assert.equal(frameState(page.land).local, 0);
     if (i > 0) assert.equal(frameState(page.land - 1).index, i - 1);
-    if (i > 0) assert.notEqual(page.tone, PAGES[i - 1].tone, `${page.id} 落拍时底色要翻转`);
   }
   assert.throws(() => frameState(FRAME_COUNT));
 });
@@ -32,7 +31,7 @@ test('每句事实和引语都有来源，来源都存在', () => {
 
 test('人名、日期、职务与来源一致', () => {
   const all = allLines().map(l => l.text).join('\n');
-  assert.ok(all.includes('1980.5 — 1982.12'));
+  assert.ok(all.includes('1980.5—1982.12'));
   assert.ok(all.includes('杭州电子工业学院首任院长'));
   assert.ok(all.includes('1979年2月'));
   assert.ok(all.includes('2026年10月16日晚'));
@@ -49,10 +48,10 @@ test('逐字打出的行从整拍开始，打完后留够阅读时间', () => {
       else if (v && typeof v === 'object' && 'kind' in v) lines.push(v);
       else if (v && typeof v === 'object') Object.values(v).forEach(walk);
     };
-    // 右上角标是常驻的章节信息，不计入本页阅读量。年份、人名、图例、科目等短标签扫一眼即可。
-    const {corner, legend, names, years, subjects, term, year, age, ageUnit, count, total, first, credits, ...body} = SCRIPT[page.id];
+    // 右上角标是常驻的章节信息，不计入本页阅读量。年份、人名、地名、图例、科目和重复出现的八个字方块扫一眼即可。
+    const {corner, legend, names, years, subjects, term, year, age, ageUnit, count, total, first, credits, places, cubes, ...body} = SCRIPT[page.id];
     walk(body);
-    const glance = [legend, names, years, subjects, term, year, age, ageUnit, count, total, first, credits].flat().filter(Boolean);
+    const glance = [legend, names, years, subjects, term, year, age, ageUnit, count, total, first, credits, places, cubes].flat().filter(Boolean);
     // 句子按每秒 6 字算阅读量；句子连同短标签合计不超过每秒 8.5 字。
     let chars = glance.reduce((s, l) => s + [...l.text.replace(/[\s，。、：；“”（）《》·—…]/g, '')].length, 0), sentence = 0;
     for (const l of lines) {

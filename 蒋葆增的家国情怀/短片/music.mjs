@@ -17,7 +17,7 @@ const pageAt = beat => PAGES.findLast(p => beat >= p.beat);
 // 每页的配器：pad 铺底，keys 钢琴分解和弦，pluck 八分音符拨弦，bass 低音，kick/hat 鼓。
 const ARR = {
   open: {pad: 1, keys: 1},
-  legacy: {pad: 1, keys: 1, bass: 0.6},
+  motto: {pad: 1, keys: 1, bass: 0.6, kick: 0.4},
   newark: {pad: 0.8, pluck: 1, bass: 1, kick: 0.5},
   plan: {pad: 0.8, pluck: 1, bass: 1, kick: 0.6, hat: 0.6},
   hire: {pad: 0.8, pluck: 1, bass: 1, kick: 0.6, hat: 0.8},

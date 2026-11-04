@@ -21,13 +21,21 @@ const ENCODE = ['-c:v', 'libx264', '-preset', 'medium', '-crf', '17', '-threads'
   '-vf', 'scale=out_color_matrix=bt709:out_range=tv:flags=lanczos+accurate_rnd+full_chroma_int,format=yuv420p',
   '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', '-color_range', 'tv', '-r', String(FPS)];
 const IMAGE = `document.getElementById('stage').toDataURL('image/png').split(',')[1]`;
+const FRAME_TIMEOUT_MS = 60000;
+
+// 系统睡眠唤醒后无头 Chrome 的 GPU 读回可能永远不返回，超时即终止渲染
+function withTimeout(promise, n) {
+  let timer;
+  const timeout = new Promise((ok, fail) => { timer = setTimeout(() => fail(new Error(`第 ${n} 帧 ${FRAME_TIMEOUT_MS / 1000} 秒未返回，渲染终止`)), FRAME_TIMEOUT_MS); });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
 
 async function renderSegment(chrome, first, count, file) {
   const ffmpeg = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'png', '-i', '-', ...ENCODE, file], {stdio: ['pipe', 'inherit', 'inherit']});
   const finished = new Promise((ok, fail) => ffmpeg.once('exit', code => (code === 0 ? ok() : fail(new Error(`ffmpeg 退出 ${code}`)))));
   for (let n = first; n < first + count; n++) {
-    await chrome.evaluate(`window.film.renderFrame(${n})`);
-    const image = Buffer.from(await chrome.evaluate(IMAGE), 'base64');
+    await withTimeout(chrome.evaluate(`window.film.renderFrame(${n})`), n);
+    const image = Buffer.from(await withTimeout(chrome.evaluate(IMAGE), n), 'base64');
     if (!ffmpeg.stdin.write(image)) await new Promise(ok => ffmpeg.stdin.once('drain', ok));
   }
   ffmpeg.stdin.end();

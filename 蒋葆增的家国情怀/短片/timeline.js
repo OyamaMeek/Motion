@@ -6,36 +6,36 @@ export const FRAME_COUNT = BEATS * BEAT_FRAMES;
 export const SECONDS = FRAME_COUNT / FPS;
 export const SAMPLE_RATE = 48000;
 
-// 每页的拍数按阅读量安排；页面在 land 那一帧完成翻页的关键动作（关灯、换底色、白场落回纸面、标题落下）。
-// tone 是这一页的底色：paper 米白纸面，warm 暖米纸，dark 墨黑暗场。
+// 每页的拍数按阅读量安排。全片暗场；每页在 land 那一帧完成翻页的关键动作：
+// 新场景或大字在这一帧硬切进入，旧页的元素在之前一两拍散开、坠落或缩走。
 const LENGTHS = [
-  ['open', 10, 'paper'],
-  ['legacy', 16, 'dark'],
-  ['newark', 14, 'paper'],
-  ['plan', 14, 'warm'],
-  ['hire', 18, 'paper'],
-  ['y1979', 14, 'dark'],
-  ['aid', 12, 'paper'],
-  ['exam', 14, 'warm'],
-  ['creed', 16, 'dark'],
-  ['notice', 12, 'paper'],
-  ['drones', 12, 'dark'],
-  ['ours', 14, 'paper'],
-  ['end', 14, 'warm'],
+  ['open', 10],
+  ['motto', 14],
+  ['newark', 14],
+  ['plan', 16],
+  ['hire', 16],
+  ['y1979', 16],
+  ['aid', 12],
+  ['exam', 14],
+  ['creed', 16],
+  ['notice', 12],
+  ['drones', 12],
+  ['ours', 14],
+  ['end', 14],
 ];
 
 export const PAGES = (() => {
   let beat = 0;
-  return LENGTHS.map(([id, beats, tone]) => {
-    const page = {id, beats, tone, beat, land: beat * BEAT_FRAMES, end: (beat + beats) * BEAT_FRAMES};
+  return LENGTHS.map(([id, beats]) => {
+    const page = {id, beats, beat, land: beat * BEAT_FRAMES, end: (beat + beats) * BEAT_FRAMES};
     beat += beats;
     return page;
   });
 })();
 
-// 开场八个字由墨点聚成实字的那一拍，也是配乐的重音。
-export const OPEN_SNAP_BEAT = 4;
-// 第九页 58 个墨点重新聚成八个字的那一拍。
+// 开场墨点聚成“蒋葆增”实字的那一拍，也是配乐的重音。
+export const OPEN_SNAP_BEAT = 3;
+// 第九页点阵重新聚成八个字的那一拍。
 export const CREED_SNAP_BEAT = 8;
 
 export function frameState(frame) {
