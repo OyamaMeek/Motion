@@ -38,7 +38,7 @@ const keyFrame = (name, frame, min) => {
 };
 const turns = PAGES.slice(1).map(p => keyFrame(p.id, p.land, 4));
 const creed = PAGES.find(p => p.id === 'creed');
-const snaps = [keyFrame('open 八个字聚成', OPEN_SNAP_BEAT * BEAT_FRAMES, 0.5), keyFrame('creed 八个字聚成', creed.land + CREED_SNAP_BEAT * BEAT_FRAMES, 0.5)];
+const snaps = [keyFrame('open 墨点聚成人名', OPEN_SNAP_BEAT * BEAT_FRAMES, 0.5), keyFrame('creed 八个字聚成', creed.land + CREED_SNAP_BEAT * BEAT_FRAMES, 0.5)];
 
 const SR = 48000;
 const pcmL = run('ffmpeg', ['-v', 'error', '-i', VIDEO, '-map', '0:a:0', '-ar', String(SR), '-f', 'f32le', '-']).stdout;

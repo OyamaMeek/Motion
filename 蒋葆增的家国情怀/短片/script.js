@@ -20,15 +20,29 @@ const label = (text, at = 0) => ({text, at, refs: [], kind: 'label'});
 export const MOTTO = {lines: ['国家大事', '千万尽力'], text: '国家大事，千万尽力', refs: ['S3', 'S4', 'S5', 'S7']};
 
 export const SCRIPT = {
+  // 透视文字平原与字墙上铺的小字：三条释义是本片作者的理解，其余是片中史实的关键词。只作背景纹理，不要求读完。
+  floor: [
+    view('国家大事：国家需要有人去做的事'),
+    view('千万：再三叮嘱，务必'),
+    view('尽力：把力气用尽，把事做到能做到的最好'),
+    fact('1930年代 · 纽瓦克 · 电子管厂实习', 0, 'S6'),
+    fact('拟定技术引进计划与设备购置清单', 0, 'S6'),
+    fact('1979 · 73岁 · 受命到杭州筹建', 0, 'S5'),
+    fact('成都电讯工程学院 58人援建', 0, 'S5'),
+    fact('80级 三门统考总成绩第一', 0, 'S5'),
+    fact('录取通知书 · “芯”上的八个字', 0, 'S7'),
+    fact('2026架无人机 · 问鼎广场', 0, 'S3'),
+  ],
   open: {
-    slam: [...MOTTO.lines.join('')].map((ch, i) => quote(ch, i * 0.5, ...MOTTO.refs)),
-    name: fact('蒋葆增', 5, 'S1', 'S3'),
-    role: fact('杭州电子工业学院首任院长', 7, 'S3'),
-    term: fact('1980.5—1982.12', 8, 'S1'),
+    glyphs: [...MOTTO.lines.join('')].map((ch, i) => quote(ch, 3 + i * 0.5, ...MOTTO.refs)),
+    name: fact('蒋葆增', 12, 'S1', 'S3'),
+    role: fact('杭州电子工业学院首任院长', 12, 'S3'),
+    term: fact('1980.5—1982.12', 13, 'S1'),
   },
   motto: {
     cubes: quote(MOTTO.text, 0.5, ...MOTTO.refs),
     lines: [quote('杭电把这八个字，', 5, 'S3', 'S4'), quote('称作蒋葆增老院长的遗训。', 7, 'S3', 'S4')],
+    question: view('国家大事，有多大？', 10),
     source: label('来源：杭州电子科技大学新闻网 2026-10-19、2021-09-30'),
   },
   newark: {
@@ -49,9 +63,9 @@ export const SCRIPT = {
     corner: [fact('中央电工器材厂第二厂 · 1937', 0, 'S6'), label('ARCTURUS RADIO TUBE CO.')],
     year: fact('1937', 0, 'S6'),
     lines: [fact('朱其清按两人推荐，', 1, 'S6'), fact('引进美国亚克屈勒公司的技术。', 3, 'S6'), fact('同期工厂聘请的留学生里，', 6, 'S6')],
-    names: [fact('蒋葆增', 9, 'S6'), fact('刘卓钧', 10, 'S6'), fact('张朝汉', 11, 'S6'), fact('梅开基', 12, 'S6')],
-    found: fact('有蒋葆增。', 13, 'S6'),
-    listHead: label('论文所列留学生（部分）'),
+    names: [fact('蒋葆增', 8, 'S6'), fact('刘卓钧', 8.5, 'S6'), fact('张朝汉', 9, 'S6'), fact('梅开基', 9.5, 'S6')],
+    found: fact('有蒋葆增。', 10.5, 'S6'),
+    listHead: label('论文所列（部分）'),
     source: label('来源：《工程研究》2022年第3期，第239—240页'),
   },
   y1979: {
@@ -76,16 +90,16 @@ export const SCRIPT = {
   },
   exam: {
     corner: [fact('杭州电子工业学院 · 建院第二年', 0, 'S5'), label('80级')],
-    subjects: [fact('数学', 1, 'S5'), fact('物理', 2, 'S5'), fact('英语', 3, 'S5')],
-    lines: [fact('在第四机械工业部所属高校的', 4, 'S5'), fact('校际教育质量检查中，', 7, 'S5'), fact('80级学生三门统考总成绩第一。', 9, 'S5')],
-    total: fact('总成绩', 10, 'S5'),
-    first: fact('第一', 10, 'S5'),
+    subjects: [fact('数学', 1, 'S5'), fact('物理', 1.5, 'S5'), fact('英语', 2, 'S5')],
+    lines: [fact('在第四机械工业部所属高校的', 3, 'S5'), fact('校际教育质量检查中，', 5, 'S5'), fact('80级学生三门统考总成绩第一。', 7, 'S5')],
+    total: fact('总成绩', 9, 'S5'),
+    first: fact('第一', 9, 'S5'),
     source: label('来源：电子科技大学《成电@杭电：携手四十年，共谋新发展》，2020-11-12'),
   },
   creed: {
-    lines: [quote('2020年，杭电校长朱泽飞', 1, 'S5'), quote('感谢援建者始终遵循', 4, 'S5'), quote('蒋葆增老院长所提倡的', 6, 'S5')],
-    motto: quote(MOTTO.text, 4, 'S5'),
-    tail: quote('的一贯作风。', 10, 'S5'),
+    lines: [quote('2020年，杭电校长朱泽飞', 3, 'S5'), quote('感谢援建者始终遵循', 6, 'S5'), quote('蒋葆增老院长所提倡的', 8, 'S5')],
+    motto: quote(MOTTO.text, 8, 'S5'),
+    tail: quote('的一贯作风。', 12, 'S5'),
     source: label('来源：电子科技大学《成电@杭电：携手四十年，共谋新发展》，2020-11-12'),
   },
   notice: {
@@ -102,8 +116,8 @@ export const SCRIPT = {
   },
   ours: {
     tag: label('我们的理解'),
-    question: view('这八个字，今天怎么接？', 1),
-    lines: [view('把一门专业课学到能解决实际问题，', 5), view('把一次实验做到经得起复核。', 8)],
+    question: view('国家大事，有多大？', 1),
+    lines: [view('把一门专业课学到能解决实际问题，', 4), view('把一次实验做到经得起复核。', 7)],
   },
   end: {
     title: [label('八个字，'), label('一生的回答')],

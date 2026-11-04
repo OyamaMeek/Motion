@@ -3,7 +3,7 @@
 // 用法：node music.mjs 输出路径.wav
 import {writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {BEATS, BPM, CREED_SNAP_BEAT, OPEN_BURST_BEAT, OPEN_ROW_BEAT, OPEN_SLAM_STEP, OPEN_SNAP_BEAT, PAGES, SAMPLE_RATE as SR, SECONDS} from './timeline.js';
+import {BEATS, BPM, CREED_SNAP_BEAT, OPEN_BURST_BEAT, OPEN_DROP_BEAT, OPEN_REVEAL_BEAT, OPEN_REVEAL_STEP, OPEN_SNAP_BEAT, OPEN_STAND_BEAT, PAGES, SAMPLE_RATE as SR, SECONDS} from './timeline.js';
 
 const BEAT = 60 / BPM;
 const N = SR * SECONDS;
@@ -118,27 +118,39 @@ function reverb(input) {
   return outBuf;
 }
 
-// 开场：八个字每半拍一记低频重击，“尽”“力”加钟声；第 4 拍收成一行、第 5 拍炸开各一记大重击，
-// 之后噪声上扬推到第 7 拍人名聚成。上扬在重音前 60 ms 停住，让重音起音清楚。
+// 噪声上扬，在 end 前 60 ms 停住，让下一记重音的起音清楚。
+function riser(dry, startBeat, endBeat, gain, seed) {
+  const t0 = startBeat * BEAT, t1 = endBeat * BEAT - 0.06;
+  addNoise(dry, t0, t1 - t0, gain, x => x ** 2.5, seed, 5000);
+}
+
+// 开场：第 0 帧一记轻的低频心跳，墨滴下落时一声高音水滴；第 1 拍墨滴落地，大重击加水花噪声；
+// 墨迹流开时低音持续，第 3 拍起八个字每半拍显影一记短击，“尽”“力”加钟声；第 8 拍八个字立定、
+// 第 10 拍炸开各一记大重击，之后上扬推到第 12 拍人名聚成。
 function coldOpen(dry, wet) {
-  addTone(dry, 0, OPEN_SNAP_BEAT * BEAT + 0.05, [[midi(33), 0.05], [midi(40), 0.022]], 0.004, 100);
-  for (let i = 0; i * OPEN_SLAM_STEP < OPEN_ROW_BEAT; i++) {
-    const t = i * OPEN_SLAM_STEP * BEAT;
-    const key = i >= 6;
-    addKick(dry, t, key ? 0.6 : 0.5);
-    addTone(dry, t, 0.5, [[midi(33), 0.2], [midi(45), 0.05]], 0.002, 0.11);
-    addNoise(dry, t, 0.08, key ? 0.7 : 0.55, x => Math.exp(-x * 5), 300 + i, 2400);
-    if (key) addTone(wet, t, 1.6, [[midi(81), 0.09], [midi(81) * 2.76, 0.025]], 0.002, 0.45);
-  }
-  for (const [beat, wash] of [[OPEN_ROW_BEAT, 0.4], [OPEN_BURST_BEAT, 1.4]]) {
+  addKick(dry, 0, 0.42);
+  addTone(dry, 0, 0.6, [[midi(33), 0.16], [midi(40), 0.04]], 0.002, 0.18);
+  addTone(wet, OPEN_DROP_BEAT * BEAT - 0.3, 0.9, [[midi(93), 0.03], [midi(93) * 1.5, 0.008]], 0.004, 0.2);
+  addTone(dry, OPEN_DROP_BEAT * BEAT, (OPEN_SNAP_BEAT - OPEN_DROP_BEAT) * BEAT + 0.05, [[midi(33), 0.05], [midi(40), 0.022]], 0.02, 100);
+  for (const [beat, wash, seed] of [[OPEN_DROP_BEAT, 1.6, 401], [OPEN_STAND_BEAT, 0.8, 402], [OPEN_BURST_BEAT, 1.4, 403]]) {
     const t = beat * BEAT;
     addKick(dry, t, 0.66);
     addTone(dry, t, 1.2, [[midi(33), 0.22], [midi(21), 0.12]], 0.002, 0.3);
-    addNoise(dry, t, wash, 0.36, x => Math.exp(-x * 4), 400 + beat, 3500);
+    addNoise(dry, t, wash, 0.36, x => Math.exp(-x * 4), seed, 3500);
     addTone(wet, t, 2, [[midi(69), 0.1], [midi(69) * 2.76, 0.03], [midi(69) * 5.4, 0.01]], 0.002, 0.6);
   }
-  const riseStart = OPEN_BURST_BEAT * BEAT + 0.35, riseEnd = OPEN_SNAP_BEAT * BEAT - 0.06;
-  addNoise(dry, riseStart, riseEnd - riseStart, 0.22, x => x ** 2.5, 450, 5000);
+  // 墨迹沿晶格流开：一段缓慢起伏的低通噪声，停在第一个字显影前
+  addNoise(dry, OPEN_DROP_BEAT * BEAT + 0.4, (OPEN_REVEAL_BEAT - OPEN_DROP_BEAT) * BEAT - 0.46, 0.12, x => Math.sin(Math.PI * x) ** 2, 420, 1200);
+  for (let i = 0; i < 8; i++) {
+    const t = (OPEN_REVEAL_BEAT + i * OPEN_REVEAL_STEP) * BEAT;
+    const key = i >= 6;
+    addKick(dry, t, key ? 0.55 : 0.45);
+    addTone(dry, t, 0.5, [[midi(33), 0.18], [midi(45), 0.05]], 0.002, 0.11);
+    addNoise(dry, t, 0.06, key ? 0.6 : 0.45, x => Math.exp(-x * 5), 300 + i, 2400);
+    addTone(wet, t, 1.2, [[midi(key ? 81 : 76), 0.05], [midi(key ? 81 : 76) * 2.76, 0.012]], 0.002, 0.35);
+  }
+  riser(dry, OPEN_STAND_BEAT - 1, OPEN_STAND_BEAT, 0.16, 440);
+  riser(dry, OPEN_BURST_BEAT + 0.7, OPEN_SNAP_BEAT, 0.22, 450);
 }
 
 // 落拍的重音：页面翻转、开场八个字聚成实字、第九页八个字重新聚成。

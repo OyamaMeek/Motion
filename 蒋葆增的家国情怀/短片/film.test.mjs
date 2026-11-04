@@ -1,8 +1,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {BEATS, BEAT_FRAMES, FPS, FRAME_COUNT, OPEN_ROW_BEAT, OPEN_SLAM_STEP, OPEN_SNAP_BEAT, PAGES, SAMPLE_RATE, SECONDS, frameState} from './timeline.js';
+import {BEATS, BEAT_FRAMES, CREED_SNAP_BEAT, FPS, FRAME_COUNT, OPEN_BURST_BEAT, OPEN_DROP_BEAT, OPEN_REVEAL_BEAT, OPEN_REVEAL_STEP, OPEN_SNAP_BEAT, OPEN_STAND_BEAT, PAGES, SAMPLE_RATE, SECONDS, frameState} from './timeline.js';
 import {MOTTO, SCRIPT, SOURCES, allLines} from './script.js';
 import {ACCENT_BEATS, synthesize} from './music.mjs';
+
+const MIX = synthesize();
+const WIN = Math.round(SAMPLE_RATE * 0.01);
+function energy(t) {
+  const s = Math.round(t * SAMPLE_RATE);
+  let e = 0;
+  for (let i = s; i < s + WIN; i++) e += MIX.left[i] ** 2 + MIX.right[i] ** 2;
+  return e;
+}
+
+test('13 页的拍数，第 9 页起落拍帧不变', () => {
+  assert.deepEqual(PAGES.map(p => [p.id, p.beats]), [
+    ['open', 16], ['motto', 16], ['newark', 14], ['plan', 14], ['hire', 14], ['y1979', 14], ['aid', 12],
+    ['exam', 12], ['creed', 16], ['notice', 12], ['drones', 12], ['ours', 14], ['end', 14],
+  ]);
+  assert.deepEqual(PAGES.slice(8).map(p => p.land), [1680, 1920, 2100, 2280, 2490]);
+});
 
 test('90 秒、120 BPM、180 拍，每页在拍点落定', () => {
   assert.equal(FPS, 30);
@@ -49,9 +66,9 @@ test('逐字打出的行从整拍开始，打完后留够阅读时间', () => {
       else if (v && typeof v === 'object') Object.values(v).forEach(walk);
     };
     // 右上角标是常驻的章节信息，不计入本页阅读量。年份、人名、地名、图例、科目和重复出现的八个字方块扫一眼即可。
-    const {corner, legend, names, years, subjects, term, year, age, ageUnit, count, total, first, credits, places, cubes, slam, ...body} = SCRIPT[page.id];
+    const {corner, legend, names, years, subjects, term, year, age, ageUnit, count, total, first, credits, places, cubes, glyphs, ...body} = SCRIPT[page.id];
     walk(body);
-    const glance = [legend, names, years, subjects, term, year, age, ageUnit, count, total, first, credits, places, cubes, slam].flat().filter(Boolean);
+    const glance = [legend, names, years, subjects, term, year, age, ageUnit, count, total, first, credits, places, cubes, glyphs].flat().filter(Boolean);
     // 句子按每秒 6 字算阅读量；句子连同短标签合计不超过每秒 8.5 字。
     let chars = glance.reduce((s, l) => s + [...l.text.replace(/[\s，。、：；“”（）《》·—…]/g, '')].length, 0), sentence = 0;
     for (const l of lines) {
@@ -76,41 +93,50 @@ test('不用口号和被禁的句式', () => {
   for (const line of allLines()) for (const word of banned) assert.ok(!line.text.includes(word), `${line.text} 含 ${word}`);
 });
 
-test('开场从第 0 帧起每半拍砸下一个字，第 7 拍人名聚成', () => {
+test('开场：墨滴第 0 帧可见，第 1 拍落地，八个字每半拍显影一个，第 8 拍立定，第 12 拍聚成人名', () => {
   assert.equal(PAGES[0].id, 'open');
-  assert.equal(PAGES[0].beats, 12);
-  assert.equal(OPEN_SNAP_BEAT, 7);
-  assert.deepEqual(SCRIPT.open.slam.map(l => l.text), [...MOTTO.lines.join('')]);
-  assert.equal(OPEN_SLAM_STEP * SCRIPT.open.slam.length, OPEN_ROW_BEAT);
-  SCRIPT.open.slam.forEach((l, i) => {
-    assert.equal(l.at, i * OPEN_SLAM_STEP);
+  assert.equal(OPEN_DROP_BEAT, 1);
+  assert.equal(OPEN_REVEAL_BEAT, 3);
+  assert.equal(OPEN_REVEAL_STEP, 0.5);
+  assert.equal(OPEN_STAND_BEAT, 8);
+  assert.equal(OPEN_BURST_BEAT, 10);
+  assert.equal(OPEN_SNAP_BEAT, 12);
+  assert.ok(OPEN_REVEAL_BEAT + OPEN_REVEAL_STEP * 8 <= OPEN_STAND_BEAT - 1, '八个字显影完才立起');
+  assert.deepEqual(SCRIPT.open.glyphs.map(l => l.text), [...MOTTO.lines.join('')]);
+  SCRIPT.open.glyphs.forEach((l, i) => {
+    assert.equal(l.at, OPEN_REVEAL_BEAT + i * OPEN_REVEAL_STEP);
     assert.deepEqual(l.refs, MOTTO.refs);
   });
-  const {left, right} = synthesize();
-  const win = Math.round(SAMPLE_RATE * 0.01);
-  const energy = t => {
-    const s = Math.round(t * SAMPLE_RATE);
-    let e = 0;
-    for (let i = s; i < s + win; i++) e += left[i] ** 2 + right[i] ** 2;
-    return e;
-  };
-  assert.ok(energy(0) > 0.05, `第 0 帧没有重击：${energy(0)}`);
-  for (const l of SCRIPT.open.slam.slice(1)) {
-    const t = l.at * 0.5;
-    assert.ok(energy(t) > 3 * energy(t - 0.03), `开场第 ${l.at} 拍没有重击`);
+  assert.equal(SCRIPT.open.name.at, OPEN_SNAP_BEAT);
+  assert.ok(energy(0) > 0.02, `第 0 帧没有声音：${energy(0)}`);
+  for (const beat of [OPEN_DROP_BEAT, ...SCRIPT.open.glyphs.map(l => l.at), OPEN_STAND_BEAT, OPEN_BURST_BEAT]) {
+    const t = beat * 0.5;
+    assert.ok(energy(t) > 3 * energy(t - 0.03), `开场第 ${beat} 拍没有起音`);
   }
 });
 
+test('八个字底下的文字有释义和其他内容，不只重复八个字', () => {
+  const floor = SCRIPT.floor;
+  assert.ok(floor.length >= 8);
+  const views = floor.filter(l => l.kind === 'view');
+  for (const word of ['国家大事', '千万', '尽力']) assert.ok(views.some(l => l.text.startsWith(word)), `缺少“${word}”的释义`);
+  assert.ok(floor.filter(l => l.kind === 'fact').length >= 5);
+  for (const l of floor) assert.notEqual(l.text.replace(/[，\s]/g, ''), '国家大事千万尽力');
+});
+
+test('转折：第 2 页提问，第 12 页回到同一个问题作答', () => {
+  const q = SCRIPT.motto.question;
+  assert.equal(q.kind, 'view');
+  assert.equal(SCRIPT.ours.question.text, q.text);
+  assert.ok(q.text.endsWith('？'));
+  assert.equal(SCRIPT.ours.lines.length, 2);
+  assert.equal(CREED_SNAP_BEAT, 11);
+  assert.ok(SCRIPT.creed.lines.at(-1).at < CREED_SNAP_BEAT && SCRIPT.creed.tail.at > CREED_SNAP_BEAT);
+});
+
 test('配乐在每个落拍帧起音，没有削波', () => {
-  const {left, right} = synthesize();
+  const {left, right} = MIX;
   assert.equal(left.length, SAMPLE_RATE * SECONDS);
-  const win = Math.round(SAMPLE_RATE * 0.01);
-  const energy = t => {
-    const s = Math.round(t * SAMPLE_RATE);
-    let e = 0;
-    for (let i = s; i < s + win; i++) e += left[i] ** 2 + right[i] ** 2;
-    return e;
-  };
   for (const beat of ACCENT_BEATS) {
     const t = beat * 0.5;
     assert.ok(energy(t) > 3 * energy(t - 0.03), `第 ${beat} 拍 ${t}s 没有起音`);
