@@ -748,6 +748,6 @@
   - `蒋葆增的家国情怀/八个字，一生的回答-选题方案.md` (+8 / -7)
   - `memory/agents.md`、`gotchas.md`、`plan.md`、`progress.md`、`verify.md`、`docs/CHANGELOG.md`
 
-- **Git 提交**：待提交
+- **Git 提交**：`4d7d613 feat: rework the Jiang Baozeng short with an ink-drop opening, a twist, and perspective scenes`；推送被 GitHub 拒绝：尚未推送的 `26b9b70` 含 `261031/會呼吸的痛_MV.mp4`（230.45 MB），超过 100 MB 单文件上限，三个提交都还在本地。
 
 ---
