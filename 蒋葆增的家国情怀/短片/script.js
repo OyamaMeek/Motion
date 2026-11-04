@@ -21,9 +21,10 @@ export const MOTTO = {lines: ['国家大事', '千万尽力'], text: '国家大�
 
 export const SCRIPT = {
   open: {
-    name: fact('蒋葆增', 0, 'S1', 'S3'),
-    role: fact('杭州电子工业学院首任院长', 4, 'S3'),
-    term: fact('1980.5—1982.12', 5, 'S1'),
+    slam: [...MOTTO.lines.join('')].map((ch, i) => quote(ch, i * 0.5, ...MOTTO.refs)),
+    name: fact('蒋葆增', 5, 'S1', 'S3'),
+    role: fact('杭州电子工业学院首任院长', 7, 'S3'),
+    term: fact('1980.5—1982.12', 8, 'S1'),
   },
   motto: {
     cubes: quote(MOTTO.text, 0.5, ...MOTTO.refs),

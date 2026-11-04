@@ -9,10 +9,10 @@ export const SAMPLE_RATE = 48000;
 // 每页的拍数按阅读量安排。全片暗场；每页在 land 那一帧完成翻页的关键动作：
 // 新场景或大字在这一帧硬切进入，旧页的元素在之前一两拍散开、坠落或缩走。
 const LENGTHS = [
-  ['open', 10],
+  ['open', 12],
   ['motto', 14],
   ['newark', 14],
-  ['plan', 16],
+  ['plan', 14],
   ['hire', 16],
   ['y1979', 16],
   ['aid', 12],
@@ -33,8 +33,11 @@ export const PAGES = (() => {
   });
 })();
 
-// 开场墨点聚成“蒋葆增”实字的那一拍，也是配乐的重音。
-export const OPEN_SNAP_BEAT = 3;
+// 开场八个字每半拍砸下一个，第 4 拍收成一行，第 5 拍炸成墨点，第 7 拍聚成“蒋葆增”，这一拍也是配乐的重音。
+export const OPEN_SLAM_STEP = 0.5;
+export const OPEN_ROW_BEAT = 4;
+export const OPEN_BURST_BEAT = 5;
+export const OPEN_SNAP_BEAT = 7;
 // 第九页点阵重新聚成八个字的那一拍。
 export const CREED_SNAP_BEAT = 8;
 

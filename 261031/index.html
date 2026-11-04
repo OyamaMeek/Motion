@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>會呼吸的痛 MV</title>
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #f8efdb; }
+  #stage, #stage canvas { position: absolute; left: 0; top: 0; width: 1920px !important; height: 1080px !important; display: block; }
+  #lyric { position: absolute; left: 80px; right: 80px; bottom: 44px; text-align: center; z-index: 10;
+    font: 600 50px/1.25 "PingFang TC", "Hiragino Sans CNS", "Noto Sans TC", sans-serif; letter-spacing: 3px; color: #3b2a1a;
+    -webkit-text-stroke: 9px #fff8e6; paint-order: stroke fill; }
+</style>
+<script src="lib/p5.min.js"></script>
+<script src="lib/p5.brush.js"></script>
+<script src="data/timing.js"></script>
+<script src="character.js"></script>
+<script src="shots.js"></script>
+<script src="scenes.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="272.996" data-width="1920" data-height="1080" data-fps="24">
+  <div id="stage"></div>
+  <div id="lyric"></div>
+  <audio id="song" src="會呼吸的痛.m4a" data-start="0" data-duration="272.996" data-track-index="0" data-volume="1"></audio>
+</div>
+<script src="main.js"></script>
+</body>
+</html>

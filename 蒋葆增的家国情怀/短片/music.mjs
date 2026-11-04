@@ -3,7 +3,7 @@
 // 用法：node music.mjs 输出路径.wav
 import {writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {BEATS, BPM, CREED_SNAP_BEAT, OPEN_SNAP_BEAT, PAGES, SAMPLE_RATE as SR, SECONDS} from './timeline.js';
+import {BEATS, BPM, CREED_SNAP_BEAT, OPEN_BURST_BEAT, OPEN_ROW_BEAT, OPEN_SLAM_STEP, OPEN_SNAP_BEAT, PAGES, SAMPLE_RATE as SR, SECONDS} from './timeline.js';
 
 const BEAT = 60 / BPM;
 const N = SR * SECONDS;
@@ -118,6 +118,29 @@ function reverb(input) {
   return outBuf;
 }
 
+// 开场：八个字每半拍一记低频重击，“尽”“力”加钟声；第 4 拍收成一行、第 5 拍炸开各一记大重击，
+// 之后噪声上扬推到第 7 拍人名聚成。上扬在重音前 60 ms 停住，让重音起音清楚。
+function coldOpen(dry, wet) {
+  addTone(dry, 0, OPEN_SNAP_BEAT * BEAT + 0.05, [[midi(33), 0.05], [midi(40), 0.022]], 0.004, 100);
+  for (let i = 0; i * OPEN_SLAM_STEP < OPEN_ROW_BEAT; i++) {
+    const t = i * OPEN_SLAM_STEP * BEAT;
+    const key = i >= 6;
+    addKick(dry, t, key ? 0.6 : 0.5);
+    addTone(dry, t, 0.5, [[midi(33), 0.2], [midi(45), 0.05]], 0.002, 0.11);
+    addNoise(dry, t, 0.08, key ? 0.7 : 0.55, x => Math.exp(-x * 5), 300 + i, 2400);
+    if (key) addTone(wet, t, 1.6, [[midi(81), 0.09], [midi(81) * 2.76, 0.025]], 0.002, 0.45);
+  }
+  for (const [beat, wash] of [[OPEN_ROW_BEAT, 0.4], [OPEN_BURST_BEAT, 1.4]]) {
+    const t = beat * BEAT;
+    addKick(dry, t, 0.66);
+    addTone(dry, t, 1.2, [[midi(33), 0.22], [midi(21), 0.12]], 0.002, 0.3);
+    addNoise(dry, t, wash, 0.36, x => Math.exp(-x * 4), 400 + beat, 3500);
+    addTone(wet, t, 2, [[midi(69), 0.1], [midi(69) * 2.76, 0.03], [midi(69) * 5.4, 0.01]], 0.002, 0.6);
+  }
+  const riseStart = OPEN_BURST_BEAT * BEAT + 0.35, riseEnd = OPEN_SNAP_BEAT * BEAT - 0.06;
+  addNoise(dry, riseStart, riseEnd - riseStart, 0.22, x => x ** 2.5, 450, 5000);
+}
+
 // 落拍的重音：页面翻转、开场八个字聚成实字、第九页八个字重新聚成。
 export const ACCENT_BEATS = [...PAGES.slice(1).map(p => p.beat), OPEN_SNAP_BEAT, PAGES.find(p => p.id === 'creed').beat + CREED_SNAP_BEAT].sort((a, b) => a - b);
 
@@ -125,10 +148,14 @@ export function synthesize() {
   const dry = new Float32Array(N), wet = new Float32Array(N);
   const panL = new Float32Array(N), panR = new Float32Array(N);
 
+  coldOpen(dry, wet);
+
   for (let beat = 0; beat < BEATS; beat++) {
     const t = beat * BEAT;
     const chord = chordAt(beat);
     const arr = ARR[pageAt(beat).id];
+    // 开场重击段不铺和声，人名聚成那一拍起才进钢琴。
+    if (beat < OPEN_SNAP_BEAT) continue;
     const bar = beat % 4;
     // 结尾和弦落在片尾页的第一拍（不一定是小节首拍），之前的铺底在它起音时让开。
     if (arr.pad && ((bar === 0 && beat < FINAL_BEAT) || beat === FINAL_BEAT)) {

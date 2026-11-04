@@ -1,0 +1,19 @@
+<!doctype html><meta charset="utf-8">
+<style>html,body{margin:0;width:1920px;height:1080px;background:#f8efdb;overflow:hidden}canvas{position:absolute;left:0;top:0}
+.t{position:absolute;z-index:5;font:600 26px/1.2 "PingFang TC",sans-serif;color:#3b2a1a;transform:translateX(-50%);white-space:nowrap}
+.h{position:absolute;z-index:5;font:700 34px/1 "PingFang TC",sans-serif;color:#241812;left:60px}</style>
+<script src="../lib/p5.min.js"></script><script src="../lib/p5.brush.js"></script><script src="../character.js"></script>
+<script>
+const lab=[];
+function L(x,y,t){lab.push([x,y,t])}
+function setup(){pixelDensity(1);createCanvas(1920,1080,WEBGL);randomSeed(7);noiseSeed(7);Clawdbot.setup();noLoop();}
+function draw(){background('#f8efdb');translate(-960,-540);
+ const A=(x,y,s,o)=>Clawdbot.draw(Object.assign({x,y,scale:s},o));
+ [['front','正面',230],['right','侧面',640],['back','背面',1000]].forEach(([f,n,x])=>{A(x,440,1.28,{facing:f,expression:'neutral'});L(x,458,n)});
+ [['happy','开心'],['shy','害羞'],['sad','难过'],['cry','大哭'],['hum','轻哼'],['smileHurt','强笑']].forEach(([e,n],i)=>{const x=1290+(i%3)*215,y=250+Math.floor(i/3)*205;A(x,y,.74,{expression:e});L(x,y+8,n)});
+ [['walk','走',{phase:.25,facing:'right',expression:'neutral'}],['jump','跳',{phase:.5,expression:'happy'}],['hug','拥抱',{expression:'sad'}],['hold','手持道具',{prop:'letter',expression:'happy'}],['raise','举手',{expression:'neutral'}],['sit','坐下',{expression:'sad'}]].forEach(([a,n,o],i)=>{const x=170+i*275;A(x,920,.82,Object.assign({action:a},o));L(x,944,n)});
+ A(1800,920,.82,{variant:'mama',expression:'happy'});L(1800,944,'妈妈（同骨架）');
+ lab.forEach(([x,y,t])=>{const d=document.createElement('div');d.className='t';d.style.left=x+'px';d.style.top=y+'px';d.textContent=t;document.body.append(d)});
+ window.__ms=0;window.__done=true;}
+</script>
+<div class="h" style="top:28px">Clawd 角色设定（蜡笔绘本版）</div>

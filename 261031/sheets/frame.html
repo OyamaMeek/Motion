@@ -1,0 +1,8 @@
+<!doctype html><meta charset="utf-8"><style>html,body{margin:0;background:#fff}canvas{display:block}</style>
+<script src="../lib/p5.min.js"></script><script src="../lib/p5.brush.js"></script><script src="../data/timing.js"></script><script src="../character.js"></script><script src="../shots.js"></script><script src="../scenes.js"></script>
+<script>
+let T=+(new URLSearchParams(location.search).get('t')||0);
+window.go=(t)=>{T=t;window.__done=false;redraw();return true};
+function setup(){pixelDensity(1);createCanvas(1920,1080,WEBGL);Clawdbot.setup();noLoop();}
+function draw(){const a=performance.now();MVScene.renderAt(T);window.__ms=performance.now()-a;window.__done=true;}
+</script>

@@ -1,4 +1,4 @@
-import {BEAT_FRAMES, CREED_SNAP_BEAT, FRAME_COUNT, OPEN_SNAP_BEAT, PAGES, frameState} from './timeline.js';
+import {BEAT_FRAMES, CREED_SNAP_BEAT, FRAME_COUNT, OPEN_BURST_BEAT, OPEN_ROW_BEAT, OPEN_SLAM_STEP, OPEN_SNAP_BEAT, PAGES, frameState} from './timeline.js';
 import {MOTTO, SCRIPT} from './script.js';
 
 const W = 1920, H = 1080;
@@ -292,8 +292,52 @@ function scatter(n, seed, box) {
   return Array.from({length: n}, () => ({x: lerp(box[0], box[2], r()), y: lerp(box[1], box[3], r()), d: r()}));
 }
 
+// 找出某个字的字怀（例如“0”中间的空洞），供推进穿越时对准
+function holeCenter(str, idx, x, y, size) {
+  const c = canvas();
+  const g = c.getContext('2d');
+  g.font = font(size, 900); g.textBaseline = 'alphabetic'; g.fillStyle = '#000';
+  const before = g.measureText(str.slice(0, idx)).width;
+  const m = g.measureText(str[idx]);
+  g.fillText(str[idx], x + before, y);
+  const alpha = (px, py) => g.getImageData(px, py, 1, 1).data[3] >= 128;
+  const midY = Math.round(y - (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2);
+  const x0 = Math.round(x + before), x1 = Math.round(x + before + m.width);
+  let i = x0;
+  while (i < x1 && !alpha(i, midY)) i++;
+  while (i < x1 && alpha(i, midY)) i++;
+  const left = i;
+  while (i < x1 && !alpha(i, midY)) i++;
+  const right = i;
+  if (right >= x1 || right - left < 4) throw new Error(`找不到“${str[idx]}”的字怀`);
+  const hx = Math.round((left + right) / 2), y0 = Math.round(y - m.actualBoundingBoxAscent), y1 = Math.round(y + m.actualBoundingBoxDescent);
+  let j = y0;
+  while (j < y1 && !alpha(hx, j)) j++;
+  while (j < y1 && alpha(hx, j)) j++;
+  const top = j;
+  while (j < y1 && !alpha(hx, j)) j++;
+  if (j >= y1) throw new Error(`“${str[idx]}”的字怀没有下缘`);
+  return {x: hx, y: (top + j) / 2, w: right - left, h: j - top};
+}
+
+// 电子管小图标平铺，用作年份字形里的纹理
+function makeTubeTile() {
+  const c = canvas(56, 84);
+  const g = c.getContext('2d');
+  g.strokeStyle = 'rgba(14,13,11,0.62)'; g.lineWidth = 2; g.lineCap = 'round';
+  g.beginPath();
+  g.moveTo(16, 62); g.lineTo(16, 26); g.arc(28, 26, 12, Math.PI, 0); g.lineTo(40, 62);
+  g.rect(12, 62, 32, 8);
+  g.moveTo(22, 58); g.lineTo(22, 30); g.lineTo(28, 24); g.lineTo(34, 30); g.lineTo(34, 58);
+  g.moveTo(20, 70); g.lineTo(20, 78); g.moveTo(36, 70); g.lineTo(36, 78);
+  g.stroke();
+  return c;
+}
+
+const OPEN = {slam: 720, row: 150, rowY: 560, name: 300, nameY: 600};
+const NEWARK = {x: LEFT - 10, y: 560, size: 300};
+
 const L = {
-  name: {size: 260, x: 250, y: 600},
   creed: {size: 150, x: LEFT, y: 680},
   drones: {size: 190, x: 900, y: [450, 690]},
   year: {size: 440, x: 110, y: 660},
@@ -301,8 +345,19 @@ const L = {
 };
 let P = {};
 function prepare() {
-  P.name = glyphPoints([{str: SCRIPT.open.name.text, x: L.name.x, y: L.name.y}], L.name.size, 1700, 3);
+  const m = canvas(10, 10).getContext('2d');
+  m.font = font(OPEN.row, 900);
+  OPEN.rowStr = SCRIPT.open.slam.map(l => l.text).join('');
+  OPEN.rowX = (W - m.measureText(OPEN.rowStr).width) / 2;
+  OPEN.cell = [...OPEN.rowStr].map((_, i) => OPEN.rowX + m.measureText(OPEN.rowStr.slice(0, i)).width);
+  m.font = font(OPEN.name, 900);
+  OPEN.nameX = (W - m.measureText(SCRIPT.open.name.text).width) / 2;
+  P.row = glyphPoints([{str: OPEN.rowStr, x: OPEN.rowX, y: OPEN.rowY + OPEN.row * 0.36}], OPEN.row, 1700, 2, 6);
+  P.name = glyphPoints([{str: SCRIPT.open.name.text, x: OPEN.nameX, y: OPEN.nameY}], OPEN.name, 1700, 3);
   P.nameFrom = scatter(P.name.length, 21, [0, 0, 1, 1]);
+  P.hole = holeCenter(SCRIPT.newark.year.text, 3, NEWARK.x, NEWARK.y, NEWARK.size);
+  P.holeScale = 1.7 * Math.max(W / P.hole.w, H / P.hole.h);
+  P.tubes = canvas().getContext('2d').createPattern(makeTubeTile(), 'repeat');
   P.creed = glyphPoints([{str: MOTTO.text, x: L.creed.x, y: L.creed.y}], L.creed.size, 1700, 5, 7);
   P.creedFrom = scatter(P.creed.length, 22, [80, 150, 1840, 980]);
   P.drones = glyphPoints(MOTTO.lines.map((str, i) => ({str, x: L.drones.x, y: L.drones.y[i]})), L.drones.size, 2026, 9, 6);
@@ -311,10 +366,8 @@ function prepare() {
   P.yearFall = scatter(P.year.length, 29, [-1, 0, 1, 1]);
   P.words = SCRIPT.plan.words.map((w, i) => glyphPoints([{str: w.text, x: L.word.x, y: L.word.y}], L.word.size, 1100, 40 + i));
   P.wordsFrom = scatter(1100, 24, [60, 380, 1300, 1000]);
-  P.yearMask = canvas();
-  const mg = P.yearMask.getContext('2d');
-  mg.font = font(L.year.size, 900); mg.textBaseline = 'alphabetic'; mg.fillStyle = '#000';
-  mg.fillText(SCRIPT.y1979.year.text, L.year.x, L.year.y);
+  m.font = font(L.year.size, 900);
+  P.yearW = m.measureText(SCRIPT.y1979.year.text).width;
   P.work = canvas();
 }
 
@@ -344,6 +397,31 @@ function rain(g, pts, t, size, color, seed) {
 }
 
 // ---------- 物件 ----------
+
+// 重击时聚光瞬间变亮；key 为真时偏朱橙
+function flash(g, amount, key) {
+  if (amount <= 0) return;
+  const c = key ? '253,96,42' : '250,240,225';
+  const grad = g.createRadialGradient(960, 540, 40, 960, 540, 1000);
+  grad.addColorStop(0, `rgba(${c},${amount})`);
+  grad.addColorStop(1, `rgba(${c},0)`);
+  g.fillStyle = grad; g.fillRect(0, 0, W, H);
+}
+
+// 重击时从字的边缘四溅的墨点，lb 为重击后经过的拍数
+function inkBurst(g, cx, cy, lb, seed, key, n) {
+  const t = seg(lb, 0, 0.5);
+  if (t >= 1) return;
+  const r = rng(seed);
+  for (let i = 0; i < n; i++) {
+    const ang = r() * Math.PI * 2, start = 260 + r() * 120, dist = 160 + r() * 520, sz = 3 + r() * 7;
+    const k = out(t);
+    g.globalAlpha = 0.85 * (1 - t);
+    g.fillStyle = key && r() > 0.4 ? ACCENT : LIGHT;
+    g.fillRect(cx + Math.cos(ang) * (start + dist * k), cy + Math.sin(ang) * (start * 0.8 + dist * k * 0.7), sz, sz);
+  }
+  g.globalAlpha = 1;
+}
 
 // 橙色方块，正面白字，顶面受光、侧面背光、下方短软投影
 function cube(g, x, y, s, ch, dim = 0, glow = 0) {
@@ -391,6 +469,24 @@ function figure(g, x, y, h, walk, color = '#151311') {
   g.restore();
   g.strokeStyle = 'rgba(196,191,186,0.35)'; g.lineWidth = 1.5;
   g.beginPath(); g.ellipse(x, y + 4, u * 3, u * 0.6, 0, 0, Math.PI * 2); g.stroke();
+}
+
+// 地平线上一排仰望的人群剪影：只有头和肩，头微微后仰
+const CROWD = (() => {
+  const r = rng(63);
+  const out = [];
+  for (let x = 720; x < 1820; x += 18 + r() * 22) out.push({x, h: 34 + r() * 22, tilt: -0.15 - r() * 0.2});
+  return out;
+})();
+function crowd(g, y) {
+  g.fillStyle = '#0B0A09';
+  for (const p of CROWD) {
+    const u = p.h / 6;
+    g.beginPath();
+    g.moveTo(p.x - 2.2 * u, y + 2); g.quadraticCurveTo(p.x - 2.2 * u, y - 3.2 * u, p.x, y - 3.4 * u);
+    g.quadraticCurveTo(p.x + 2.2 * u, y - 3.2 * u, p.x + 2.2 * u, y + 2); g.fill();
+    g.beginPath(); g.ellipse(p.x + p.tilt * u, y - 4.6 * u, 1.05 * u, 1.25 * u, p.tilt, 0, Math.PI * 2); g.fill();
+  }
 }
 
 // 电子管结构示意，reveal 为自下而上画出的进度
@@ -483,19 +579,10 @@ function lightOrb(g, x, y, r, a) {
   g.fillStyle = 'rgba(42,39,35,0.9)'; g.fillRect(0, 758, W, 2);
 }
 
-// 一个大字竖排满屏，下一拍缩进左侧列表
-function bigVertical(g, str, x, k, color) {
-  const size = 280;
-  setFont(g, font(size, 900)); g.textAlign = 'center';
-  [...str].forEach((ch, i) => {
-    g.globalAlpha = 1 - k;
-    g.fillStyle = color;
-    g.fillText(ch, x, 400 + i * (size + 10) - 40 * k);
-  });
-  g.globalAlpha = 1;
-}
+const bezier = (a, c, b, u) => ({x: (1 - u) ** 2 * a.x + 2 * (1 - u) * u * c.x + u * u * b.x, y: (1 - u) ** 2 * a.y + 2 * (1 - u) * u * c.y + u * u * b.y});
 
-function orbs(g, s, kinds, x0, y0) {
+// 58 颗球从成都一端出发，沿弧线飞到杭州一端，再落进下方的小山；返回已落定的颗数
+function orbs(g, s, kinds, x0, y0, from, ctrl, to) {
   const r = rng(51);
   const spots = [];
   let row = 0, i = 0;
@@ -506,19 +593,23 @@ function orbs(g, s, kinds, x0, y0) {
   }
   let landed = 0;
   kinds.forEach((kind, k) => {
-    const start = 30 + k;
-    const t = clamp((s.local - start) / 14);
+    const t = clamp((s.local - 34 - k) / 24);
     if (t <= 0) return;
     if (t >= 1) landed++;
     const p = spots[k];
-    const x = lerp(p.x + 220, p.x, t), y = lerp(-80, p.y, drop(t));
+    let x, y, rad;
+    if (t < 0.6) ({x, y} = bezier(from, ctrl, to, ease(t / 0.6)), rad = 15);
+    else {
+      const u = (t - 0.6) / 0.4;
+      x = lerp(to.x, p.x, u); y = lerp(to.y, p.y, drop(u)); rad = lerp(15, 26, u);
+    }
     const base = {prof: ACCENT, assoc: LIGHT, lect: MIST, staff: DEEP}[kind];
-    const grad = g.createRadialGradient(x - 9, y - 10, 3, x, y, 27);
+    const grad = g.createRadialGradient(x - rad * 0.35, y - rad * 0.4, 2, x, y, rad + 1);
     grad.addColorStop(0, kind === 'prof' ? ACCENT_TOP : '#FFFFFF');
     grad.addColorStop(0.35, base);
     grad.addColorStop(1, kind === 'prof' ? ACCENT_SIDE : SHADE);
     g.fillStyle = grad;
-    g.beginPath(); g.arc(x, y, 26, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(x, y, rad, 0, Math.PI * 2); g.fill();
   });
   return landed;
 }
@@ -530,28 +621,96 @@ const KINDS = [...Array(22).fill('staff'), ...Array(30).fill('lect'), ...Array(3
 const DRAW = {
   open(g, s) {
     const b = s.b, a = SCRIPT.open;
-    if (b < OPEN_SNAP_BEAT) {
-      // 墨点从中心炸开，再聚成人名
-      for (let i = 0; i < P.name.length; i++) {
-        const p = P.name[i], f = P.nameFrom[i];
-        const ang = f.x * Math.PI * 2, rad = 120 + 560 * f.y;
-        const bx = 960 + Math.cos(ang) * rad, by = 540 + Math.sin(ang) * rad * 0.6;
-        const burst = out(seg(b, 0, 1.2)), back = ease(seg(b, 1.2 + f.d * 0.6, OPEN_SNAP_BEAT));
-        const x = lerp(lerp(960, bx, burst), p.x, back), y = lerp(lerp(540, by, burst), p.y, back);
-        g.globalAlpha = 0.4 + 0.6 * back;
-        g.fillStyle = LIGHT;
-        g.fillRect(x - 2, y - 2, 4, 4);
+    const rowBase = OPEN.rowY + OPEN.row * 0.36;
+    if (b < OPEN_ROW_BEAT) {
+      // 每半拍一个满屏大字砸下：从 1.5 倍在 3 帧内压到原大，带残影、聚光闪亮和四溅墨点
+      const i = Math.min(a.slam.length - 1, Math.floor(b / OPEN_SLAM_STEP));
+      const lb = b - a.slam[i].at;
+      const key = i >= 6;
+      const hit = out(clamp(lb / 0.2));
+      flash(g, 0.3 * (1 - seg(lb, 0, 0.45)), key);
+      inkBurst(g, 960, 540, lb, 80 + i, key, 70);
+      g.save();
+      setFont(g, font(OPEN.slam, 900)); g.textAlign = 'center'; g.textBaseline = 'middle';
+      if (hit < 1) {
+        for (const k of [0.25, 0.5]) {
+          const sc = lerp(1.5, 1, hit) * (1 + k * 0.2);
+          g.globalAlpha = 0.18 * (1 - hit);
+          g.setTransform(sc, 0, 0, sc, 960 * (1 - sc), 540 * (1 - sc));
+          g.fillStyle = key ? ACCENT : LIGHT;
+          g.fillText(a.slam[i].text, 960, 560);
+        }
+      }
+      const sc = lerp(1.5, 1, hit) * (1 - 0.04 * seg(lb, 0.2, 0.5));
+      g.globalAlpha = 1;
+      g.setTransform(sc, 0, 0, sc, 960 * (1 - sc), 540 * (1 - sc));
+      if (key) { g.shadowColor = ACCENT; g.shadowBlur = 70; }
+      g.fillStyle = key ? ACCENT : LIGHT;
+      g.fillText(a.slam[i].text, 960, 560);
+      g.restore();
+    } else if (b < OPEN_BURST_BEAT) {
+      // “力”从满屏缩回八字一行的最后一格，其余七字从左到右亮起
+      const k = ease(seg(b, OPEN_ROW_BEAT, OPEN_ROW_BEAT + 0.5));
+      flash(g, 0.22 * (1 - seg(b, OPEN_ROW_BEAT, OPEN_ROW_BEAT + 0.6)), false);
+      g.save();
+      setFont(g, font(OPEN.row, 900)); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+      [...OPEN.rowStr].forEach((ch, j) => {
+        if (j === 7) return;
+        g.globalAlpha = out(seg(b, OPEN_ROW_BEAT + j * 0.05, OPEN_ROW_BEAT + j * 0.05 + 0.25));
+        g.fillStyle = j === 6 ? ACCENT : LIGHT;
+        g.shadowColor = ACCENT; g.shadowBlur = j === 6 ? 24 : 0;
+        g.fillText(ch, OPEN.cell[j], rowBase);
+      });
+      const last = OPEN.cell[7] + OPEN.row / 2;
+      const size = lerp(OPEN.slam, OPEN.row, k);
+      g.globalAlpha = 1;
+      g.shadowColor = ACCENT; g.shadowBlur = lerp(70, 24, k);
+      g.font = font(Math.round(size), 900); g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillStyle = ACCENT;
+      g.fillText(OPEN.rowStr[7], lerp(960, last, k), lerp(560, OPEN.rowY + 8, k));
+      g.restore();
+    } else if (b < OPEN_SNAP_BEAT) {
+      // 整行炸成墨点，冲击环扩散，墨点再聚成人名
+      const burst = out(seg(b, OPEN_BURST_BEAT, OPEN_BURST_BEAT + 1));
+      flash(g, 0.35 * (1 - seg(b, OPEN_BURST_BEAT, OPEN_BURST_BEAT + 0.8)), false);
+      const ring = out(seg(b, OPEN_BURST_BEAT, OPEN_BURST_BEAT + 1.1));
+      g.save();
+      g.strokeStyle = LIGHT; g.shadowColor = LIGHT; g.shadowBlur = 30;
+      g.globalAlpha = 0.9 * (1 - ring); g.lineWidth = 3 + 16 * (1 - ring);
+      g.beginPath(); g.ellipse(960, OPEN.rowY, 640 + 900 * ring, 110 + 600 * ring, 0, 0, Math.PI * 2); g.stroke();
+      g.strokeStyle = ACCENT; g.shadowColor = ACCENT; g.globalAlpha = 0.7 * (1 - ring); g.lineWidth = 2 + 6 * (1 - ring);
+      g.beginPath(); g.ellipse(960, OPEN.rowY, 620 + 500 * ring, 90 + 340 * ring, 0, 0, Math.PI * 2); g.stroke();
+      g.restore();
+      for (let i = 0; i < P.row.length; i++) {
+        const p = P.row[i], q = P.name[i], f = P.nameFrom[i];
+        const dx = p.x - 960, dy = p.y - OPEN.rowY;
+        const len = Math.hypot(dx, dy) || 1, ang = Math.atan2(dy, dx) + (f.x - 0.5) * 1.2;
+        const dist = 220 + 620 * f.y;
+        const bx = p.x + Math.cos(ang) * dist * (0.4 + 0.6 * len / 700), by = p.y + Math.sin(ang) * dist * 0.6;
+        const back = ease(seg(b, OPEN_BURST_BEAT + 0.9 + f.d * 0.5, OPEN_SNAP_BEAT));
+        g.globalAlpha = 0.75 + 0.25 * Math.max(1 - burst, back);
+        g.fillStyle = p.accent && back < 0.85 ? ACCENT : LIGHT;
+        const sz = 4 + 4 * (1 - back) * (0.5 + f.d);
+        g.fillRect(lerp(lerp(p.x, bx, burst), q.x, back) - sz / 2, lerp(lerp(p.y, by, burst), q.y, back) - sz / 2, sz, sz);
       }
       g.globalAlpha = 1;
-    } else if (b < 8.6) {
-      const pop = 1 + 0.03 * (1 - out(seg(b, OPEN_SNAP_BEAT, OPEN_SNAP_BEAT + 0.6)));
-      text(g, a.name.text, L.name.x, L.name.y, font(Math.round(L.name.size * pop), 900), LIGHT);
-    } else rain(g, P.name, seg(b, 8.6, 10), 4, LIGHT, 61);
-    const fade = 1 - seg(b, 8.4, 9.4);
-    g.globalAlpha = fade;
-    typed(g, a.role, s, L.name.x + 12, 700, font(38), MIST);
-    typed(g, a.term, s, L.name.x + 12, 760, MONO(30), FOG, 'left', '2px');
-    g.globalAlpha = 1;
+    } else if (b < 10.6) {
+      const pop = 1 + 0.04 * (1 - out(seg(b, OPEN_SNAP_BEAT, OPEN_SNAP_BEAT + 0.6)));
+      const push = pop * (1 + 0.03 * seg(b, OPEN_SNAP_BEAT, 10.6));
+      flash(g, 0.25 * (1 - seg(b, OPEN_SNAP_BEAT, OPEN_SNAP_BEAT + 0.8)), false);
+      g.save();
+      g.translate(960, OPEN.nameY - 110); g.scale(push, push); g.translate(-960, -(OPEN.nameY - 110));
+      text(g, a.name.text, OPEN.nameX, OPEN.nameY, font(OPEN.name, 900), LIGHT);
+      g.restore();
+    } else rain(g, P.name, seg(b, 10.6, 12), 4, LIGHT, 61);
+    if (b >= OPEN_SNAP_BEAT) {
+      g.globalAlpha = 1 - seg(b, 10.4, 11.4);
+      setFont(g, font(40), NARR_SPACING);
+      typed(g, a.role, s, 960 - g.measureText(a.role.text).width / 2, 720, font(40), MIST);
+      setFont(g, MONO(30), '2px');
+      typed(g, a.term, s, 960 - g.measureText(a.term.text).width / 2, 790, MONO(30), FOG, 'left', '2px');
+      g.globalAlpha = 1;
+    }
   },
 
   motto(g, s) {
@@ -577,28 +736,49 @@ const DRAW = {
 
   newark(g, s) {
     const b = s.b, a = SCRIPT.newark;
-    plain(g, 0, 0.22, 0);
-    keyCubes(g, 1560, 170 + Math.sin(s.local * 0.08) * 6, 62, 0.6);
-    const fade = 1 - seg(b, 12.6, 14);
+    // 结尾推进穿过“1930”里“0”的字怀：其余元素先退场，字怀放大到盖满画面后停 7 帧，下一页在落拍帧硬切进入
+    const fade = 1 - seg(b, 11.6, 12.2);
+    const z = seg(b, 12, 13.5), e = ease(z);
+    const sc = Math.exp(Math.log(P.holeScale) * inQ(z)) * (1 + 0.025 * (1 - out(seg(b, 0, 0.6))));
+    plain(g, 0, 0.22 * fade, 0);
     g.globalAlpha = fade;
-    const pop = 1 + 0.025 * (1 - out(seg(b, 0, 0.6)));
-    text(g, a.year.text, LEFT - 10, 560, font(Math.round(300 * pop), 900), LIGHT);
+    keyCubes(g, 1560, 170 + Math.sin(s.local * 0.08) * 6, 62, 0.6);
+    g.globalAlpha = 1;
+    const wg = P.work.getContext('2d');
+    wg.setTransform(1, 0, 0, 1, 0, 0);
+    wg.globalCompositeOperation = 'source-over'; wg.globalAlpha = 1;
+    wg.clearRect(0, 0, W, H);
+    wg.save();
+    wg.translate(lerp(P.hole.x, 960, e), lerp(P.hole.y, 540, e)); wg.scale(sc, sc); wg.translate(-P.hole.x, -P.hole.y);
+    wg.font = font(NEWARK.size, 900); wg.textBaseline = 'alphabetic'; wg.textAlign = 'left'; wg.fillStyle = LIGHT;
+    wg.fillText(a.year.text, NEWARK.x, NEWARK.y);
+    wg.restore();
+    if (z < 0.4) {
+      // 字形里平铺电子管小图，缓慢横移
+      wg.globalCompositeOperation = 'source-atop'; wg.globalAlpha = 1 - z / 0.4;
+      wg.translate(-((s.local * 0.5) % 56), 0);
+      wg.fillStyle = P.tubes; wg.fillRect(0, 0, W + 56, H);
+      wg.setTransform(1, 0, 0, 1, 0, 0);
+      wg.globalCompositeOperation = 'source-over'; wg.globalAlpha = 1;
+    }
+    g.drawImage(P.work, 0, 0);
+    g.globalAlpha = fade;
     typed(g, a.place, s, LEFT + 6, 700, font(72, 900), MIST, 'left', '8px');
     redCircle(g, LEFT + 260, 676, 300, 74, seg(b, 3, 3.8), 5);
     typed(g, a.lines[0], s, LEFT + 6, 860);
+    if (b >= 1) source(g, a.source);
     g.globalAlpha = 1;
     corner(g, a.corner, fade);
-    if (b >= 1) source(g, a.source);
   },
 
   plan(g, s) {
     const b = s.b, a = SCRIPT.plan;
     fogScene(g, s.local, 1);
     g.save();
-    const push = 1 + 0.05 * ease(b / 16);
+    const push = 1 + 0.05 * ease(b / 14);
     g.translate(1300, 640); g.scale(push, push); g.translate(-1300, -640);
     tube(g, 1500, 470, 0.95, 1, 0.9 * out(seg(b, 1, 4)), `rgba(196,191,186,${0.75 * out(seg(b, 0, 3))})`);
-    figure(g, lerp(820, 1080, b / 16), 720, 150, s.local * 0.16);
+    figure(g, lerp(820, 1060, b / 14), 720, 150, s.local * 0.16);
     g.restore();
     keyCubes(g, 1560, 170, 50, 0.4);
     narration(g, a.lines[0], s, LEFT, 200, 99, 3);
@@ -611,8 +791,8 @@ const DRAW = {
       else rain(g, P.words[0], seg(b, w1.at - 0.6, w1.at), 4.2, LIGHT, 71);
     }
     if (b >= w1.at) {
-      if (b < 15) cloud(g, P.words[1], P.wordsFrom, seg(b, w1.at, w1.at + 1), 4.2, LIGHT);
-      else rain(g, P.words[1], seg(b, 15, 16), 4.2, LIGHT, 72);
+      if (b < 13) cloud(g, P.words[1], P.wordsFrom, seg(b, w1.at, w1.at + 1), 4.2, LIGHT);
+      else rain(g, P.words[1], seg(b, 13, 14), 4.2, LIGHT, 72);
     }
     corner(g, a.corner);
     if (b >= 1) { demo(g, a.demo, SAFE_R, 990); source(g, a.source); }
@@ -620,38 +800,61 @@ const DRAW = {
 
   hire(g, s) {
     const b = s.b, a = SCRIPT.hire;
-    // 年份落拍满屏，之后缩到左上
-    const k = ease(seg(b, 0.6, 1.6));
-    const size = Math.round(lerp(440, 190, k));
+    // 年份像里程表一样从上一页的 1930 滚到 1937，之后缩到左上
+    const k = ease(seg(b, 0.6, 1.2));
+    const size = Math.round(lerp(560, 200, k));
+    const yx = lerp(140, LEFT - 6, k), yy = lerp(780, 300, k);
+    const year = a.year.text, roll = 7 * out(seg(b, 0, 0.6));
     g.save();
-    setFont(g, font(size, 900)); g.textAlign = 'left';
-    const yx = lerp(110, LEFT - 6, k), yy = lerp(700, 300, k);
-    g.fillStyle = LIGHT; g.fillText(a.year.text, yx, yy);
-    g.fillStyle = 'rgba(14,13,11,0.55)';
-    const wYear = g.measureText(a.year.text).width;
-    for (let y = yy - size * 0.75; y < yy; y += Math.max(6, size / 26)) g.fillRect(yx, y, wYear, 1.5);
+    setFont(g, DIN(size)); g.textAlign = 'left';
+    const head = year.slice(0, 3), wHead = g.measureText(head).width, wDigit = g.measureText('0').width;
+    g.fillStyle = LIGHT; g.fillText(head, yx, yy);
+    g.beginPath(); g.rect(yx + wHead - 4, yy - size * 0.78, wDigit + 12, size * 0.84); g.clip();
+    const d = Math.floor(roll), frac = roll - d;
+    for (const [digit, off] of [[d, -frac], [Math.min(d + 1, 7), 1 - frac]]) {
+      g.globalAlpha = 1 - Math.abs(off) * 0.6;
+      g.fillText(String(digit), yx + wHead, yy + off * size * 0.8);
+    }
     g.restore();
+    g.fillStyle = DEEP; g.fillRect(yx, yy + size * 0.08, (wHead + wDigit) * out(seg(b, 0, 0.8)), 3);
     narration(g, a.lines[0], s, LEFT, 420, 99, 6);
     narration(g, a.lines[1], s, LEFT, 486, 99, 7);
     narration(g, a.lines[2], s, LEFT, 580, 99, 8);
     typed(g, a.found, s, LEFT, 720, font(84, 900), LIGHT, 'left', '4px');
-    const lx = 1110;
-    if (b >= a.names[0].at) {
-      text(g, a.listHead.text, lx, 350, font(22), FOG);
-      g.strokeStyle = DEEP; g.lineWidth = 1; g.beginPath(); g.moveTo(lx, 366); g.lineTo(lx + 230, 366); g.stroke();
+    // 名册：每拍登记一行，扫描条跟着新行下移；“有蒋葆增”那一拍扫描条退回第一行变成朱橙
+    const lx = 1110, row0 = 470, rowH = 84, nx = lx + 96;
+    const opened = out(seg(b, a.names[0].at - 1, a.names[0].at));
+    if (opened > 0) {
+      g.globalAlpha = opened;
+      text(g, a.listHead.text, lx, 380, font(22), FOG);
+      g.strokeStyle = FOG; g.lineWidth = 1.5;
+      g.beginPath(); g.moveTo(lx, 400); g.lineTo(lx + 560 * opened, 400); g.stroke();
+      g.strokeStyle = INK2; g.lineWidth = 1;
+      for (let i = 1; i <= a.names.length; i++) { g.beginPath(); g.moveTo(lx, row0 - 64 + i * rowH); g.lineTo(lx + 560 * opened, row0 - 64 + i * rowH); g.stroke(); }
+      g.globalAlpha = 1;
+    }
+    const entered = a.names.filter(n => b >= n.at).length;
+    const found = seg(b, a.found.at, a.found.at + 0.5);
+    if (entered > 0) {
+      const last = a.names[entered - 1].at;
+      const from = entered > 1 ? entered - 2 : 0;
+      const yScan = lerp(lerp(from, entered - 1, out(seg(b, last, last + 0.3))), 0, ease(found));
+      const y = row0 - 54 + yScan * rowH;
+      g.fillStyle = found > 0 ? `rgba(253,96,42,${0.08 + 0.12 * found})` : 'rgba(250,246,242,0.07)';
+      g.fillRect(lx - 14, y, 588, rowH - 8);
+      g.fillStyle = found > 0 ? ACCENT : LIGHT;
+      g.fillRect(lx - 14, y, 4, rowH - 8);
     }
     a.names.forEach((n, i) => {
       if (b < n.at) return;
-      const color = i === 0 ? ACCENT : LIGHT;
-      const t = seg(b, n.at + 0.55, n.at + 1);
-      if (t < 1) bigVertical(g, n.text, 1600, t, color);
-      if (t > 0) {
-        g.globalAlpha = t;
-        text(g, n.text, lx, 430 + i * 70, font(48, i === 0 ? 900 : 400), color);
-        g.globalAlpha = 1;
-      }
+      const t = out(seg(b, n.at, n.at + 0.4));
+      const hit = i === 0 && found > 0;
+      g.globalAlpha = t;
+      text(g, String(i + 1).padStart(2, '0'), lx + 4, row0 + i * rowH, MONO(22), FOG);
+      text(g, n.text, nx + 60 * (1 - t), row0 + i * rowH, font(52, hit ? 900 : 400), hit ? ACCENT : LIGHT, 'left', '6px');
+      g.globalAlpha = 1;
     });
-    redCircle(g, lx + 74, 414, 112, 42, seg(b, 14, 14.8), 8);
+    redCircle(g, nx + 86, row0 - 18, 128, 46, seg(b, 14, 14.8), 8);
     corner(g, a.corner);
     if (b >= 1) source(g, a.source);
   },
@@ -659,31 +862,38 @@ const DRAW = {
   y1979(g, s) {
     const b = s.b, a = SCRIPT.y1979;
     const crumble = seg(b, 14, 16);
-    // 顶光照在剪影上
+    // 落拍时是“9”的特写，一拍多拉远，露出年份下方顶光里的小人影；拉远在旁白第一行开始前完成
+    const cam = ease(seg(b, 0, 1.2)), sc = lerp(3.6, 1, cam);
+    const fx = L.year.x + 0.8 * P.yearW, fy = L.year.y - 170;
+    const camera = c => { c.translate(fx, fy); c.scale(sc, sc); c.translate(-fx, -fy); };
+    g.save();
+    camera(g);
     const cone = g.createLinearGradient(0, 0, 0, 960);
     cone.addColorStop(0, 'rgba(250,240,225,0.0)');
     cone.addColorStop(1, 'rgba(250,240,225,0.10)');
     g.fillStyle = cone;
     g.beginPath(); g.moveTo(560, 0); g.lineTo(640, 0); g.lineTo(760, 960); g.lineTo(440, 960); g.fill();
     figure(g, 600, 950, 120, 0);
+    g.restore();
     if (crumble < 1) {
-      const pop = 1 + 0.02 * (1 - out(seg(b, 0, 0.6)));
-      g.save();
-      g.globalAlpha = 1 - crumble;
-      g.translate(L.year.x, L.year.y); g.scale(pop, pop); g.translate(-L.year.x, -L.year.y);
       const wg = P.work.getContext('2d');
-      wg.globalCompositeOperation = 'source-over';
+      wg.setTransform(1, 0, 0, 1, 0, 0);
+      wg.globalCompositeOperation = 'source-over'; wg.globalAlpha = 1;
       wg.clearRect(0, 0, W, H);
-      wg.drawImage(P.yearMask, 0, 0);
-      wg.globalCompositeOperation = 'source-in';
-      wg.fillStyle = LIGHT; wg.fillRect(0, 0, W, H);
-      // source-in 会清掉线条以外的像素，纹理线改用 source-atop，只画在字形内
+      wg.save();
+      camera(wg);
+      wg.font = font(L.year.size, 900); wg.textBaseline = 'alphabetic'; wg.textAlign = 'left'; wg.fillStyle = LIGHT;
+      wg.fillText(a.year.text, L.year.x, L.year.y);
+      wg.restore();
+      // 纹理线用 source-atop，只画在字形内；线距固定在画面座标，拉远时字里的线变密
       wg.globalCompositeOperation = 'source-atop';
       wg.fillStyle = 'rgba(14,13,11,0.5)';
       const shift = (s.local * 0.6) % 12;
-      for (let y = 250 + shift; y < 700; y += 12) wg.fillRect(0, y, W, 2);
+      for (let y = shift; y < H; y += 12) wg.fillRect(0, y, W, 2);
+      wg.globalCompositeOperation = 'source-over';
+      g.globalAlpha = 1 - crumble;
       g.drawImage(P.work, 0, 0);
-      g.restore();
+      g.globalAlpha = 1;
     }
     if (crumble > 0) {
       for (let i = 0; i < P.year.length; i++) {
@@ -714,17 +924,33 @@ const DRAW = {
 
   aid(g, s) {
     const b = s.b, a = SCRIPT.aid;
+    // 成都、杭州逐拍落在左右两半，弧线从成都画向杭州，两地名再缩成弧线两端的标签
+    const k = ease(seg(b, 1.6, 2.3));
+    const size = lerp(300, 54, k);
+    const ends = [{x: lerp(500, LEFT + 60, k), y: lerp(640, 270, k)}, {x: lerp(1420, 1390, k), y: lerp(640, 270, k)}];
     a.places.forEach((pl, i) => {
       if (b < pl.at) return;
-      const t = seg(b, pl.at + 0.55, pl.at + 1);
-      if (t < 1) bigVertical(g, pl.text, 1600, t, LIGHT);
+      const pop = 1 + 0.05 * (1 - out(seg(b, pl.at, pl.at + 0.4)));
+      setFont(g, font(Math.round(size * pop), 900), `${Math.round(lerp(10, 6, k))}px`);
+      g.textAlign = 'center'; g.fillStyle = LIGHT;
+      g.fillText(pl.text, ends[i].x, ends[i].y);
+      g.letterSpacing = '0px';
     });
-    if (b >= 1.55) {
-      g.globalAlpha = seg(b, 1.55, 2);
-      text(g, '成都 → 杭州', LEFT, 250, font(46, 900), MIST, 'left', '4px');
-      g.globalAlpha = 1;
+    // 弧线终点在缩小后移到“杭州”标签右上方，球从那里落下，不穿过标签
+    const top = ends.map((p, i) => ({x: p.x + (i ? 90 * k : 0), y: p.y - lerp(size * 0.95 + 14, i ? 40 : size * 0.95 + 14, k)}));
+    const ctrl = {x: (top[0].x + top[1].x) / 2, y: Math.min(top[0].y, top[1].y) - lerp(300, 170, k)};
+    const drawn = out(seg(b, 1, 1.8));
+    if (drawn > 0) {
+      g.save();
+      g.strokeStyle = MIST; g.lineWidth = 3; g.setLineDash([16, 12]); g.lineDashOffset = -s.local * 1.5;
+      g.beginPath();
+      for (let u = 0; u <= drawn + 1e-6; u += 0.02) { const p = bezier(top[0], ctrl, top[1], Math.min(u, drawn)); u === 0 ? g.moveTo(p.x, p.y) : g.lineTo(p.x, p.y); }
+      g.stroke();
+      g.restore();
+      const head = bezier(top[0], ctrl, top[1], drawn);
+      g.fillStyle = LIGHT; g.beginPath(); g.arc(head.x, head.y, 7, 0, Math.PI * 2); g.fill();
     }
-    const landed = orbs(g, s, KINDS, 1060, 900);
+    const landed = orbs(g, s, KINDS, 1060, 900, top[0], ctrl, top[1]);
     if (b >= a.count.at) {
       const w = text(g, String(landed), LEFT - 6, 560, DIN(260), LIGHT);
       text(g, '人', LEFT + w + 10, 560, font(60, 900), LIGHT);
@@ -752,17 +978,29 @@ const DRAW = {
     const grow = step + (step ? out(seg(b, a.subjects[step - 1].at, a.subjects[step - 1].at + 0.4)) - 1 : 0);
     const fade = 1 - seg(b, 12.8, 14);
     g.globalAlpha = fade;
-    lightOrb(g, 1000, 300, 46 + 22 * Math.max(0, grow), 0.25 + 0.2 * Math.max(0, grow));
+    lightOrb(g, 1480, 250, 40 + 20 * Math.max(0, grow), 0.22 + 0.2 * Math.max(0, grow));
     g.globalAlpha = 1;
+    // 三张深灰试卷逐拍从画面下方发出，扇形摊开在光下
+    const slips = [{x: 1300, y: 620, r: -0.11}, {x: 1480, y: 596, r: 0}, {x: 1660, y: 620, r: 0.11}];
     a.subjects.forEach((sub, i) => {
       if (b < sub.at) return;
-      const t = seg(b, sub.at + 0.55, sub.at + 1);
-      if (t < 1) bigVertical(g, sub.text, 1600, t, LIGHT);
-      if (t > 0) {
-        g.globalAlpha = t * fade;
-        text(g, sub.text, LEFT + i * 150, 250, font(54, 900), MIST);
-        g.globalAlpha = 1;
-      }
+      const t = out(seg(b, sub.at, sub.at + 0.45));
+      const sl = slips[i];
+      g.save();
+      g.globalAlpha = fade;
+      g.translate(lerp(sl.x - 260, sl.x, t), lerp(H + 300, sl.y, t));
+      g.rotate(lerp(sl.r - 0.5, sl.r, t));
+      g.fillStyle = 'rgba(0,0,0,0.45)'; g.fillRect(-122, -162, 260, 350);
+      g.fillStyle = INK2; g.fillRect(-130, -175, 260, 350);
+      g.strokeStyle = FOG; g.lineWidth = 1.5; g.strokeRect(-130, -175, 260, 350);
+      g.fillStyle = DEEP;
+      for (let y = -40; y < 160; y += 26) g.fillRect(-100, y, 200, 1.5);
+      setFont(g, font(70, 900)); g.textAlign = 'center'; g.fillStyle = LIGHT;
+      g.fillText(sub.text, 0, -80);
+      g.restore();
+      g.globalAlpha = t * fade;
+      text(g, sub.text, LEFT + i * 150, 250, font(54, 900), MIST);
+      g.globalAlpha = 1;
     });
     g.globalAlpha = fade;
     typed(g, a.lines[0], s, LEFT, 420);
@@ -770,9 +1008,9 @@ const DRAW = {
     typed(g, a.lines[2], s, LEFT, 600, font(52, 700));
     if (b >= a.first.at) {
       const t = seg(b, a.first.at, a.first.at + 0.5);
-      text(g, a.total.text, 1430, 640, font(40), MIST);
-      cube(g, 1430, lerp(80, 690, drop(t)), 120, '第', 0, 0.4);
-      cube(g, 1566, lerp(40, 690, drop(clamp(t * 1.15 - 0.15))), 120, '一', 0, 0.4);
+      text(g, a.total.text, 1400, 920, font(40), MIST, 'right');
+      cube(g, 1420, lerp(-140, 800, drop(t)), 120, '第', 0, 0.4);
+      cube(g, 1556, lerp(-180, 800, drop(clamp(t * 1.15 - 0.15))), 120, '一', 0, 0.4);
     }
     g.globalAlpha = 1;
     corner(g, a.corner, fade);
@@ -833,10 +1071,25 @@ const DRAW = {
       const yy = lerp(y, pin, bend);
       const flow = clamp(b / 3);
       g.globalAlpha = 0.4 + 0.6 * flow;
+      const pts = [[xs[0], y], [lerp(xs[3], xs[1], bend), y], [lerp(xs[3], xs[2], bend), yy], [xs[3], yy]];
       g.beginPath();
-      g.moveTo(xs[0], y); g.lineTo(lerp(xs[3], xs[1], bend), y); g.lineTo(lerp(xs[3], xs[2], bend), yy); g.lineTo(xs[3], yy);
+      pts.forEach(([px, py], j) => (j ? g.lineTo(px, py) : g.moveTo(px, py)));
       g.stroke();
       g.fillStyle = MIST; g.beginPath(); g.arc(xs[0], y, 5, 0, Math.PI * 2); g.fill();
+      // 走线弯好后，电流脉冲沿走线流进“芯”，每条错开相位
+      const live = seg(b, 3, 4);
+      if (live > 0) {
+        const lens = pts.slice(1).map(([px, py], j) => Math.hypot(px - pts[j][0], py - pts[j][1]));
+        const total = lens.reduce((x, v) => x + v, 0);
+        let d = (((s.local - 45) * 0.045 + i * 0.37) % 1) * total;
+        let j = 0;
+        while (j < lens.length - 1 && d > lens[j]) d -= lens[j++];
+        const u = lens[j] ? d / lens[j] : 0;
+        g.globalAlpha = live;
+        g.fillStyle = LIGHT; g.shadowBlur = 18;
+        g.beginPath(); g.arc(lerp(pts[j][0], pts[j + 1][0], u), lerp(pts[j][1], pts[j + 1][1], u), 5.5, 0, Math.PI * 2); g.fill();
+        g.shadowBlur = 8;
+      }
     }
     g.restore();
     g.globalAlpha = 1;
@@ -858,13 +1111,16 @@ const DRAW = {
 
   drones(g, s) {
     const b = s.b, a = SCRIPT.drones;
-    const band = g.createLinearGradient(0, 760, 0, H);
+    // 点阵升空时镜头慢慢上仰：地平线、雾带和仰望的人群一起下沉
+    const dy = 70 * ease(seg(b, 0, 8));
+    const band = g.createLinearGradient(0, 760 + dy, 0, H + dy);
     band.addColorStop(0, 'rgba(60,56,52,0)');
     band.addColorStop(0.5, 'rgba(60,56,52,0.55)');
     band.addColorStop(1, 'rgba(24,22,20,0.9)');
-    g.fillStyle = band; g.fillRect(0, 760, W, H - 760);
-    g.globalAlpha = 0.5; g.drawImage(FOG_A, -((s.local * 0.4) % 2400), 640); g.globalAlpha = 1;
-    g.fillStyle = 'rgba(42,39,35,1)'; g.fillRect(700, 958, 1140, 2);
+    g.fillStyle = band; g.fillRect(0, 760 + dy, W, H - 760);
+    g.globalAlpha = 0.5; g.drawImage(FOG_A, -((s.local * 0.4) % 2400), 640 + dy); g.globalAlpha = 1;
+    g.fillStyle = 'rgba(42,39,35,1)'; g.fillRect(700, 958 + dy, 1140, 2);
+    crowd(g, 958 + dy);
     const bright = seg(b, 10, 12);
     for (let i = 0; i < P.drones.length; i++) {
       const p = P.drones[i], f = P.dronesFrom[i];
