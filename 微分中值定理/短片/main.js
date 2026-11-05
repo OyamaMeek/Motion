@@ -17,6 +17,7 @@ const outCubic = x => 1 - (1 - x) ** 3;
 const outQuart = x => 1 - (1 - x) ** 4;
 const outExpo = x => (x >= 1 ? 1 : 1 - 2 ** (-10 * x));
 const inExpo = x => (x <= 0 ? 0 : 2 ** (10 * x - 10));
+const inQuint = x => x ** 5;
 const outBack = x => 1 + 2.70158 * (x - 1) ** 3 + 1.70158 * (x - 1) ** 2;
 
 function rng(seed) {
@@ -95,7 +96,12 @@ function place(nd, x, y, sz, col, font, out, ids) {
   return r;
 }
 
-function drawItems(g, items) {
+// outline 为真时先给全部字描一圈底色边，再填字：字压在同色线条上时仍然分得开
+function drawItems(g, items, outline = null) {
+  if (outline) {
+    g.lineJoin = 'round'; g.strokeStyle = outline.color; g.lineWidth = outline.width;
+    for (const it of items) if (it.k === 't') { g.font = it.f; g.strokeText(it.t, it.x, it.y); }
+  }
   for (const it of items) {
     g.fillStyle = it.c;
     if (it.k === 't') { g.font = it.f; g.fillText(it.t, it.x, it.y); }
@@ -104,7 +110,7 @@ function drawItems(g, items) {
 }
 
 const sprites = new Map();
-function sprite(key, nodes, size, {font = TITLE, color = INK} = {}) {
+function sprite(key, nodes, size, {font = TITLE, color = INK, outline = null} = {}) {
   if (sprites.has(key)) return sprites.get(key);
   const items = [], ids = {};
   const {ink} = place({g: Array.isArray(nodes) ? nodes : [nodes]}, 0, 0, size, color, font, items, ids);
@@ -112,7 +118,7 @@ function sprite(key, nodes, size, {font = TITLE, color = INK} = {}) {
   const c = canvas(Math.ceil(ink.x1 - ink.x0 + 2 * PAD), Math.ceil(ink.y1 - ink.y0 + 2 * PAD));
   const g = c.getContext('2d', {willReadFrequently: true});
   const vector = items.map(it => ({...it, x: it.x + ox, y: it.y + oy}));
-  drawItems(g, vector);
+  drawItems(g, vector, outline);
   const shift = r => ({x0: r.x0 + ox, x1: r.x1 + ox, y0: r.y0 + oy, y1: r.y1 + oy});
   const sp = {key, c, vector, w: c.width, h: c.height, ids: Object.fromEntries(Object.entries(ids).map(([k, r]) => [k, shift(r)])), ink: shift(ink)};
   sprites.set(key, sp);
@@ -218,13 +224,115 @@ function paper(g) {
   g.drawImage(grain, 0, 0);
 }
 
+// 场景编号：开场总起不编号，五个讲解场景是 01—05
 function hud(g, scene) {
+  if (scene === 0) return;
   g.setTransform(1, 0, 0, 1, 0, 0);
-  textLine(g, `${String(scene + 1).padStart(2, '0')} / 05`, W - 60, 72, MONO(28), INK, {align: 'right', label: 'HUD scene'});
+  textLine(g, `${String(scene).padStart(2, '0')} / 05`, W - 60, 72, MONO(28), INK, {align: 'right', label: 'HUD scene'});
 }
 
 const PR = {t: '′', tight: true};
 const XI = c => ({t: 'ξ', tight: true, ...(c ? {c} : {})});
+
+// ---------- 开场总起：墨黑底上逐拍硬切 ----------
+// 0—8 拍：镜头每 2 拍换一个机位，搭出中值定理的整张图（曲线、两端、中间一点的切线、与切线平行的弦）；
+// 8—11 拍：四个定理名逐拍满屏砸下；12—15 拍连成一条链；16 拍大标题；24—27 拍发问；28—32 拍冲进橙点。
+const OV_K = 0.35;
+const OV_Y = u => LAGRANGE.phi(u) + OV_K * u;
+const OV_X = u => -700 + 1400 * u, OV_YW = u => 170 - 380 * OV_Y(u);
+// 机位关键帧：[拍, 缩放, 对准曲线上 u 处（null 为整张图中心）]
+const OV_SHOTS = [[0, 2.7, 0.1], [2, 1.2, null], [4, 2.0, 0.5], [6, 1.0, null], [8, 1.0, null]];
+const OUTLINE = {color: INK, width: 22};
+
+// 每个机位在自己的拍点上急推过去，0.6 拍内停稳
+function overtureShot(b) {
+  const focus = u => (u === null ? [0, -40] : [OV_X(u), OV_YW(u)]);
+  let i = 0;
+  while (i + 1 < OV_SHOTS.length && b >= OV_SHOTS[i + 1][0]) i++;
+  const cur = OV_SHOTS[i], prev = OV_SHOTS[Math.max(0, i - 1)];
+  const q = i === 0 ? 1 : outCubic(seg(b, cur[0], cur[0] + 0.6));
+  const fa = focus(prev[2]), fb = focus(cur[2]);
+  return {s: lerp(prev[1], cur[1], q), f: [lerp(fa[0], fb[0], q), lerp(fa[1], fb[1], q)]};
+}
+
+function overturePicture(g, b) {
+  const O = KEYS.overture;
+  const {s, f} = overtureShot(b);
+  g.save();
+  g.translate(960, 540); g.scale(s, s); g.translate(-f[0], -f[1]);
+  const upto = outCubic(seg(b, -0.25, 1.2));
+  const pts = [];
+  for (let j = 0; j <= 240 * upto; j++) pts.push([OV_X(j / 240), OV_YW(j / 240)]);
+  polyline(g, pts, PAPER, 9);
+  if (b >= O.parallel) {
+    const q = outCubic(seg(b, O.parallel, O.parallel + 0.4));
+    line(g, OV_X(0), OV_YW(0), lerp(OV_X(0), OV_X(1), q), lerp(OV_YW(0), OV_YW(1), q), ORANGE, 7);
+  }
+  if (b >= O.point) {
+    const xi = LAGRANGE.xi, pop = 1 + 0.6 * Math.max(0, 1 - (b - O.point) / 0.3);
+    slopeSeg(g, OV_X(xi), OV_YW(xi), -(380 / 1400) * OV_K, 760 * pop, ORANGE, 7);
+    dot(g, OV_X(xi), OV_YW(xi), 15 * pop, ORANGE);
+  }
+  if (b >= O.ends) {
+    const pop = 1 + 0.8 * Math.max(0, 1 - (b - O.ends) / 0.3);
+    for (const u of [0, 1]) { dot(g, OV_X(u), OV_YW(u), 20 * pop, ORANGE); dot(g, OV_X(u), OV_YW(u), 8 * pop, INK); }
+  }
+  g.restore();
+}
+
+function overture(g, b) {
+  const O = KEYS.overture, T = TEXT.overture;
+  const ground = c => { g.fillStyle = c; g.fillRect(0, 0, W, H); };
+  // 名字卡：米白、墨黑、米白、亮橙四种底色逐拍硬切
+  if (b >= O.names[0] && b < O.row) {
+    const i = Math.min(3, Math.floor(b - O.names[0]));
+    const [bg, fg] = [[PAPER, INK], [INK, PAPER], [PAPER, INK], [ORANGE, INK]][i];
+    ground(bg);
+    g.drawImage(grain, 0, 0);
+    slam(g, sprite(`ov-name-${i}`, {t: T.names[i], c: fg}, 360), 960, 560, b, O.names[i]);
+    textLine(g, `0${i + 1}`, 140, 200, MONO(56), i === 3 ? INK : ORANGE, {label: 'ov index'});
+    return;
+  }
+  ground(INK);
+  if (b < O.names[0]) {
+    overturePicture(g, b);
+    const k = Math.min(3, Math.floor(b / 2));
+    slam(g, sprite(`ov-beat-${k}`, {t: T.beats[k], c: PAPER}, 140, {outline: OUTLINE}), 140, 190, b, k * 2, {left: true});
+    return;
+  }
+  if (b < O.title) {
+    T.names.forEach((t, i) => drawSprite(g, sprite(`ov-row-${i}`, {t, c: PAPER}, 96), 285 + i * 450, 470));
+    const q = outCubic(seg(b, O.row, O.row + 1));
+    g.fillStyle = ORANGE;
+    g.fillRect(190, 566, 1540 * q, 12);
+    for (let i = 0; i < 4; i++) if (190 + 1540 * q >= 285 + i * 450) dot(g, 285 + i * 450, 572, 16, ORANGE);
+    slam(g, sprite('ov-chain', {t: T.chain, c: PAPER}, 110), 960, 780, b, O.chain);
+    return;
+  }
+  // 标题和发问：28 拍起镜头冲进橙点，字和点一起放大
+  const dive = inQuint(seg(b, O.dive, 32));
+  const zoom = 1 + 60 * dive;
+  g.save();
+  g.translate(960, 700); g.scale(zoom, zoom); g.translate(-960, -700);
+  const settled = dive === 0;
+  if (b < O.why) {
+    const push = 1 + 0.05 * seg(b, O.title, O.why);
+    g.save(); g.translate(960, 470); g.scale(push, push); g.translate(-960, -470);
+    slam(g, sprite('ov-title', {t: T.title, c: PAPER}, 250), 960, 470, b, O.title);
+    const q = outExpo(seg(b, O.title, O.title + 0.4));
+    g.fillStyle = ORANGE;
+    g.fillRect(0, 640, W * q, 16);
+    slam(g, sprite('ov-sub', {t: T.sub, c: ORANGE}, 88), 960, 770, b, O.sub);
+    g.restore();
+  } else if (b < O.ask) {
+    slam(g, sprite('ov-why', {t: T.why, c: PAPER}, 380), 960, 500, b, O.why, {check: settled});
+  } else {
+    slam(g, sprite('ov-ask', {t: T.ask, c: PAPER}, 124), 960, 480, b, O.ask, {check: settled});
+    const r = 16 * (1 + 0.5 * Math.max(0, 1 - (b - O.ask) / 0.3));
+    dot(g, 960, 700, r, ORANGE);
+  }
+  g.restore();
+}
 
 // ---------- 场景一 费马：大字切条拆开重组 ----------
 const FX = x => 960 + x * 360, FY = y => 650 - y * 250;
@@ -663,8 +771,10 @@ function cauchy(g, b) {
 
 // ---------- 场景五 胶片条串起四个定理 ----------
 const TW = 360, TH = 203, PITCH = 450, SLOT0 = 285, STRIP_Y = 470;
-const CHAIN_FRAMES = [322, 1005, 1530, 2475];
-const EXTRA_FRAMES = [40, 140, 240, 450, 700, 860, 1150, 1400, 1700, 1900, 2250, 2650, 2850];
+// 胶片条上的画面：四个定理各取一帧（场景内帧号），另取 13 帧做急停前滑过的胶片
+const sceneFrame = (id, local) => SCENES.find(s => s.id === id).start + local;
+const CHAIN_FRAMES = [sceneFrame('fermat', 322), sceneFrame('rolle', 405), sceneFrame('lagrange', 210), sceneFrame('cauchy', 315)];
+const EXTRA_FRAMES = [40, 140, 240, 450, 700, 860, 1150, 1400, 1700, 1900, 2250, 2650, 2850].map(f => sceneFrame('fermat', f));
 let thumbs = null;
 
 function drawStrip(g, b) {
@@ -719,7 +829,7 @@ function chain(g, b) {
 }
 
 // ---------- 渲染 ----------
-const SCENE_FN = {fermat, rolle, lagrange, cauchy, chain};
+const SCENE_FN = {overture, fermat, rolle, lagrange, cauchy, chain};
 
 function drawFrame(g, frame) {
   FRAME = frame;

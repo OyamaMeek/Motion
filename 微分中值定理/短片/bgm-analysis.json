@@ -1,0 +1,438 @@
+{
+ "source": "bgm.mp3",
+ "duration": 160.589,
+ "period": 0.5314269624697239,
+ "bpm": 112.90356763450497,
+ "firstBeat": 0.5385538431203101,
+ "beatResidualMsMax": 27.7,
+ "beatResidualMsStd": 7.7,
+ "beatCount": 299,
+ "downbeatPhase": 0,
+ "lowOnsetByPhase": [
+  4.671,
+  3.234,
+  2.032,
+  2.098
+ ],
+ "energyPer8Beats": [
+  0.0991,
+  0.1013,
+  0.0991,
+  0.0971,
+  0.1375,
+  0.1122,
+  0.1374,
+  0.1127,
+  0.1398,
+  0.1139,
+  0.1394,
+  0.1238,
+  0.1109,
+  0.1228,
+  0.1102,
+  0.1205,
+  0.1086,
+  0.1273,
+  0.0961,
+  0.0988,
+  0.0926,
+  0.0947,
+  0.1238,
+  0.1113,
+  0.1231,
+  0.1102,
+  0.1204,
+  0.1093,
+  0.1273,
+  0.1184,
+  0.1112,
+  0.1225,
+  0.11,
+  0.1216,
+  0.1086,
+  0.1265,
+  0.1114
+ ],
+ "barChords": [
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 1,
+   "quality": "maj",
+   "name": "C#"
+  },
+  {
+   "root": 3,
+   "quality": "maj",
+   "name": "Eb"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 1,
+   "quality": "maj",
+   "name": "C#"
+  },
+  {
+   "root": 3,
+   "quality": "maj",
+   "name": "Eb"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 1,
+   "quality": "maj",
+   "name": "C#"
+  },
+  {
+   "root": 3,
+   "quality": "min",
+   "name": "Ebm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 1,
+   "quality": "maj",
+   "name": "C#"
+  },
+  {
+   "root": 3,
+   "quality": "min",
+   "name": "Ebm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 1,
+   "quality": "maj",
+   "name": "C#"
+  },
+  {
+   "root": 3,
+   "quality": "min",
+   "name": "Ebm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 1,
+   "quality": "maj",
+   "name": "C#"
+  },
+  {
+   "root": 3,
+   "quality": "min",
+   "name": "Ebm"
+  },
+  {
+   "root": 2,
+   "quality": "min",
+   "name": "Dm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 1,
+   "quality": "maj",
+   "name": "C#"
+  },
+  {
+   "root": 3,
+   "quality": "min",
+   "name": "Ebm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 1,
+   "quality": "maj",
+   "name": "C#"
+  },
+  {
+   "root": 3,
+   "quality": "min",
+   "name": "Ebm"
+  },
+  {
+   "root": 2,
+   "quality": "min",
+   "name": "Dm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 1,
+   "quality": "maj",
+   "name": "C#"
+  },
+  {
+   "root": 3,
+   "quality": "maj",
+   "name": "Eb"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 1,
+   "quality": "maj",
+   "name": "C#"
+  },
+  {
+   "root": 3,
+   "quality": "maj",
+   "name": "Eb"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 1,
+   "quality": "maj",
+   "name": "C#"
+  },
+  {
+   "root": 3,
+   "quality": "min",
+   "name": "Ebm"
+  },
+  {
+   "root": 5,
+   "quality": "maj",
+   "name": "F"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 1,
+   "quality": "maj",
+   "name": "C#"
+  },
+  {
+   "root": 3,
+   "quality": "min",
+   "name": "Ebm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 1,
+   "quality": "maj",
+   "name": "C#"
+  },
+  {
+   "root": 3,
+   "quality": "min",
+   "name": "Ebm"
+  },
+  {
+   "root": 5,
+   "quality": "maj",
+   "name": "F"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 1,
+   "quality": "maj",
+   "name": "C#"
+  },
+  {
+   "root": 3,
+   "quality": "min",
+   "name": "Ebm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 1,
+   "quality": "maj",
+   "name": "C#"
+  },
+  {
+   "root": 3,
+   "quality": "min",
+   "name": "Ebm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 1,
+   "quality": "maj",
+   "name": "C#"
+  },
+  {
+   "root": 3,
+   "quality": "min",
+   "name": "Ebm"
+  },
+  {
+   "root": 5,
+   "quality": "maj",
+   "name": "F"
+  },
+  {
+   "root": 5,
+   "quality": "min",
+   "name": "Fm"
+  },
+  {
+   "root": 1,
+   "quality": "maj",
+   "name": "C#"
+  },
+  {
+   "root": 3,
+   "quality": "min",
+   "name": "Ebm"
+  },
+  {
+   "root": 10,
+   "quality": "maj",
+   "name": "Bb"
+  },
+  {
+   "root": 10,
+   "quality": "maj",
+   "name": "Bb"
+  }
+ ]
+}

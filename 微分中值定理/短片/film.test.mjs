@@ -3,24 +3,24 @@ import assert from 'node:assert/strict';
 import {BEATS, BEAT_FRAMES, CUT_BEATS, CUT_FRAMES, FPS, FRAME_COUNT, HIT_BEATS, KEYS, SAMPLE_RATE, SCENES, SECONDS, frameState} from './timeline.js';
 import {TEXT, allText} from './script.js';
 import {CAUCHY, FERMAT, LAGRANGE, ROLLE_SHAPES, extrema} from './math.js';
-import {synthesize} from './music.mjs';
+import {BGM, BGM_SEGMENTS, BGM_STRETCH, bgmBeatAt, synthesize} from './music.mjs';
 
 const MIX = synthesize();
 
-test('120 秒、30 fps、120 BPM、240 拍', () => {
+test('136 秒、30 fps、120 BPM、272 拍', () => {
   assert.equal(FPS, 30);
   assert.equal(BEAT_FRAMES, 15);
-  assert.equal(BEATS, 240);
-  assert.equal(FRAME_COUNT, 3600);
-  assert.equal(SECONDS, 120);
+  assert.equal(BEATS, 272);
+  assert.equal(FRAME_COUNT, 4080);
+  assert.equal(SECONDS, 136);
   assert.equal(SAMPLE_RATE, 48000);
 });
 
-test('5 个场景首尾相接，切点在小节首拍', () => {
-  assert.deepEqual(SCENES.map(s => [s.id, s.beats]), [['fermat', 40], ['rolle', 48], ['lagrange', 56], ['cauchy', 56], ['chain', 40]]);
+test('开场总起加 5 个场景首尾相接，切点在小节首拍', () => {
+  assert.deepEqual(SCENES.map(s => [s.id, s.beats]), [['overture', 32], ['fermat', 40], ['rolle', 48], ['lagrange', 56], ['cauchy', 56], ['chain', 40]]);
   assert.equal(SCENES.reduce((s, x) => s + x.beats, 0), BEATS);
-  assert.deepEqual(CUT_BEATS, [40, 88, 144, 200]);
-  assert.deepEqual(CUT_FRAMES, [600, 1320, 2160, 3000]);
+  assert.deepEqual(CUT_BEATS, [32, 72, 120, 176, 232]);
+  assert.deepEqual(CUT_FRAMES, [480, 1080, 1800, 2640, 3480]);
   for (const b of CUT_BEATS) assert.equal(b % 4, 0);
   for (const [i, s] of SCENES.entries()) {
     assert.equal(frameState(s.start).index, i);
@@ -90,6 +90,29 @@ test('柯西：g′ 处处不为零，ξ 在区间内部，切线与弦平行', 
   assert.ok(t > 0.05 && t < 0.95);
   const dx = CAUCHY.g(1) - CAUCHY.g(0), dy = CAUCHY.f(1) - CAUCHY.f(0);
   assert.ok(Math.abs(CAUCHY.df(t) / CAUCHY.dg(t) - dy / dx) < 1e-6);
+});
+
+test('bgm：拉伸到 120 BPM，剪辑点在乐句首拍，段落落在切点上', () => {
+  assert.equal(BGM.downbeatPhase, 0);
+  assert.ok(Math.abs(BGM_STRETCH - BGM.period / 0.5) < 1e-12);
+  assert.ok(BGM_STRETCH > 1.05 && BGM_STRETCH < 1.08, `拉伸倍数 ${BGM_STRETCH}`);
+  for (const s of BGM_SEGMENTS) {
+    assert.equal(s.from % 16, 0);
+    assert.equal(s.at % 4, 0);
+  }
+  // bgm 第 32 拍起是正歌（前 32 拍能量低），落在费马的切点；第 176 拍起是间奏之后的第二段，落在柯西的切点
+  const e = BGM.energyPer8Beats, mean = a => a.reduce((x, y) => x + y, 0) / a.length;
+  assert.ok(e[4] > 1.2 * mean(e.slice(0, 4)));
+  assert.ok(e[22] > 1.2 * mean(e.slice(18, 22)));
+  assert.equal(bgmBeatAt(SCENES.find(s => s.id === 'fermat').beat), 32);
+  assert.equal(bgmBeatAt(SCENES.find(s => s.id === 'cauchy').beat), 176);
+  // 剪掉的一句前后和弦接得上：接缝后的小节是 F
+  const seam = BGM_SEGMENTS[1];
+  assert.equal(BGM.barChords[seam.from / 4].root, 5);
+  // bgm 的结尾落在片尾最后 8 拍之内
+  const endBeat = (BGM.duration - BGM.firstBeat) / BGM.period;
+  const filmEnd = seam.at + (endBeat - seam.from);
+  assert.ok(filmEnd > BEATS - 8 && filmEnd <= BEATS, `bgm 结束在第 ${filmEnd} 拍`);
 });
 
 const energy = (t, ms) => {
