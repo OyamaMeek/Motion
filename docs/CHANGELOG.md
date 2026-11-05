@@ -786,6 +786,6 @@
   - `.agent/visual/微分中值定理短片.md` (+42) 与 `.agent/visual/微分中值定理短片/` 18 张联系表和波形图
   - `.gitignore` (+1)、`memory/agents.md`、`gotchas.md`、`plan.md`、`progress.md`、`verify.md`、`docs/CHANGELOG.md`
 
-- **Git 提交**：待提交
+- **Git 提交**：`2e8d05c feat: render the 120-second Fermat-to-Cauchy mean value theorem short`；已推送 origin/main。本条哈希通过后续文档提交补记。
 
 ---
