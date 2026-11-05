@@ -809,6 +809,6 @@
   - `.agent/visual/微分中值定理短片.md` (+26) 与 `.agent/visual/微分中值定理短片/v2/` 5 张图
   - `memory/plan.md`、`progress.md`、`verify.md`、`docs/CHANGELOG.md`
 
-- **Git 提交**：待提交
+- **Git 提交**：`dcd901b feat: add a trailer-style overture and mix bgm.mp3 into the Fermat-to-Cauchy short`；已推送 origin/main。本条哈希通过后续文档提交补记。
 
 ---
