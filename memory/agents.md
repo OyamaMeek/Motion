@@ -1,5 +1,9 @@
 # 当前任务环境
 
+## 2026-11-05：微分中值定理短片
+
+- 主代理独立完成。绘制：Canvas 2D ES module，复用 `會呼吸的痛/開場樣圖/v2/chrome.mjs` 驱动无头 Chrome 分段渲染；配乐：Node 合成 PCM 写 WAV；编码与检查：ffmpeg（libx264、AAC、ebur128、showwavespic）。字体 Songti SC Black、Menlo。用户要求抽帧与波形查看。
+
 ## 2026-11-04：蒋葆增短片《八个字，一生的回答》
 
 - 主代理独立完成。资料：WebSearch 检索；原文用 Node `fetch` 下载后抽文本（`.agent/work/蒋葆增/fetch.mjs`），杭电官网“校史沿革”页 Node 连接超时，改用应用内浏览器读取正文；《工程研究》论文 PDF 用 `uv run --with pypdf` 抽文字层。证书过期的电子科大页面没有绕过证书读取，改用新浪转载页。

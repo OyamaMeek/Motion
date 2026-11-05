@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<title>从费马到柯西</title>
+<style>
+  @font-face { font-family: "Songti SC"; src: local("STSongti-SC-Black"), local("Songti SC Black"); font-weight: 900; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #F2EDE4; }
+  #stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: block; }
+</style>
+</head>
+<body>
+<canvas id="stage" width="1920" height="1080"></canvas>
+<script>
+  window.renderErrors = [];
+  window.addEventListener('error', e => renderErrors.push(e.error?.stack ?? `${e.message} ${e.filename}:${e.lineno}`));
+  window.addEventListener('unhandledrejection', e => renderErrors.push(String(e.reason?.stack ?? e.reason)));
+</script>
+<script type="module" src="main.js"></script>
+</body>
+</html>
