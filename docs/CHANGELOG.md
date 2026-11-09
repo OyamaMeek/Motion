@@ -831,6 +831,6 @@
   - `.agent/visual/泰勒公式短片.md` 与 `.agent/visual/泰勒公式短片/` 23 张图
   - `.gitignore` (+1)、`memory/agents.md`、`gotchas.md`、`plan.md`、`progress.md`、`verify.md`、`docs/CHANGELOG.md`
 
-- **Git 提交**：待提交
+- **Git 提交**：`35ceddd feat: render the 152-second Taylor formula short with a redesigned look and score`；已推送 origin/main。本条哈希通过后续文档提交补记。
 
 ---
