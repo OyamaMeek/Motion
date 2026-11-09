@@ -1,5 +1,9 @@
 # 当前任务环境
 
+## 2026-11-09：泰勒公式短片
+
+- 主代理独立完成，按用户要求全部重新编写，不复用其他工程的脚本。绘制：Canvas 2D ES module，自写 `browser.mjs` 经 CDP 驱动无头 Chrome 分段渲染；配乐：Node 合成 PCM 写 WAV，混入拉伸到 120 BPM 的 `bgm.mp3`；编码与检查：ffmpeg（libx264、AAC、ebur128、showwavespic），bgm 测量用 `.agent/venv` 的 librosa。字体 PingFang SC、STIX Two Text。用户要求抽帧与波形查看。
+
 ## 2026-11-05：微分中值定理短片
 
 - 主代理独立完成。绘制：Canvas 2D ES module，复用 `會呼吸的痛/開場樣圖/v2/chrome.mjs` 驱动无头 Chrome 分段渲染；配乐：Node 合成 PCM 写 WAV；编码与检查：ffmpeg（libx264、AAC、ebur128、showwavespic）。字体 Songti SC Black、Menlo。用户要求抽帧与波形查看。
