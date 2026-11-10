@@ -849,6 +849,6 @@
   - `蒋葆增的家国情怀fable5.2/资料说明.md` (+70)、`来源对照.md` (+52)
   - `.gitignore` (+1)、`docs/CHANGELOG.md`
 
-- **Git 提交**：待提交
+- **Git 提交**：`e4f3abe docs: collect the Jiang Baozeng research notes into the fable5.2 folder`；已推送 origin/main。
 
 ---
