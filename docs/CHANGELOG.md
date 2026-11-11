@@ -871,6 +871,6 @@
   - 新增 `蒋葆增的家国情怀fable5.2/选题方案.md` (+79)、`脚本与时间表.md` (+213)、`检查/抽帧检查记录.md` (+45)、`检查/导出检查.json`、`检查/波形.png`、`检查/抽帧/` 56 张图；改写 `来源对照.md`，更新 `资料说明.md`
   - `.agent/visual/蒋葆增fable5.2短片.md`、`.gitignore` (+1)、`memory/agents.md`、`gotchas.md`、`plan.md`、`progress.md`、`verify.md`、`docs/CHANGELOG.md`
 
-- **Git 提交**：待提交
+- **Git 提交**：`2841a4b feat: render the 90-second Jiang Baozeng short rewritten from scratch with re-verified sources`；已推送 origin/main。本条哈希通过后续文档提交补记。
 
 ---
