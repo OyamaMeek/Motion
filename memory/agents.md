@@ -1,5 +1,11 @@
 # 当前任务环境
 
+## 2026-11-10：蒋葆增短片 fable5.2 版《八个字，一生的回答》
+
+- 主代理独立完成，按用户要求全部重新编写，没有读取或复用 `蒋葆增的家国情怀/短片/` 的脚本。资料：WebSearch 检索，WebFetch 打开正文；WebFetch 对杭电新闻网只返回转述，逐字引文用 `原文/` 的副本；Bash 里的 curl 取不到外网页面；本机没有 pdftoppm，PDF 页面无法渲染查看。
+- 绘制：Canvas 2D ES module，自写透视相机和逐字仿射排字（`lib.js`），不用 3D 库；`render.mjs` 起本地静态服务，经调试端口驱动 6 个无头 Chrome，PNG 逐帧送 ffmpeg（libx264、crf 15）。配乐：Node 合成 PCM，混入 `atempo` 拉伸到 120 BPM 的 `bgm.mp3`（拍点数据沿用泰勒短片时 librosa 的测量），前视限幅。检查：ffmpeg/ffprobe（ebur128、showwavespic）。字体 Songti SC、Kaiti SC、Menlo、DIN Condensed。
+- 中间文件在 `.agent/work/蒋葆增fable/`。用户要求逐页抽帧与翻页连续帧检查，图片和记录放在交付目录 `蒋葆增的家国情怀fable5.2/检查/`，`.agent/visual/蒋葆增fable5.2短片.md` 指向它们。
+
 ## 2026-11-09：泰勒公式短片
 
 - 主代理独立完成，按用户要求全部重新编写，不复用其他工程的脚本。绘制：Canvas 2D ES module，自写 `browser.mjs` 经 CDP 驱动无头 Chrome 分段渲染；配乐：Node 合成 PCM 写 WAV，混入拉伸到 120 BPM 的 `bgm.mp3`；编码与检查：ffmpeg（libx264、AAC、ebur128、showwavespic），bgm 测量用 `.agent/venv` 的 librosa。字体 PingFang SC、STIX Two Text。用户要求抽帧与波形查看。

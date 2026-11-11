@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<title>八个字，一生的回答</title>
+<style>html,body{margin:0;background:#000}canvas{display:block}</style>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script type="module">
+import { draw, droneCount } from './film.js';
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+window.renderFrame = (f, type = 'image/png', quality) => {
+  draw(ctx, f);
+  return canvas.toDataURL(type, quality);
+};
+window.scanFrames = (from, to) => {
+  const bad = [];
+  for (let f = from; f < to; f++) {
+    try {
+      draw(ctx, f);
+    } catch (e) {
+      bad.push(`第 ${f} 帧：${e.message}`);
+    }
+  }
+  return bad;
+};
+window.droneCount = droneCount;
+window.ready = true;
+const f = Number(new URLSearchParams(location.search).get('f'));
+if (Number.isInteger(f)) draw(ctx, f);
+</script>
+</html>
